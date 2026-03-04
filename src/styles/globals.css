@@ -82,3 +82,9 @@
 .stagger-3 { animation-delay: .15s; }
 .stagger-4 { animation-delay: .20s; }
 .stagger-5 { animation-delay: .25s; }
+
+/* Drawer slide-in from right */
+@keyframes slideRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}

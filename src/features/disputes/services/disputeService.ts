@@ -2,6 +2,8 @@ import axiosInstance from '@/lib/axios';
 
 const DISPUTES_BASE = '/dispute/api/v1/disputes';
 const EMAILS_BASE   = '/dispute/api/v1/emails';
+const INVOICES_BASE = '/dispute/api/v1/invoices';
+const PAYMENTS_BASE = '/dispute/api/v1/payments';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,7 +39,6 @@ export interface Dispute {
   description: string;
   created_at: string;
   updated_at: string;
-  // Enriched from detail endpoint
   latest_analysis?: AIAnalysis | null;
   open_questions_count?: number;
   assigned_to?: string | null;
@@ -56,12 +57,61 @@ export interface TimelineEpisode {
   created_at: string;
 }
 
-export interface SupportingDoc {
-  attachment_id: number;
-  file_name: string;
-  file_type: string;
-  file_url: string;
-  uploaded_at: string;
+// ─── Invoice ──────────────────────────────────────────────────────────────────
+
+export interface InvoiceLineItem {
+  description: string;
+  qty?: number;
+  quantity?: number;
+  unit_price?: number;
+  total?: number;
+}
+
+export interface InvoiceDetails {
+  invoice_number?: string;
+  invoice_date?: string;
+  due_date?: string;
+  vendor_name?: string;
+  customer_name?: string;
+  customer_id?: string;
+  line_items?: InvoiceLineItem[];
+  subtotal?: number;
+  tax_amount?: number;
+  total_amount?: number;
+  currency?: string;
+  payment_terms?: string;
+  [key: string]: unknown;
+}
+
+export interface InvoiceData {
+  invoice_id: number;
+  invoice_number: string;
+  invoice_url: string;
+  invoice_details: InvoiceDetails;
+  updated_at: string;
+}
+
+// ─── Payment Detail ───────────────────────────────────────────────────────────
+
+export interface PaymentDetails {
+  payment_reference?: string;
+  payment_date?: string;
+  amount_paid?: number;
+  payment_mode?: string;
+  bank_reference?: string;
+  invoice_number?: string;
+  customer_id?: string;
+  status?: string;
+  note?: string;
+  [key: string]: unknown;
+}
+
+export interface PaymentDetailData {
+  payment_detail_id: number;
+  customer_id: string;
+  invoice_number: string;
+  payment_url: string;
+  payment_details: PaymentDetails | null;
 }
 
 // ─── Email types ──────────────────────────────────────────────────────────────
@@ -103,7 +153,6 @@ export const disputeService = {
   list: async (params?: {
     status?: string;
     priority?: string;
-    search?: string;
     limit?: number;
     offset?: number;
   }): Promise<DisputeListResponse> => {
@@ -114,7 +163,6 @@ export const disputeService = {
   myDisputes: async (params?: {
     status?: string;
     priority?: string;
-    search?: string;
     limit?: number;
     offset?: number;
   }): Promise<DisputeListResponse> => {
@@ -143,15 +191,16 @@ export const disputeService = {
     await axiosInstance.patch(`${DISPUTES_BASE}/${disputeId}/status`, { status, notes });
   },
 
-  getSupportingDocs: async (emailId: number): Promise<SupportingDoc[]> => {
-    const { data } = await axiosInstance.get<EmailResponse>(`${EMAILS_BASE}/${emailId}`);
-    return data.attachments.map((a) => ({
-      attachment_id: a.attachment_id,
-      file_name: a.file_name,
-      file_type: a.file_type,
-      file_url: `${EMAILS_BASE}/attachments/${a.attachment_id}`,
-      uploaded_at: a.uploaded_at,
-    }));
+  // Fetch invoice details — GET /dispute/api/v1/invoices/{invoice_id}
+  getInvoice: async (invoiceId: number): Promise<InvoiceData> => {
+    const { data } = await axiosInstance.get<InvoiceData>(`${INVOICES_BASE}/${invoiceId}`);
+    return data;
+  },
+
+  // Fetch payment detail — GET /dispute/api/v1/payments/{payment_detail_id}
+  getPaymentDetail: async (paymentDetailId: number): Promise<PaymentDetailData> => {
+    const { data } = await axiosInstance.get<PaymentDetailData>(`${PAYMENTS_BASE}/${paymentDetailId}`);
+    return data;
   },
 };
 
