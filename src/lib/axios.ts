@@ -6,14 +6,11 @@ import { logoutUser } from '@/features/auth/slices/authSlice';
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
-  reject: (reason?: unknown) => void;
+  reject:  (reason?: unknown) => void;
 }> = [];
 
 const processQueue = (error: AxiosError | null) => {
-  failedQueue.forEach((prom) => {
-    if (error) prom.reject(error);
-    else prom.resolve();
-  });
+  failedQueue.forEach((p) => (error ? p.reject(error) : p.resolve()));
   failedQueue = [];
 };
 
@@ -29,7 +26,7 @@ axiosInstance.interceptors.request.use(
     if (env.isDev) console.debug(`[axios] -> ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
-  (error) => Promise.reject(error)
+  (err) => Promise.reject(err)
 );
 
 axiosInstance.interceptors.response.use(
@@ -41,11 +38,12 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
     const status = error.response?.status;
 
+    // Don't retry auth endpoints themselves
     const isAuthEndpoint =
-      originalRequest.url?.includes('/api/v1/auth/login') ||
-      originalRequest.url?.includes('/api/v1/auth/signup') ||
-      originalRequest.url?.includes('/api/v1/auth/refresh') ||
-      originalRequest.url?.includes('/api/v1/auth/me');
+      originalRequest.url?.includes('/auth/login')   ||
+      originalRequest.url?.includes('/auth/signup')  ||
+      originalRequest.url?.includes('/auth/refresh') ||
+      originalRequest.url?.includes('/auth/me');
 
     if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
@@ -60,7 +58,7 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await axiosInstance.post('/api/v1/auth/refresh');
+        await axiosInstance.post('/auth/api/v1/auth/refresh');
         processQueue(null);
         return axiosInstance(originalRequest);
       } catch (refreshError) {
@@ -72,7 +70,6 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    // Backend returns: { detail: string, error_code: string, errors?: [...] }
     const responseData = error.response?.data as {
       detail?: string;
       error_code?: string;
