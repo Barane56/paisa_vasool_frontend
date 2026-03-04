@@ -3,44 +3,14 @@ import axiosInstance from '@/lib/axios';
 const DISPUTES_BASE = '/dispute/api/v1/disputes';
 const EMAILS_BASE   = '/dispute/api/v1/emails';
 
-// ── Email ingest ─────────────────────────────────────────────────────────────
-export interface EmailIngestResponse {
-  email_id: number;
-  processing_status: string;
-  task_id: string;
-}
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface TaskStatusResponse {
-  task_id: string;
-  status: string;   // PENDING | STARTED | SUCCESS | FAILURE
-  result: unknown | null;
-}
-
-export interface EmailResponse {
-  email_id: number;
-  sender_email: string;
-  subject: string;
-  body_text: string;
-  received_at: string;
-  has_attachment: boolean;
-  processing_status: string;
-  failure_reason: string | null;
-  dispute_id: number | null;
-  routing_confidence: number | null;
-  attachments: Array<{
-    attachment_id: number;
-    file_name: string;
-    file_type: string;
-    uploaded_at: string;
-  }>;
-}
-
-// ── Dispute types ─────────────────────────────────────────────────────────────
 export interface DisputeType {
   dispute_type_id: number;
   reason_name: string;
-  description: string;
-  is_active: boolean;
+  description: string | null;
+  is_active?: boolean;
+  severity_level?: string | null;
 }
 
 export interface AIAnalysis {
@@ -67,7 +37,7 @@ export interface Dispute {
   description: string;
   created_at: string;
   updated_at: string;
-  // Detail-only fields
+  // Enriched from detail endpoint
   latest_analysis?: AIAnalysis | null;
   open_questions_count?: number;
   assigned_to?: string | null;
@@ -94,39 +64,46 @@ export interface SupportingDoc {
   uploaded_at: string;
 }
 
-// ── Email service ─────────────────────────────────────────────────────────────
-const emailService = {
-  ingest: async (file: File, senderEmail: string, subject: string): Promise<EmailIngestResponse> => {
-    const form = new FormData();
-    form.append('file', file);
-    form.append('sender_email', senderEmail);
-    form.append('subject', subject);
-    const { data } = await axiosInstance.post<EmailIngestResponse>(
-      `${EMAILS_BASE}/ingest`,
-      form,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
-    );
-    return data;
-  },
+// ─── Email types ──────────────────────────────────────────────────────────────
 
-  getTaskStatus: async (taskId: string): Promise<TaskStatusResponse> => {
-    const { data } = await axiosInstance.get<TaskStatusResponse>(
-      `${EMAILS_BASE}/task/${taskId}/status`
-    );
-    return data;
-  },
+export interface EmailIngestResponse {
+  email_id: number;
+  processing_status: string;
+  task_id: string;
+}
 
-  getEmail: async (emailId: number): Promise<EmailResponse> => {
-    const { data } = await axiosInstance.get<EmailResponse>(`${EMAILS_BASE}/${emailId}`);
-    return data;
-  },
-};
+export interface TaskStatusResponse {
+  task_id: string;
+  status: string;
+  result: unknown | null;
+}
 
-// ── Dispute service ───────────────────────────────────────────────────────────
-const disputeService = {
+export interface EmailResponse {
+  email_id: number;
+  sender_email: string;
+  subject: string;
+  body_text: string;
+  received_at: string;
+  has_attachment: boolean;
+  processing_status: string;
+  failure_reason: string | null;
+  dispute_id: number | null;
+  routing_confidence: number | null;
+  attachments: Array<{
+    attachment_id: number;
+    file_name: string;
+    file_type: string;
+    uploaded_at: string;
+  }>;
+}
+
+// ─── Dispute service ──────────────────────────────────────────────────────────
+
+export const disputeService = {
   list: async (params?: {
     status?: string;
     priority?: string;
+    search?: string;
     limit?: number;
     offset?: number;
   }): Promise<DisputeListResponse> => {
@@ -134,10 +111,14 @@ const disputeService = {
     return data;
   },
 
-  myDisputes: async (limit = 20, offset = 0): Promise<DisputeListResponse> => {
-    const { data } = await axiosInstance.get<DisputeListResponse>(`${DISPUTES_BASE}/my`, {
-      params: { limit, offset },
-    });
+  myDisputes: async (params?: {
+    status?: string;
+    priority?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<DisputeListResponse> => {
+    const { data } = await axiosInstance.get<DisputeListResponse>(`${DISPUTES_BASE}/my`, { params });
     return data;
   },
 
@@ -158,22 +139,45 @@ const disputeService = {
     return data;
   },
 
-  getAnalysis: async (disputeId: number): Promise<AIAnalysis> => {
-    const { data } = await axiosInstance.get<AIAnalysis>(`${DISPUTES_BASE}/${disputeId}/analysis`);
-    return data;
+  updateStatus: async (disputeId: number, status: string, notes?: string): Promise<void> => {
+    await axiosInstance.patch(`${DISPUTES_BASE}/${disputeId}/status`, { status, notes });
   },
 
-  // Supporting documents come from the email attachments for this dispute
   getSupportingDocs: async (emailId: number): Promise<SupportingDoc[]> => {
     const { data } = await axiosInstance.get<EmailResponse>(`${EMAILS_BASE}/${emailId}`);
     return data.attachments.map((a) => ({
       attachment_id: a.attachment_id,
       file_name: a.file_name,
       file_type: a.file_type,
-      file_url: `/api/v1/emails/attachments/${a.attachment_id}`,
+      file_url: `${EMAILS_BASE}/attachments/${a.attachment_id}`,
       uploaded_at: a.uploaded_at,
     }));
   },
 };
 
-export { emailService, disputeService };
+// ─── Email service ─────────────────────────────────────────────────────────────
+
+export const emailService = {
+  ingest: async (file: File, senderEmail: string, subject: string): Promise<EmailIngestResponse> => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('sender_email', senderEmail);
+    form.append('subject', subject);
+    const { data } = await axiosInstance.post<EmailIngestResponse>(
+      `${EMAILS_BASE}/ingest`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return data;
+  },
+
+  getTaskStatus: async (taskId: string): Promise<TaskStatusResponse> => {
+    const { data } = await axiosInstance.get<TaskStatusResponse>(`${EMAILS_BASE}/task/${taskId}/status`);
+    return data;
+  },
+
+  getEmail: async (emailId: number): Promise<EmailResponse> => {
+    const { data } = await axiosInstance.get<EmailResponse>(`${EMAILS_BASE}/${emailId}`);
+    return data;
+  },
+};
