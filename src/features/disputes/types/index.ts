@@ -1,1 +1,1 @@
-export type { Dispute, DisputeType, AIAnalysis, DisputeListResponse, TimelineEpisode, SupportingDoc } from '../services/disputeService';
+export type { Dispute, DisputeType, AIAnalysis, DisputeListResponse, TimelineEpisode } from '../services/disputeService';

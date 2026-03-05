@@ -53,9 +53,9 @@ const StatCard = ({ icon: Icon, label, value, accent, sub }: StatCardProps) => (
       <Icon size={20} className="text-white" />
     </div>
     <div className="min-w-0">
-      <p className="text-xs font-semibold text-surface-300 uppercase tracking-widest truncate">{label}</p>
+      <p className="text-xs font-semibold text-gray-600 uppercase tracking-widest truncate">{label}</p>
       <p className="font-display text-3xl font-bold text-surface-900 leading-tight">{value}</p>
-      {sub && <p className="text-xs text-surface-300 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-gray-600 mt-0.5">{sub}</p>}
     </div>
   </div>
 );
@@ -98,11 +98,11 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
       <div className="px-5 py-4 grid grid-cols-2 gap-x-6 gap-y-3 border-b border-surface-100">
         {d.vendor_name && (
           <div className="col-span-2 flex items-center gap-2">
-            <Building2 size={13} className="text-surface-300 shrink-0" />
+            <Building2 size={13} className="text-gray-600 shrink-0" />
             <span className="text-sm text-surface-800 font-medium">{d.vendor_name}</span>
             {d.customer_name && (
               <>
-                <ChevronRight size={13} className="text-surface-200" />
+                <ChevronRight size={13} className="text-gray-400" />
                 <span className="text-sm text-surface-800 font-medium">{d.customer_name}</span>
               </>
             )}
@@ -115,9 +115,9 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
           { icon: DollarSign,  label: 'Currency',      val: cur },
         ].filter(r => r.val).map(({ icon: Ic, label, val }) => (
           <div key={label} className="flex items-start gap-2">
-            <Ic size={13} className="text-surface-300 mt-0.5 shrink-0" />
+            <Ic size={13} className="text-gray-600 mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-surface-300 font-medium">{label}</p>
+              <p className="text-xs text-gray-600 font-medium">{label}</p>
               <p className="text-sm font-semibold text-surface-800">{val}</p>
             </div>
           </div>
@@ -128,14 +128,14 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
       {items.length > 0 && (
         <div className="px-5 py-4 border-b border-surface-100">
           <div className="flex items-center gap-1.5 mb-3">
-            <Package size={13} className="text-surface-300" />
-            <p className="text-xs font-semibold text-surface-300 uppercase tracking-wider">Line Items</p>
+            <Package size={13} className="text-gray-600" />
+            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Line Items</p>
           </div>
           <div className="space-y-1.5">
             {items.map((item, i) => (
               <div key={i} className="flex items-baseline justify-between gap-4 text-sm">
                 <span className="text-surface-800 flex-1 min-w-0 truncate">{item.description}</span>
-                <span className="text-surface-300 shrink-0 text-xs">
+                <span className="text-gray-600 shrink-0 text-xs">
                   {(item.qty ?? item.quantity) != null ? `× ${item.qty ?? item.quantity}` : ''}
                   {item.unit_price != null ? ` @ ${formatCurrency(item.unit_price, cur)}` : ''}
                 </span>
@@ -154,13 +154,13 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
       <div className="px-5 py-4 space-y-2">
         {d.subtotal != null && (
           <div className="flex justify-between text-sm">
-            <span className="text-surface-300">Subtotal</span>
+            <span className="text-gray-600">Subtotal</span>
             <span className="font-medium text-surface-800">{formatCurrency(d.subtotal, cur)}</span>
           </div>
         )}
         {d.tax_amount != null && (
           <div className="flex justify-between text-sm">
-            <span className="text-surface-300">Tax (GST/VAT)</span>
+            <span className="text-gray-600">Tax (GST/VAT)</span>
             <span className="font-medium text-surface-800">{formatCurrency(d.tax_amount, cur)}</span>
           </div>
         )}
@@ -228,9 +228,9 @@ const PaymentCard = ({ payment }: { payment: PaymentDetailData }) => {
           { icon: Receipt,    label: 'Invoice Ref',   val: d.invoice_number  as string ?? payment.invoice_number },
         ].filter(r => r.val).map(({ icon: Ic, label, val }) => (
           <div key={label} className="flex items-start gap-2">
-            <Ic size={13} className="text-surface-300 mt-0.5 shrink-0" />
+            <Ic size={13} className="text-gray-600 mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-surface-300 font-medium">{label}</p>
+              <p className="text-xs text-gray-600 font-medium">{label}</p>
               <p className="text-sm font-semibold text-surface-800 break-all">{val}</p>
             </div>
           </div>
@@ -262,7 +262,7 @@ const actorConfig = {
   CUSTOMER:  { label: 'Customer',       color: 'bg-blue-500',   ring: 'ring-blue-200',   bubble: 'bg-surface-50 border border-surface-200',       text: 'text-blue-600' },
   AI:        { label: 'AI Assistant',   color: 'bg-purple-600', ring: 'ring-purple-200', bubble: 'bg-purple-50 border border-purple-100',      text: 'text-purple-600' },
   ASSOCIATE: { label: 'Associate',      color: 'bg-brand-600',  ring: 'ring-brand-200',  bubble: 'bg-brand-50 border border-brand-100',           text: 'text-brand-600' },
-  SYSTEM:    { label: 'System',         color: 'bg-surface-300',ring: 'ring-surface-200',bubble: 'bg-surface-100 border border-surface-200',      text: 'text-surface-300' },
+  SYSTEM:    { label: 'System',         color: 'bg-surface-300',ring: 'ring-surface-200',bubble: 'bg-surface-100 border border-surface-200',      text: 'text-gray-600' },
 };
 
 const getActorCfg = (actor: string) => actorConfig[actor as keyof typeof actorConfig] ?? actorConfig.ASSOCIATE;
@@ -296,10 +296,10 @@ const TimelineMessage = ({ ep, isLast }: { ep: TimelineEpisode; isLast: boolean 
         {/* Meta row */}
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <span className={`text-xs font-bold ${cfg.text}`}>{cfg.label}</span>
-          <span className="text-xs text-surface-200 font-mono">·</span>
-          <span className="text-xs text-surface-300 font-medium">{typeLabel}</span>
-          <span className="text-xs text-surface-200 font-mono">·</span>
-          <span className="text-xs text-surface-300">{formatDate(ep.created_at)}</span>
+          <span className="text-xs text-gray-400 font-mono">·</span>
+          <span className="text-xs text-gray-600 font-medium">{typeLabel}</span>
+          <span className="text-xs text-gray-400 font-mono">·</span>
+          <span className="text-xs text-gray-600">{formatDate(ep.created_at)}</span>
         </div>
 
         {/* Bubble */}
@@ -344,14 +344,14 @@ const DocRow = ({
         <Icon size={18} className="text-white" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-surface-300 uppercase tracking-wider mb-0.5">{label}</p>
+        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-0.5">{label}</p>
         {loading ? (
           <div className="flex items-center gap-2 mt-1">
-            <Loader2 size={14} className="animate-spin text-surface-300" />
-            <span className="text-sm text-surface-300">Fetching details…</span>
+            <Loader2 size={14} className="animate-spin text-gray-600" />
+            <span className="text-sm text-gray-600">Fetching details…</span>
           </div>
         ) : missing ? (
-          <p className="text-sm text-surface-300 italic">{missingText}</p>
+          <p className="text-sm text-gray-600 italic">{missingText}</p>
         ) : (
           <>
             <p className="font-display font-bold text-surface-900">{sublabel}</p>
@@ -359,7 +359,7 @@ const DocRow = ({
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
                 {meta.map(({ icon: Ic, text }, i) => (
                   <div key={i} className="flex items-center gap-1.5">
-                    <Ic size={12} className="text-surface-300 shrink-0" />
+                    <Ic size={12} className="text-gray-600 shrink-0" />
                     <span className="text-xs text-surface-800">{text}</span>
                   </div>
                 ))}
@@ -505,17 +505,17 @@ const DisputeDrawer = ({
               <h2 className="font-display font-bold text-surface-900 text-lg leading-snug">
                 {dispute.dispute_type?.reason_name ?? 'Unknown Dispute'}
               </h2>
-              <p className="text-xs text-surface-300 mt-1 flex items-center gap-1.5">
+              <p className="text-xs text-gray-600 mt-1 flex items-center gap-1.5">
                 <Building2 size={11} />
                 {dispute.customer_id}
-                <span className="text-surface-200 mx-1">·</span>
+                <span className="text-gray-400 mx-1">·</span>
                 <Calendar size={11} />
                 Opened {formatDate(dispute.created_at)}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl hover:bg-surface-100 text-surface-300 hover:text-surface-800 transition-colors shrink-0"
+              className="p-2 rounded-xl hover:bg-surface-100 text-gray-600 hover:text-surface-800 transition-colors shrink-0"
             >
               <X size={18} />
             </button>
@@ -532,7 +532,7 @@ const DisputeDrawer = ({
                 'relative flex items-center gap-2 py-3.5 mr-6 text-sm font-semibold border-b-2 transition-colors',
                 tab === t.id
                   ? 'border-brand-500 text-brand-600'
-                  : 'border-transparent text-surface-300 hover:text-surface-800'
+                  : 'border-transparent text-gray-600 hover:text-surface-800'
               )}
             >
               {t.label}
@@ -556,17 +556,17 @@ const DisputeDrawer = ({
 
               {/* Description */}
               <section>
-                <h3 className="text-xs font-bold text-surface-300 uppercase tracking-widest mb-2">
+                <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-2">
                   Dispute Description
                 </h3>
                 <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">
-                  {dispute.description || <em className="text-surface-300">No description available</em>}
+                  {dispute.description || <em className="text-gray-600">No description available</em>}
                 </p>
               </section>
 
               {/* Core meta */}
               <section>
-                <h3 className="text-xs font-bold text-surface-300 uppercase tracking-widest mb-3">
+                <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-3">
                   Case Details
                 </h3>
                 <div className="grid grid-cols-2 gap-2.5">
@@ -577,7 +577,7 @@ const DisputeDrawer = ({
                     { label: 'Payment Ref',   val: dispute.payment_detail_id ? `#${dispute.payment_detail_id}` : '—' },
                   ].map(({ label, val }) => (
                     <div key={label} className="bg-surface-50 border border-surface-100 rounded-xl px-3.5 py-3">
-                      <p className="text-xs text-surface-300 font-semibold uppercase tracking-wider mb-0.5">{label}</p>
+                      <p className="text-xs text-gray-600 font-semibold uppercase tracking-wider mb-0.5">{label}</p>
                       <p className="text-sm font-bold text-surface-900 truncate">{val}</p>
                     </div>
                   ))}
@@ -587,20 +587,20 @@ const DisputeDrawer = ({
               {/* Invoice details */}
               {dispute.invoice_id && (
                 <section>
-                  <h3 className="text-xs font-bold text-surface-300 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                     <Receipt size={11} /> Invoice Details
                   </h3>
                   {invoiceLoading ? (
                     <div className="flex items-center justify-center gap-2 py-10 bg-surface-50 rounded-2xl border border-surface-100">
                       <LoadingSpinner />
-                      <span className="text-sm text-surface-300">Loading invoice…</span>
+                      <span className="text-sm text-gray-600">Loading invoice…</span>
                     </div>
                   ) : invoice ? (
                     <InvoiceCard invoice={invoice} />
                   ) : (
                     <div className="bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5 flex items-center gap-2">
-                      <Receipt size={14} className="text-surface-300" />
-                      <span className="text-sm text-surface-300">Invoice #{dispute.invoice_id} — details not available</span>
+                      <Receipt size={14} className="text-gray-600" />
+                      <span className="text-sm text-gray-600">Invoice #{dispute.invoice_id} — details not available</span>
                     </div>
                   )}
                 </section>
@@ -609,20 +609,20 @@ const DisputeDrawer = ({
               {/* Payment detail */}
               {dispute.payment_detail_id && (
                 <section>
-                  <h3 className="text-xs font-bold text-surface-300 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                     <DollarSign size={11} /> Payment Details
                   </h3>
                   {paymentLoading ? (
                     <div className="flex items-center justify-center gap-2 py-10 bg-surface-50 rounded-2xl border border-surface-100">
                       <LoadingSpinner />
-                      <span className="text-sm text-surface-300">Loading payment…</span>
+                      <span className="text-sm text-gray-600">Loading payment…</span>
                     </div>
                   ) : payment ? (
                     <PaymentCard payment={payment} />
                   ) : (
                     <div className="bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5 flex items-center gap-2">
-                      <DollarSign size={14} className="text-surface-300" />
-                      <span className="text-sm text-surface-300">Payment #{dispute.payment_detail_id} — details not available</span>
+                      <DollarSign size={14} className="text-gray-600" />
+                      <span className="text-sm text-gray-600">Payment #{dispute.payment_detail_id} — details not available</span>
                     </div>
                   )}
                 </section>
@@ -631,7 +631,7 @@ const DisputeDrawer = ({
               {/* AI Analysis */}
               {dispute.latest_analysis && (
                 <section>
-                  <h3 className="text-xs font-bold text-surface-300 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                     <Brain size={11} /> AI Analysis
                   </h3>
                   <div className="bg-purple-50 border border-purple-100 rounded-2xl overflow-hidden">
@@ -695,7 +695,7 @@ const DisputeDrawer = ({
 
               {/* Status actions */}
               <section className="border-t border-surface-100 pt-5">
-                <h3 className="text-xs font-bold text-surface-300 uppercase tracking-widest mb-3">Update Status</h3>
+                <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-3">Update Status</h3>
                 <div className="flex flex-wrap gap-2">
                   {(['UNDER_REVIEW', 'RESOLVED', 'CLOSED'] as const).map(nextStatus => {
                     if (dispute.status === nextStatus) return null;
@@ -729,7 +729,7 @@ const DisputeDrawer = ({
           ═══════════════════════════════════════════ */}
           {tab === 'docs' && (
             <div className="px-6 py-5 space-y-4">
-              <p className="text-sm text-surface-300">
+              <p className="text-sm text-gray-600">
                 Supporting documents for this dispute — the original invoice and payment record files.
               </p>
 
@@ -816,11 +816,11 @@ const DisputeDrawer = ({
           {tab === 'timeline' && (
             <div className="px-6 py-5">
               <div className="flex items-baseline justify-between mb-5">
-                <p className="text-xs font-bold text-surface-300 uppercase tracking-widest">
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-widest">
                   Conversation History
                 </p>
                 {!timelineLoading && episodes.length > 0 && (
-                  <span className="text-xs text-surface-300">
+                  <span className="text-xs text-gray-600">
                     {episodes.length} message{episodes.length !== 1 ? 's' : ''}
                   </span>
                 )}
@@ -829,7 +829,7 @@ const DisputeDrawer = ({
               {timelineLoading ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
                   <LoadingSpinner />
-                  <p className="text-sm text-surface-300">Loading conversation…</p>
+                  <p className="text-sm text-gray-600">Loading conversation…</p>
                 </div>
               ) : episodes.length > 0 ? (
                 <div className="space-y-0">
@@ -863,7 +863,7 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
       onClick={onClick}
     >
       <td className="px-5 py-3.5">
-        <code className="text-xs font-mono text-surface-300 bg-surface-100 px-2 py-0.5 rounded-lg">
+        <code className="text-xs font-mono text-gray-900 bg-surface-100 px-2 py-0.5 rounded-lg">
           #{dispute.dispute_id}
         </code>
       </td>
@@ -871,7 +871,7 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
         <p className="text-sm font-semibold text-surface-900 truncate">
           {dispute.dispute_type?.reason_name ?? 'Unknown'}
         </p>
-        <p className="text-xs text-surface-300 truncate mt-0.5">{dispute.customer_id}</p>
+        <p className="text-xs text-gray-900 truncate mt-0.5">{dispute.customer_id}</p>
       </td>
       <td className="px-5 py-3.5">
         <span className={clsx('badge flex items-center gap-1.5 w-fit', {
@@ -887,17 +887,11 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
       <td className="px-5 py-3.5">
         <Badge variant={p.badge}>{p.label}</Badge>
       </td>
-      <td className="px-5 py-3.5 text-sm text-surface-300 max-w-[140px]">
-        {dispute.assigned_to
-          ? <span className="truncate block">{dispute.assigned_to}</span>
-          : <span className="italic text-surface-200">Unassigned</span>
-        }
-      </td>
-      <td className="px-5 py-3.5 text-sm text-surface-300 whitespace-nowrap">
+      <td className="px-5 py-3.5 text-sm text-gray-900 whitespace-nowrap">
         {formatDate(dispute.created_at)}
       </td>
       <td className="px-4 py-3.5">
-        <ChevronRight size={16} className="text-surface-200 group-hover:text-brand-400 transition-colors" />
+        <ChevronRight size={16} className="text-gray-400 group-hover:text-brand-400 transition-colors" />
       </td>
     </tr>
   );
@@ -981,7 +975,7 @@ const DashboardPage = () => {
           <button
             onClick={() => loadDisputes(true)}
             title="Refresh"
-            className="p-2 rounded-xl hover:bg-surface-100 text-surface-300 hover:text-surface-800 transition-colors"
+            className="p-2 rounded-xl hover:bg-surface-100 text-gray-600 hover:text-surface-800 transition-colors"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           </button>
@@ -1021,7 +1015,7 @@ const DashboardPage = () => {
       {/* Filters row */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px] max-w-xs">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-300 pointer-events-none" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" />
           <input
             className="input-base pl-9 py-2 text-sm"
             placeholder="Search by ID, customer, type…"
@@ -1030,7 +1024,7 @@ const DashboardPage = () => {
           />
         </div>
         <div className="flex items-center gap-2">
-          <Filter size={13} className="text-surface-300" />
+          <Filter size={13} className="text-gray-600" />
           <select
             className="input-base py-2 text-sm w-auto cursor-pointer"
             value={statusFilter}
@@ -1052,7 +1046,7 @@ const DashboardPage = () => {
             <option key={v} value={v}>{c.label}</option>
           ))}
         </select>
-        <span className="text-xs text-surface-300 ml-auto">
+        <span className="text-xs text-gray-600 ml-auto">
           {filtered.length} of {disputes.length}
         </span>
       </div>
@@ -1062,10 +1056,10 @@ const DashboardPage = () => {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-surface-50 border-b border-surface-100">
-              {['ID', 'Type / Customer', 'Status', 'Priority', 'Assigned To', 'Created', ''].map(h => (
+              {['ID', 'Type / Customer', 'Status', 'Priority', 'Created', ''].map(h => (
                 <th
                   key={h}
-                  className="px-5 py-3 text-left text-xs font-bold text-surface-300 uppercase tracking-widest whitespace-nowrap"
+                  className="px-5 py-3 text-left text-xs font-bold text-gray-900 uppercase tracking-widest whitespace-nowrap"
                 >
                   {h}
                 </th>
@@ -1075,10 +1069,10 @@ const DashboardPage = () => {
           <tbody className="divide-y divide-surface-100">
             {loading ? (
               <tr>
-                <td colSpan={7}>
+                <td colSpan={6}>
                   <div className="flex items-center justify-center gap-3 py-20">
                     <Loader2 size={22} className="animate-spin text-brand-400" />
-                    <span className="text-sm text-surface-300">Loading disputes…</span>
+                    <span className="text-sm text-gray-600">Loading disputes…</span>
                   </div>
                 </td>
               </tr>
@@ -1088,7 +1082,7 @@ const DashboardPage = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={7}>
+                <td colSpan={6}>
                   <EmptyState
                     title="No disputes found"
                     description={error ? 'Could not load from server.' : 'Try adjusting your filters or search query.'}

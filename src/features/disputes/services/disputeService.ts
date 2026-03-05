@@ -151,6 +151,7 @@ export interface EmailResponse {
 
 export const disputeService = {
   list: async (params?: {
+    search?: string;
     status?: string;
     priority?: string;
     limit?: number;
@@ -161,6 +162,7 @@ export const disputeService = {
   },
 
   myDisputes: async (params?: {
+    search?: string;
     status?: string;
     priority?: string;
     limit?: number;
