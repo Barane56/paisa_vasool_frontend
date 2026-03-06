@@ -1,10 +1,11 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Search, Filter, Clock, CheckCircle2, AlertCircle, FileText,
   X, ChevronRight, Brain, MessageSquare, HelpCircle,
   User2, RefreshCw, Loader2, AlertTriangle, Receipt,
   Calendar, DollarSign, Building2, Hash, Zap,
-  ArrowUpRight, Package, CheckCheck, TrendingUp,
+  ArrowUpRight, Package, CheckCheck, TrendingUp, CreditCard,
+  Link2, Trash2, Plus,
 } from 'lucide-react';
 import { useUser } from '@/hooks';
 import { Badge } from '@/components/ui';
@@ -15,6 +16,9 @@ import {
   Dispute,
   InvoiceData,
   PaymentDetailData,
+  PaymentDetailListResponse,
+  SupportingRef,
+  SupportingRefCreate,
   TimelineEpisode,
 } from '../services/disputeService';
 import clsx from 'clsx';
@@ -175,88 +179,315 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
   );
 };
 
-// ─── Payment detail card (Overview tab) ──────────────────────────────────────
+// ─── Single payment row ───────────────────────────────────────────────────────
 
-const PaymentCard = ({ payment }: { payment: PaymentDetailData }) => {
-  const d   = payment.payment_details ?? {};
+const PaymentRow = ({ payment, index }: { payment: PaymentDetailData; index: number }) => {
+  const d = payment.payment_details ?? {};
   const statusColor =
-    d.status === 'CLEARED' ? 'bg-green-100 text-green-700' :
-    d.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
-    d.status === 'FAILED'  ? 'bg-red-100 text-red-700'     :
+    d.status === 'CLEARED'  ? 'bg-green-100 text-green-700'  :
+    d.status === 'PENDING'  ? 'bg-amber-100 text-amber-700'  :
+    d.status === 'FAILED'   ? 'bg-red-100 text-red-700'      :
+    d.status === 'REVERSED' ? 'bg-purple-100 text-purple-700':
     'bg-surface-100 text-surface-800';
+
+  const typeColor =
+    d.payment_type === 'FULL'       ? 'text-green-700'  :
+    d.payment_type === 'PARTIAL'    ? 'text-blue-700'   :
+    d.payment_type === 'ADVANCE'    ? 'text-indigo-700' :
+    d.payment_type === 'CHARGEBACK' ? 'text-red-700'    :
+    d.payment_type === 'REFUND'     ? 'text-purple-700' :
+    'text-surface-600';
+
+  return (
+    <div className={clsx('border-b border-surface-100 last:border-b-0', index % 2 === 1 ? 'bg-surface-50' : 'bg-white')}>
+      <div className="px-5 py-3.5 flex items-start gap-4">
+        {/* Sequence badge */}
+        <div className="w-7 h-7 rounded-full bg-surface-100 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold text-surface-600">
+          {d.payment_sequence ?? index + 1}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-surface-900 text-sm">
+                {d.payment_reference ?? `Payment #${payment.payment_detail_id}`}
+              </span>
+              {d.payment_type && (
+                <span className={`text-xs font-semibold uppercase ${typeColor}`}>
+                  {d.payment_type as string}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {d.status && (
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusColor}`}>
+                  {d.status as string}
+                </span>
+              )}
+              {payment.payment_url && (
+                <a
+                  href={payment.payment_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700"
+                >
+                  PDF <ArrowUpRight size={10} />
+                </a>
+              )}
+            </div>
+          </div>
+          <div className="mt-1.5 flex items-center gap-4 flex-wrap text-xs text-gray-600">
+            {d.payment_date && <span className="flex items-center gap-1"><Calendar size={11} />{formatDate(d.payment_date as string)}</span>}
+            {d.payment_mode && <span className="flex items-center gap-1"><Zap size={11} />{d.payment_mode as string}</span>}
+            {d.amount_paid != null && (
+              <span className="flex items-center gap-1 font-bold text-green-700 text-sm">
+                <DollarSign size={11} />{formatCurrency(d.amount_paid as number)}
+                {d.currency && d.currency !== 'INR' ? ` ${d.currency}` : ''}
+              </span>
+            )}
+          </div>
+          {(d.note || d.failure_reason) && (
+            <div className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-800 bg-amber-50 rounded-lg px-2.5 py-1.5">
+              <AlertTriangle size={11} className="shrink-0 mt-0.5 text-amber-500" />
+              {(d.failure_reason ?? d.note) as string}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Multi-payment card (Overview tab) ───────────────────────────────────────
+
+const PaymentListCard = ({ payments }: { payments: PaymentDetailData[] }) => {
+  const totalPaid = payments.reduce((sum, p) => {
+    const amt = p.payment_details?.amount_paid;
+    if (typeof amt === 'number' && p.payment_details?.status === 'CLEARED') return sum + amt;
+    return sum;
+  }, 0);
 
   return (
     <div className="rounded-2xl border border-surface-200 overflow-hidden">
-      {/* Header band */}
+      {/* Header */}
       <div className="bg-green-50 px-5 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-green-200 flex items-center justify-center shrink-0">
-            <DollarSign size={16} className="text-green-700" />
+            <CreditCard size={16} className="text-green-700" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs text-green-600 font-semibold uppercase tracking-wider">Payment</p>
-            <p className="font-display font-bold text-surface-900 text-sm truncate">
-              {d.payment_reference ?? `Payment #${payment.payment_detail_id}`}
+            <p className="text-xs text-green-600 font-semibold uppercase tracking-wider">Payments</p>
+            <p className="font-display font-bold text-surface-900 text-sm">
+              {payments.length} record{payments.length !== 1 ? 's' : ''}
+              {payments[0]?.invoice_number ? ` — ${payments[0].invoice_number}` : ''}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {d.status && (
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusColor}`}>
-              {d.status}
+        {totalPaid > 0 && (
+          <div className="shrink-0 text-right">
+            <p className="text-xs text-gray-500">Cleared</p>
+            <p className="font-display font-bold text-green-700 text-lg">{formatCurrency(totalPaid)}</p>
+          </div>
+        )}
+      </div>
+      {/* Rows */}
+      <div className="divide-y divide-surface-100">
+        {payments.map((p, i) => <PaymentRow key={p.payment_detail_id} payment={p} index={i} />)}
+      </div>
+    </div>
+  );
+};
+
+// Legacy single-payment card kept for backwards compat
+const PaymentCard = ({ payment }: { payment: PaymentDetailData }) => (
+  <PaymentListCard payments={[payment]} />
+);
+
+// ─── Supporting Docs Panel ────────────────────────────────────────────────────
+
+// ─── Supporting Docs Panel (Documents tab) ────────────────────────────────────
+const SupportingDocsPanel = ({
+  disputeId,
+  latestAnalysisId,
+}: {
+  disputeId: number;
+  latestAnalysisId?: number;
+}) => {
+  const [docs, setDocs]         = useState<SupportingRef[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [urlMap, setUrlMap]     = useState<Record<number, string>>({});
+  const [adding, setAdding]     = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState<SupportingRefCreate>({
+    analysis_id:     latestAnalysisId ?? 0,
+    reference_table: 'payment_detail',
+    ref_id_value:    0,
+    context_note:    '',
+  });
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await disputeService.getSupportingDocs(disputeId);
+      setDocs(res.items);
+      // Resolve clickable URLs per ref by fetching the linked record
+      const entries = await Promise.all(
+        res.items.map(async (doc) => {
+          try {
+            if (doc.reference_table === 'invoice_data') {
+              const inv = await disputeService.getInvoice(doc.ref_id_value);
+              return [doc.ref_id, inv.invoice_url] as [number, string];
+            } else if (doc.reference_table === 'payment_detail') {
+              const pmt = await disputeService.getPaymentDetail(doc.ref_id_value);
+              return [doc.ref_id, pmt.payment_url] as [number, string];
+            }
+          } catch { /* URL not resolvable */ }
+          return [doc.ref_id, ''] as [number, string];
+        })
+      );
+      setUrlMap(Object.fromEntries(entries.filter(([, url]) => url)));
+    } catch { /* no docs yet */ } finally { setLoading(false); }
+  }, [disputeId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleAdd = async () => {
+    if (!form.analysis_id || !form.ref_id_value || !form.context_note) {
+      toast.error('Fill in all fields'); return;
+    }
+    try {
+      setAdding(true);
+      await disputeService.addSupportingDoc(disputeId, form);
+      toast.success('Supporting document added');
+      setShowForm(false);
+      setForm({ ...form, ref_id_value: 0, context_note: '' });
+      await load();
+    } catch { toast.error('Failed to add document'); } finally { setAdding(false); }
+  };
+
+  const handleRemove = async (refId: number) => {
+    try {
+      await disputeService.removeSupportingDoc(disputeId, refId);
+      setDocs(prev => prev.filter(d => d.ref_id !== refId));
+      toast.success('Reference removed');
+    } catch { toast.error('Failed to remove'); }
+  };
+
+  const DOC_META: Record<string, { icon: React.ElementType; bg: string; label: string }> = {
+    payment_detail:    { icon: CreditCard,    bg: 'bg-green-600',  label: 'Payment Record'    },
+    invoice_data:      { icon: Receipt,       bg: 'bg-brand-600',  label: 'Invoice Document'  },
+    email_attachments: { icon: FileText,      bg: 'bg-amber-500',  label: 'Email Attachment'  },
+    email_inbox:       { icon: MessageSquare, bg: 'bg-purple-600', label: 'Email'             },
+  };
+
+  if (loading) return (
+    <div className="flex items-center gap-2 text-xs text-gray-500 py-4">
+      <Loader2 size={14} className="animate-spin" /> Loading supporting documents…
+    </div>
+  );
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
+          Supporting Documents
+          {docs.length > 0 && (
+            <span className="text-xs bg-surface-100 text-surface-700 rounded-full px-2 py-px font-bold normal-case tracking-normal">
+              {docs.length}
             </span>
           )}
-          {payment.payment_url && (
-            <a
-              href={payment.payment_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs font-semibold text-green-700 hover:text-green-800 bg-white border border-green-200 hover:border-green-400 px-3 py-1.5 rounded-lg transition-all"
-            >
-              View PDF <ArrowUpRight size={12} />
-            </a>
-          )}
-        </div>
+        </h4>
+        {latestAnalysisId && (
+          <button
+            onClick={() => setShowForm(v => !v)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg transition-all"
+          >
+            <Plus size={12} /> Add Ref
+          </button>
+        )}
       </div>
 
-      {/* Key facts */}
-      <div className="px-5 py-4 grid grid-cols-2 gap-x-6 gap-y-3 border-b border-surface-100">
-        {[
-          { icon: Calendar,   label: 'Payment Date',  val: d.payment_date    ? formatDate(d.payment_date as string) : null },
-          { icon: Zap,        label: 'Mode',          val: d.payment_mode    as string ?? null },
-          { icon: Hash,       label: 'Bank Reference',val: d.bank_reference  as string ?? null },
-          { icon: Receipt,    label: 'Invoice Ref',   val: d.invoice_number  as string ?? payment.invoice_number },
-        ].filter(r => r.val).map(({ icon: Ic, label, val }) => (
-          <div key={label} className="flex items-start gap-2">
-            <Ic size={13} className="text-gray-600 mt-0.5 shrink-0" />
+      {showForm && latestAnalysisId && (
+        <div className="rounded-xl border border-brand-200 bg-brand-50 p-4 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <p className="text-xs text-gray-600 font-medium">{label}</p>
-              <p className="text-sm font-semibold text-surface-800 break-all">{val}</p>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">Table</label>
+              <select
+                className="w-full text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
+                value={form.reference_table}
+                onChange={e => setForm(f => ({ ...f, reference_table: e.target.value }))}
+              >
+                <option value="payment_detail">payment_detail</option>
+                <option value="invoice_data">invoice_data</option>
+                <option value="email_attachments">email_attachments</option>
+                <option value="email_inbox">email_inbox</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">Record ID</label>
+              <input
+                type="number"
+                className="w-full text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
+                value={form.ref_id_value || ''}
+                onChange={e => setForm(f => ({ ...f, ref_id_value: parseInt(e.target.value) || 0 }))}
+                placeholder="e.g. 3"
+              />
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Amount paid */}
-      {d.amount_paid != null && (
-        <div className="px-5 py-4 flex items-center justify-between border-b border-surface-100">
-          <span className="font-bold text-surface-900">Amount Paid</span>
-          <span className="font-display font-bold text-xl text-green-700">
-            {formatCurrency(d.amount_paid as number)}
-          </span>
+          <div>
+            <label className="text-xs font-semibold text-gray-600 block mb-1">Context Note</label>
+            <input
+              type="text"
+              className="w-full text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
+              value={form.context_note}
+              onChange={e => setForm(f => ({ ...f, context_note: e.target.value }))}
+              placeholder="Why this document is relevant…"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button onClick={handleAdd} disabled={adding}
+              className="flex items-center gap-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 px-4 py-1.5 rounded-lg transition-all">
+              {adding ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Add
+            </button>
+            <button onClick={() => setShowForm(false)}
+              className="text-xs font-semibold text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-surface-100 transition-all">
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Note / discrepancy */}
-      {d.note && (
-        <div className="px-5 py-3.5 flex items-start gap-2.5 bg-amber-50">
-          <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-sm text-amber-900 leading-relaxed">{d.note as string}</p>
+      {docs.length === 0 ? (
+        <p className="text-xs text-gray-400 py-2 italic">No supporting documents attached yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {docs.map(doc => {
+            const meta = DOC_META[doc.reference_table] ?? { icon: Link2, bg: 'bg-surface-400', label: doc.reference_table };
+            const url  = urlMap[doc.ref_id];
+            return (
+              <DocRow
+                key={doc.ref_id}
+                icon={meta.icon}
+                iconBg={meta.bg}
+                label={meta.label}
+                sublabel={`#${doc.ref_id_value}`}
+                meta={[{ icon: Hash, text: doc.context_note }]}
+                url={url}
+                urlLabel="Open"
+                trailing={
+                  <button onClick={() => handleRemove(doc.ref_id)}
+                    className="text-gray-300 hover:text-red-500 transition-colors p-1 mt-1" title="Remove">
+                    <Trash2 size={13} />
+                  </button>
+                }
+              />
+            );
+          })}
         </div>
       )}
     </div>
   );
 };
+
 
 const actorConfig = {
   CUSTOMER:  { label: 'Customer',       color: 'bg-blue-500',   ring: 'ring-blue-200',   bubble: 'bg-surface-50 border border-surface-200',       text: 'text-blue-600' },
@@ -326,6 +557,7 @@ const DocRow = ({
   loading,
   missing,
   missingText,
+  trailing,
 }: {
   icon: React.ElementType;
   iconBg: string;
@@ -337,6 +569,7 @@ const DocRow = ({
   loading?: boolean;
   missing?: boolean;
   missingText?: string;
+  trailing?: React.ReactNode;
 }) => (
   <div className="rounded-2xl border border-surface-200 overflow-hidden">
     <div className="flex items-start gap-4 p-5">
@@ -368,16 +601,19 @@ const DocRow = ({
           </>
         )}
       </div>
-      {!loading && !missing && url && (
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 border border-brand-200 hover:border-brand-400 px-3 py-2 rounded-xl transition-all"
-        >
-          {urlLabel} <ArrowUpRight size={12} />
-        </a>
-      )}
+      <div className="flex flex-col items-end gap-1 shrink-0">
+        {!loading && !missing && url && (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 border border-brand-200 hover:border-brand-400 px-3 py-2 rounded-xl transition-all"
+          >
+            {urlLabel} <ArrowUpRight size={12} />
+          </a>
+        )}
+        {trailing}
+      </div>
     </div>
   </div>
 );
@@ -397,7 +633,7 @@ const DisputeDrawer = ({
   const [invoice, setInvoice]         = useState<InvoiceData | null>(null);
   const [invoiceLoading, setInvoiceL] = useState(false);
   const [invoiceTried, setInvoiceTried] = useState(false);
-  const [payment, setPayment]         = useState<PaymentDetailData | null>(null);
+  const [payments, setPayments]       = useState<PaymentDetailData[]>([]);
   const [paymentLoading, setPaymentL] = useState(false);
   const [paymentTried, setPaymentTried] = useState(false);
   const [episodes, setEpisodes]       = useState<TimelineEpisode[]>([]);
@@ -425,17 +661,36 @@ const DisputeDrawer = ({
       .finally(() => setInvoiceL(false));
   }, [tab, dispute.invoice_id, invoiceTried]);
 
-  // Fetch payment detail (once, when overview or docs tab opened and payment_detail_id exists)
+  // Fetch ALL payment details by invoice number.
+  // We kick off immediately when invoice_id is known (don't wait for invoice load)
+  // by fetching the invoice number first if needed, or using payment_detail_id as fallback.
   useEffect(() => {
-    if (paymentTried || !dispute.payment_detail_id) return;
+    if (paymentTried) return;
     if (tab !== 'overview' && tab !== 'docs') return;
+    if (!dispute.invoice_id && !dispute.payment_detail_id) return;
     setPaymentTried(true);
     setPaymentL(true);
-    disputeService.getPaymentDetail(dispute.payment_detail_id)
-      .then(setPayment)
-      .catch(() => {})
-      .finally(() => setPaymentL(false));
-  }, [tab, dispute.payment_detail_id, paymentTried]);
+
+    const run = async () => {
+      try {
+        if (dispute.invoice_id) {
+          // Try to get invoice number — either already loaded or fetch it now
+          const invNum = invoice?.invoice_number
+            ?? (await disputeService.getInvoice(dispute.invoice_id)).invoice_number;
+          const res = await disputeService.getPaymentsByInvoice(invNum);
+          setPayments(res.items);
+        } else {
+          const p = await disputeService.getPaymentDetail(dispute.payment_detail_id!);
+          setPayments([p]);
+        }
+      } catch {
+        // payments stay empty
+      } finally {
+        setPaymentL(false);
+      }
+    };
+    run();
+  }, [tab, dispute.invoice_id, dispute.payment_detail_id, paymentTried, invoice]);
 
   // Fetch timeline (once, when timeline tab opened)
   useEffect(() => {
@@ -573,8 +828,12 @@ const DisputeDrawer = ({
                   {[
                     { label: 'Assigned To',   val: dispute.assigned_to ?? 'Unassigned' },
                     { label: 'Last Updated',  val: formatDate(dispute.updated_at) },
-                    { label: 'Invoice Ref',   val: dispute.invoice_id        ? `#${dispute.invoice_id}`        : '—' },
-                    { label: 'Payment Ref',   val: dispute.payment_detail_id ? `#${dispute.payment_detail_id}` : '—' },
+                    { label: 'Invoice',       val: invoice?.invoice_details?.invoice_number
+                                                ?? invoice?.invoice_number
+                                                ?? (dispute.invoice_id ? `#${dispute.invoice_id}` : '—') },
+                    { label: 'Payments',      val: payments.length > 0
+                                                ? `${payments.length} record${payments.length !== 1 ? 's' : ''}`
+                                                : (dispute.payment_detail_id ? `#${dispute.payment_detail_id}` : '—') },
                   ].map(({ label, val }) => (
                     <div key={label} className="bg-surface-50 border border-surface-100 rounded-xl px-3.5 py-3">
                       <p className="text-xs text-gray-600 font-semibold uppercase tracking-wider mb-0.5">{label}</p>
@@ -606,8 +865,8 @@ const DisputeDrawer = ({
                 </section>
               )}
 
-              {/* Payment detail */}
-              {dispute.payment_detail_id && (
+              {/* Payment details (supports multiple payments per invoice) */}
+              {(dispute.payment_detail_id || payments.length > 0 || paymentLoading) && (
                 <section>
                   <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                     <DollarSign size={11} /> Payment Details
@@ -615,16 +874,16 @@ const DisputeDrawer = ({
                   {paymentLoading ? (
                     <div className="flex items-center justify-center gap-2 py-10 bg-surface-50 rounded-2xl border border-surface-100">
                       <LoadingSpinner />
-                      <span className="text-sm text-gray-600">Loading payment…</span>
+                      <span className="text-sm text-gray-600">Loading payments…</span>
                     </div>
-                  ) : payment ? (
-                    <PaymentCard payment={payment} />
-                  ) : (
+                  ) : payments.length > 0 ? (
+                    <PaymentListCard payments={payments} />
+                  ) : dispute.payment_detail_id ? (
                     <div className="bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5 flex items-center gap-2">
                       <DollarSign size={14} className="text-gray-600" />
                       <span className="text-sm text-gray-600">Payment #{dispute.payment_detail_id} — details not available</span>
                     </div>
-                  )}
+                  ) : null}
                 </section>
               )}
 
@@ -728,85 +987,119 @@ const DisputeDrawer = ({
               DOCUMENTS TAB
           ═══════════════════════════════════════════ */}
           {tab === 'docs' && (
-            <div className="px-6 py-5 space-y-4">
-              <p className="text-sm text-gray-600">
-                Supporting documents for this dispute — the original invoice and payment record files.
+            <div className="px-6 py-5 space-y-5">
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Source documents linked to this dispute — the original invoice, all associated payment records,
+                and any supporting documents the AI or FA team has referenced.
               </p>
 
-              {/* Invoice PDF */}
-              <DocRow
-                icon={Receipt}
-                iconBg="bg-brand-600"
-                label="Invoice Document"
-                sublabel={
-                  invoice
-                    ? invoice.invoice_details?.invoice_number ?? invoice.invoice_number
-                    : invoiceLoading
-                    ? undefined
-                    : dispute.invoice_id
-                    ? `Invoice #${dispute.invoice_id}`
-                    : undefined
-                }
-                loading={invoiceLoading}
-                missing={!invoiceLoading && !invoice && !dispute.invoice_id}
-                missingText="No invoice linked to this dispute"
-                url={invoice?.invoice_url}
-                urlLabel="Open Invoice"
-                meta={invoice ? [
-                  ...(invoice.invoice_details?.invoice_date
-                    ? [{ icon: Calendar, text: formatDate(invoice.invoice_details.invoice_date as string) }]
-                    : []),
-                  ...(invoice.invoice_details?.total_amount != null
-                    ? [{ icon: DollarSign, text: formatCurrency(invoice.invoice_details.total_amount, invoice.invoice_details?.currency ?? 'INR') }]
-                    : []),
-                  ...(invoice.invoice_details?.vendor_name
-                    ? [{ icon: Building2, text: invoice.invoice_details.vendor_name as string }]
-                    : []),
-                ] : []}
-              />
+              {/* ── Invoice ──────────────────────────────────────────────── */}
+              <section>
+                <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <Receipt size={11} /> Invoice
+                </h3>
+                <DocRow
+                  icon={Receipt}
+                  iconBg="bg-brand-600"
+                  label="Invoice Document"
+                  sublabel={
+                    invoice
+                      ? invoice.invoice_details?.invoice_number ?? invoice.invoice_number
+                      : dispute.invoice_id
+                      ? `Invoice #${dispute.invoice_id}`
+                      : undefined
+                  }
+                  loading={invoiceLoading}
+                  missing={!invoiceLoading && !invoice && !dispute.invoice_id}
+                  missingText="No invoice linked to this dispute"
+                  url={invoice?.invoice_url}
+                  urlLabel="Open Invoice"
+                  meta={invoice ? [
+                    ...(invoice.invoice_details?.invoice_date
+                      ? [{ icon: Calendar, text: formatDate(invoice.invoice_details.invoice_date as string) }]
+                      : []),
+                    ...(invoice.invoice_details?.total_amount != null
+                      ? [{ icon: DollarSign, text: formatCurrency(invoice.invoice_details.total_amount, invoice.invoice_details?.currency ?? 'INR') }]
+                      : []),
+                    ...(invoice.invoice_details?.vendor_name
+                      ? [{ icon: Building2, text: invoice.invoice_details.vendor_name as string }]
+                      : []),
+                  ] : []}
+                />
+              </section>
 
-              {/* Payment PDF */}
-              <DocRow
-                icon={DollarSign}
-                iconBg="bg-green-600"
-                label="Payment Document"
-                sublabel={
-                  payment
-                    ? payment.payment_details?.payment_reference ?? `Payment #${payment.payment_detail_id}`
-                    : paymentLoading
-                    ? undefined
-                    : dispute.payment_detail_id
-                    ? `Payment #${dispute.payment_detail_id}`
-                    : undefined
-                }
-                loading={paymentLoading}
-                missing={!paymentLoading && !payment && !dispute.payment_detail_id}
-                missingText="No payment record linked to this dispute"
-                url={payment?.payment_url}
-                urlLabel="Open Payment"
-                meta={payment ? [
-                  ...(payment.payment_details?.payment_date
-                    ? [{ icon: Calendar, text: formatDate(payment.payment_details.payment_date as string) }]
-                    : []),
-                  ...(payment.payment_details?.amount_paid != null
-                    ? [{ icon: DollarSign, text: formatCurrency(payment.payment_details.amount_paid as number) }]
-                    : []),
-                  ...(payment.payment_details?.payment_mode
-                    ? [{ icon: Zap, text: payment.payment_details.payment_mode as string }]
-                    : []),
-                  ...(payment.payment_details?.status
-                    ? [{ icon: CheckCircle2, text: payment.payment_details.status as string }]
-                    : []),
-                ] : []}
-              />
+              {/* ── Payment Records ──────────────────────────────────────── */}
+              <section>
+                <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <CreditCard size={11} /> Payment Records
+                  {payments.length > 0 && (
+                    <span className="ml-1 text-xs bg-green-100 text-green-700 rounded-full px-2 py-px font-bold normal-case tracking-normal">
+                      {payments.length}
+                    </span>
+                  )}
+                </h3>
+                {paymentLoading ? (
+                  <DocRow
+                    icon={CreditCard} iconBg="bg-green-600"
+                    label="Payment Records" loading urlLabel="Open"
+                  />
+                ) : payments.length > 0 ? (
+                  <div className="space-y-3">
+                    {payments.map(p => {
+                      const d = p.payment_details ?? {};
+                      const statusMeta = d.status
+                        ? [{ icon: CheckCircle2, text: d.status as string }]
+                        : [];
+                      const dateMeta = d.payment_date
+                        ? [{ icon: Calendar, text: formatDate(d.payment_date as string) }]
+                        : [];
+                      const modeMeta = d.payment_mode
+                        ? [{ icon: Zap, text: d.payment_mode as string }]
+                        : [];
+                      return (
+                        <DocRow
+                          key={p.payment_detail_id}
+                          icon={CreditCard}
+                          iconBg="bg-green-600"
+                          label={`Payment${d.payment_type ? ` · ${d.payment_type}` : ''}`}
+                          sublabel={
+                            d.payment_reference as string
+                            ?? `Payment #${p.payment_detail_id}`
+                          }
+                          meta={[
+                            ...dateMeta,
+                            ...modeMeta,
+                            ...statusMeta,
+                            ...(d.amount_paid != null
+                              ? [{ icon: DollarSign, text: formatCurrency(d.amount_paid as number, d.currency as string ?? 'INR') }]
+                              : []),
+                            ...(d.bank_reference
+                              ? [{ icon: Hash, text: d.bank_reference as string }]
+                              : []),
+                          ]}
+                          url={p.payment_url}
+                          urlLabel="Open PDF"
+                        />
+                      );
+                    })}
+                  </div>
+                ) : !dispute.payment_detail_id ? (
+                  <DocRow
+                    icon={CreditCard} iconBg="bg-green-600"
+                    label="Payment Records"
+                    missing missingText="No payment records found for this dispute"
+                    urlLabel="Open"
+                  />
+                ) : null}
+              </section>
 
-              {/* Note if payment has a discrepancy */}
-              {payment?.payment_details?.note && (
-                <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3.5">
-                  <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-800 leading-relaxed">{payment.payment_details.note as string}</p>
-                </div>
-              )}
+              {/* ── Supporting Documents (auto-linked by AI + FA team) ─────── */}
+              <section>
+                <SupportingDocsPanel
+                  disputeId={dispute.dispute_id}
+                  latestAnalysisId={dispute.latest_analysis?.analysis_id}
+                />
+              </section>
             </div>
           )}
 
@@ -902,14 +1195,23 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
 const DashboardPage = () => {
   const user = useUser();
 
-  const [disputes,       setDisputes]       = useState<Dispute[]>([]);
-  const [total,          setTotal]          = useState(0);
-  const [loading,        setLoading]        = useState(true);
-  const [error,          setError]          = useState<string | null>(null);
-  const [search,         setSearch]         = useState('');
-  const [statusFilter,   setStatusFilter]   = useState('all');
-  const [priorityFilter, setPriorityFilter] = useState('all');
-  const [selected,       setSelected]       = useState<Dispute | null>(null);
+  const [disputes,        setDisputes]        = useState<Dispute[]>([]);
+  const [total,           setTotal]           = useState(0);
+  const [loading,         setLoading]         = useState(true);
+  const [error,           setError]           = useState<string | null>(null);
+  const [search,          setSearch]          = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusFilter,    setStatusFilter]    = useState('all');
+  const [priorityFilter,  setPriorityFilter]  = useState('all');
+  const [selected,        setSelected]        = useState<Dispute | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounce search input — 350ms after last keystroke fires backend fetch
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => setDebouncedSearch(val), 350);
+  };
 
   const loadDisputes = useCallback(async (showToast = false) => {
     setLoading(true);
@@ -918,6 +1220,7 @@ const DashboardPage = () => {
       const params = {
         status:   statusFilter   !== 'all' ? statusFilter   : undefined,
         priority: priorityFilter !== 'all' ? priorityFilter : undefined,
+        search:   debouncedSearch.trim() || undefined,
         limit: 100,
         offset: 0,
       };
@@ -939,30 +1242,20 @@ const DashboardPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, priorityFilter]);
+  }, [statusFilter, priorityFilter, debouncedSearch]);
 
   useEffect(() => { loadDisputes(); }, [loadDisputes]);
 
-  const stats = useMemo(() => ({
+  // Stats computed from the current loaded page
+  const stats = {
     total:    disputes.length,
     open:     disputes.filter(d => d.status === 'OPEN').length,
     review:   disputes.filter(d => d.status === 'UNDER_REVIEW').length,
     resolved: disputes.filter(d => d.status === 'RESOLVED').length,
-  }), [disputes]);
+  };
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return disputes.filter(d => {
-      if (q && !(
-        String(d.dispute_id).includes(q) ||
-        d.customer_id.toLowerCase().includes(q) ||
-        (d.dispute_type?.reason_name ?? '').toLowerCase().includes(q)
-      )) return false;
-      if (statusFilter   !== 'all' && d.status   !== statusFilter)   return false;
-      if (priorityFilter !== 'all' && d.priority !== priorityFilter) return false;
-      return true;
-    });
-  }, [disputes, search, statusFilter, priorityFilter]);
+  // All filtering is server-side — no client-side useMemo filter needed
+  const filtered = disputes;
 
   return (
     <div className="p-6 max-w-screen-xl mx-auto">
@@ -1020,7 +1313,7 @@ const DashboardPage = () => {
             className="input-base pl-9 py-2 text-sm"
             placeholder="Search by ID, customer, type…"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => handleSearchChange(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-2">

@@ -102,6 +102,10 @@ export interface PaymentDetails {
   invoice_number?: string;
   customer_id?: string;
   status?: string;
+  payment_type?: string;
+  payment_sequence?: number;
+  failure_reason?: string;
+  currency?: string;
   note?: string;
   [key: string]: unknown;
 }
@@ -112,6 +116,41 @@ export interface PaymentDetailData {
   invoice_number: string;
   payment_url: string;
   payment_details: PaymentDetails | null;
+}
+
+export interface PaymentDetailListResponse {
+  invoice_number: string;
+  total: number;
+  items: PaymentDetailData[];
+}
+
+export interface CustomerPaymentListResponse {
+  customer_id: string;
+  total: number;
+  items: PaymentDetailData[];
+}
+
+// ─── Supporting Docs ──────────────────────────────────────────────────────────
+
+export interface SupportingRef {
+  ref_id: number;
+  analysis_id: number;
+  reference_table: string;
+  ref_id_value: number;
+  context_note: string;
+}
+
+export interface SupportingRefListResponse {
+  dispute_id: number;
+  total: number;
+  items: SupportingRef[];
+}
+
+export interface SupportingRefCreate {
+  analysis_id: number;
+  reference_table: string;
+  ref_id_value: number;
+  context_note: string;
 }
 
 // ─── Email types ──────────────────────────────────────────────────────────────
@@ -199,10 +238,54 @@ export const disputeService = {
     return data;
   },
 
-  // Fetch payment detail — GET /dispute/api/v1/payments/{payment_detail_id}
+  // Fetch a single payment detail by ID
   getPaymentDetail: async (paymentDetailId: number): Promise<PaymentDetailData> => {
     const { data } = await axiosInstance.get<PaymentDetailData>(`${PAYMENTS_BASE}/${paymentDetailId}`);
     return data;
+  },
+
+  // Fetch ALL payment details for a given invoice number (multiple payments)
+  getPaymentsByInvoice: async (invoiceNumber: string): Promise<PaymentDetailListResponse> => {
+    const { data } = await axiosInstance.get<PaymentDetailListResponse>(
+      `${PAYMENTS_BASE}/by-invoice/${encodeURIComponent(invoiceNumber)}`
+    );
+    return data;
+  },
+
+  // Fetch all payment details for a customer
+  getPaymentsByCustomer: async (
+    customerId: string,
+    params?: { limit?: number; offset?: number }
+  ): Promise<CustomerPaymentListResponse> => {
+    const { data } = await axiosInstance.get<CustomerPaymentListResponse>(
+      `${PAYMENTS_BASE}/by-customer/${encodeURIComponent(customerId)}`,
+      { params }
+    );
+    return data;
+  },
+
+  // ── Supporting Docs ──────────────────────────────────────────────────────
+
+  getSupportingDocs: async (disputeId: number): Promise<SupportingRefListResponse> => {
+    const { data } = await axiosInstance.get<SupportingRefListResponse>(
+      `${DISPUTES_BASE}/${disputeId}/supporting-docs`
+    );
+    return data;
+  },
+
+  addSupportingDoc: async (
+    disputeId: number,
+    payload: SupportingRefCreate
+  ): Promise<SupportingRef> => {
+    const { data } = await axiosInstance.post<SupportingRef>(
+      `${DISPUTES_BASE}/${disputeId}/supporting-docs`,
+      payload
+    );
+    return data;
+  },
+
+  removeSupportingDoc: async (disputeId: number, refId: number): Promise<void> => {
+    await axiosInstance.delete(`${DISPUTES_BASE}/${disputeId}/supporting-docs/${refId}`);
   },
 };
 
