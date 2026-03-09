@@ -1093,13 +1093,14 @@ const DisputeDrawer = ({
                 ) : null}
               </section>
 
-              {/* ── Supporting Documents (auto-linked by AI + FA team) ─────── */}
+              {/* ── Supporting Documents (auto-linked by AI + FA team) ─────── }
               <section>
                 <SupportingDocsPanel
                   disputeId={dispute.dispute_id}
                   latestAnalysisId={dispute.latest_analysis?.analysis_id}
                 />
-              </section>
+              </section> 
+              */}
             </div>
           )}
 
