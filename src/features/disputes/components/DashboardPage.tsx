@@ -16,7 +16,7 @@ import {
   Dispute,
   InvoiceData,
   PaymentDetailData,
-  PaymentDetailListResponse,
+  // PaymentDetailListResponse,
   SupportingRef,
   SupportingRefCreate,
   TimelineEpisode,
@@ -298,195 +298,195 @@ const PaymentListCard = ({ payments }: { payments: PaymentDetailData[] }) => {
 };
 
 // Legacy single-payment card kept for backwards compat
-const PaymentCard = ({ payment }: { payment: PaymentDetailData }) => (
-  <PaymentListCard payments={[payment]} />
-);
+// const PaymentCard = ({ payment }: { payment: PaymentDetailData }) => (
+//   <PaymentListCard payments={[payment]} />
+// );
 
 // ─── Supporting Docs Panel ────────────────────────────────────────────────────
 
 // ─── Supporting Docs Panel (Documents tab) ────────────────────────────────────
-const SupportingDocsPanel = ({
-  disputeId,
-  latestAnalysisId,
-}: {
-  disputeId: number;
-  latestAnalysisId?: number;
-}) => {
-  const [docs, setDocs]         = useState<SupportingRef[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [urlMap, setUrlMap]     = useState<Record<number, string>>({});
-  const [adding, setAdding]     = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<SupportingRefCreate>({
-    analysis_id:     latestAnalysisId ?? 0,
-    reference_table: 'payment_detail',
-    ref_id_value:    0,
-    context_note:    '',
-  });
+// const SupportingDocsPanel = ({
+//   disputeId,
+//   latestAnalysisId,
+// }: {
+//   disputeId: number;
+//   latestAnalysisId?: number;
+// }) => {
+//   const [docs, setDocs]         = useState<SupportingRef[]>([]);
+//   const [loading, setLoading]   = useState(true);
+//   const [urlMap, setUrlMap]     = useState<Record<number, string>>({});
+//   const [adding, setAdding]     = useState(false);
+//   const [showForm, setShowForm] = useState(false);
+//   const [form, setForm] = useState<SupportingRefCreate>({
+//     analysis_id:     latestAnalysisId ?? 0,
+//     reference_table: 'payment_detail',
+//     ref_id_value:    0,
+//     context_note:    '',
+//   });
 
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await disputeService.getSupportingDocs(disputeId);
-      setDocs(res.items);
-      // Resolve clickable URLs per ref by fetching the linked record
-      const entries = await Promise.all(
-        res.items.map(async (doc) => {
-          try {
-            if (doc.reference_table === 'invoice_data') {
-              const inv = await disputeService.getInvoice(doc.ref_id_value);
-              return [doc.ref_id, inv.invoice_url] as [number, string];
-            } else if (doc.reference_table === 'payment_detail') {
-              const pmt = await disputeService.getPaymentDetail(doc.ref_id_value);
-              return [doc.ref_id, pmt.payment_url] as [number, string];
-            }
-          } catch { /* URL not resolvable */ }
-          return [doc.ref_id, ''] as [number, string];
-        })
-      );
-      setUrlMap(Object.fromEntries(entries.filter(([, url]) => url)));
-    } catch { /* no docs yet */ } finally { setLoading(false); }
-  }, [disputeId]);
+//   const load = useCallback(async () => {
+//     try {
+//       setLoading(true);
+//       const res = await disputeService.getSupportingDocs(disputeId);
+//       setDocs(res.items);
+//       // Resolve clickable URLs per ref by fetching the linked record
+//       const entries = await Promise.all(
+//         res.items.map(async (doc) => {
+//           try {
+//             if (doc.reference_table === 'invoice_data') {
+//               const inv = await disputeService.getInvoice(doc.ref_id_value);
+//               return [doc.ref_id, inv.invoice_url] as [number, string];
+//             } else if (doc.reference_table === 'payment_detail') {
+//               const pmt = await disputeService.getPaymentDetail(doc.ref_id_value);
+//               return [doc.ref_id, pmt.payment_url] as [number, string];
+//             }
+//           } catch { /* URL not resolvable */ }
+//           return [doc.ref_id, ''] as [number, string];
+//         })
+//       );
+//       setUrlMap(Object.fromEntries(entries.filter(([, url]) => url)));
+//     } catch { /* no docs yet */ } finally { setLoading(false); }
+//   }, [disputeId]);
 
-  useEffect(() => { load(); }, [load]);
+//   useEffect(() => { load(); }, [load]);
 
-  const handleAdd = async () => {
-    if (!form.analysis_id || !form.ref_id_value || !form.context_note) {
-      toast.error('Fill in all fields'); return;
-    }
-    try {
-      setAdding(true);
-      await disputeService.addSupportingDoc(disputeId, form);
-      toast.success('Supporting document added');
-      setShowForm(false);
-      setForm({ ...form, ref_id_value: 0, context_note: '' });
-      await load();
-    } catch { toast.error('Failed to add document'); } finally { setAdding(false); }
-  };
+//   const handleAdd = async () => {
+//     if (!form.analysis_id || !form.ref_id_value || !form.context_note) {
+//       toast.error('Fill in all fields'); return;
+//     }
+//     try {
+//       setAdding(true);
+//       await disputeService.addSupportingDoc(disputeId, form);
+//       toast.success('Supporting document added');
+//       setShowForm(false);
+//       setForm({ ...form, ref_id_value: 0, context_note: '' });
+//       await load();
+//     } catch { toast.error('Failed to add document'); } finally { setAdding(false); }
+//   };
 
-  const handleRemove = async (refId: number) => {
-    try {
-      await disputeService.removeSupportingDoc(disputeId, refId);
-      setDocs(prev => prev.filter(d => d.ref_id !== refId));
-      toast.success('Reference removed');
-    } catch { toast.error('Failed to remove'); }
-  };
+//   const handleRemove = async (refId: number) => {
+//     try {
+//       await disputeService.removeSupportingDoc(disputeId, refId);
+//       setDocs(prev => prev.filter(d => d.ref_id !== refId));
+//       toast.success('Reference removed');
+//     } catch { toast.error('Failed to remove'); }
+//   };
 
-  const DOC_META: Record<string, { icon: React.ElementType; bg: string; label: string }> = {
-    payment_detail:    { icon: CreditCard,    bg: 'bg-green-600',  label: 'Payment Record'    },
-    invoice_data:      { icon: Receipt,       bg: 'bg-brand-600',  label: 'Invoice Document'  },
-    email_attachments: { icon: FileText,      bg: 'bg-amber-500',  label: 'Email Attachment'  },
-    email_inbox:       { icon: MessageSquare, bg: 'bg-purple-600', label: 'Email'             },
-  };
+//   const DOC_META: Record<string, { icon: React.ElementType; bg: string; label: string }> = {
+//     payment_detail:    { icon: CreditCard,    bg: 'bg-green-600',  label: 'Payment Record'    },
+//     invoice_data:      { icon: Receipt,       bg: 'bg-brand-600',  label: 'Invoice Document'  },
+//     email_attachments: { icon: FileText,      bg: 'bg-amber-500',  label: 'Email Attachment'  },
+//     email_inbox:       { icon: MessageSquare, bg: 'bg-purple-600', label: 'Email'             },
+//   };
 
-  if (loading) return (
-    <div className="flex items-center gap-2 text-xs text-gray-500 py-4">
-      <Loader2 size={14} className="animate-spin" /> Loading supporting documents…
-    </div>
-  );
+//   if (loading) return (
+//     <div className="flex items-center gap-2 text-xs text-gray-500 py-4">
+//       <Loader2 size={14} className="animate-spin" /> Loading supporting documents…
+//     </div>
+//   );
 
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h4 className="text-xs font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
-          Supporting Documents
-          {docs.length > 0 && (
-            <span className="text-xs bg-surface-100 text-surface-700 rounded-full px-2 py-px font-bold normal-case tracking-normal">
-              {docs.length}
-            </span>
-          )}
-        </h4>
-        {latestAnalysisId && (
-          <button
-            onClick={() => setShowForm(v => !v)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg transition-all"
-          >
-            <Plus size={12} /> Add Ref
-          </button>
-        )}
-      </div>
+//   return (
+//     <div className="space-y-3">
+//       <div className="flex items-center justify-between">
+//         <h4 className="text-xs font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
+//           Supporting Documents
+//           {docs.length > 0 && (
+//             <span className="text-xs bg-surface-100 text-surface-700 rounded-full px-2 py-px font-bold normal-case tracking-normal">
+//               {docs.length}
+//             </span>
+//           )}
+//         </h4>
+//         {latestAnalysisId && (
+//           <button
+//             onClick={() => setShowForm(v => !v)}
+//             className="flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg transition-all"
+//           >
+//             <Plus size={12} /> Add Ref
+//           </button>
+//         )}
+//       </div>
 
-      {showForm && latestAnalysisId && (
-        <div className="rounded-xl border border-brand-200 bg-brand-50 p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">Table</label>
-              <select
-                className="w-full text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
-                value={form.reference_table}
-                onChange={e => setForm(f => ({ ...f, reference_table: e.target.value }))}
-              >
-                <option value="payment_detail">payment_detail</option>
-                <option value="invoice_data">invoice_data</option>
-                <option value="email_attachments">email_attachments</option>
-                <option value="email_inbox">email_inbox</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">Record ID</label>
-              <input
-                type="number"
-                className="w-full text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
-                value={form.ref_id_value || ''}
-                onChange={e => setForm(f => ({ ...f, ref_id_value: parseInt(e.target.value) || 0 }))}
-                placeholder="e.g. 3"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-gray-600 block mb-1">Context Note</label>
-            <input
-              type="text"
-              className="w-full text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
-              value={form.context_note}
-              onChange={e => setForm(f => ({ ...f, context_note: e.target.value }))}
-              placeholder="Why this document is relevant…"
-            />
-          </div>
-          <div className="flex gap-2">
-            <button onClick={handleAdd} disabled={adding}
-              className="flex items-center gap-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 px-4 py-1.5 rounded-lg transition-all">
-              {adding ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Add
-            </button>
-            <button onClick={() => setShowForm(false)}
-              className="text-xs font-semibold text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-surface-100 transition-all">
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+//       {showForm && latestAnalysisId && (
+//         <div className="rounded-xl border border-brand-200 bg-brand-50 p-4 space-y-3">
+//           <div className="grid grid-cols-2 gap-3">
+//             <div>
+//               <label className="text-xs font-semibold text-gray-600 block mb-1">Table</label>
+//               <select
+//                 className="w-full text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
+//                 value={form.reference_table}
+//                 onChange={e => setForm(f => ({ ...f, reference_table: e.target.value }))}
+//               >
+//                 <option value="payment_detail">payment_detail</option>
+//                 <option value="invoice_data">invoice_data</option>
+//                 <option value="email_attachments">email_attachments</option>
+//                 <option value="email_inbox">email_inbox</option>
+//               </select>
+//             </div>
+//             <div>
+//               <label className="text-xs font-semibold text-gray-600 block mb-1">Record ID</label>
+//               <input
+//                 type="number"
+//                 className="w-full text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
+//                 value={form.ref_id_value || ''}
+//                 onChange={e => setForm(f => ({ ...f, ref_id_value: parseInt(e.target.value) || 0 }))}
+//                 placeholder="e.g. 3"
+//               />
+//             </div>
+//           </div>
+//           <div>
+//             <label className="text-xs font-semibold text-gray-600 block mb-1">Context Note</label>
+//             <input
+//               type="text"
+//               className="w-full text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-400"
+//               value={form.context_note}
+//               onChange={e => setForm(f => ({ ...f, context_note: e.target.value }))}
+//               placeholder="Why this document is relevant…"
+//             />
+//           </div>
+//           <div className="flex gap-2">
+//             <button onClick={handleAdd} disabled={adding}
+//               className="flex items-center gap-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 px-4 py-1.5 rounded-lg transition-all">
+//               {adding ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />} Add
+//             </button>
+//             <button onClick={() => setShowForm(false)}
+//               className="text-xs font-semibold text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-surface-100 transition-all">
+//               Cancel
+//             </button>
+//           </div>
+//         </div>
+//       )}
 
-      {docs.length === 0 ? (
-        <p className="text-xs text-gray-400 py-2 italic">No supporting documents attached yet.</p>
-      ) : (
-        <div className="space-y-3">
-          {docs.map(doc => {
-            const meta = DOC_META[doc.reference_table] ?? { icon: Link2, bg: 'bg-surface-400', label: doc.reference_table };
-            const url  = urlMap[doc.ref_id];
-            return (
-              <DocRow
-                key={doc.ref_id}
-                icon={meta.icon}
-                iconBg={meta.bg}
-                label={meta.label}
-                sublabel={`#${doc.ref_id_value}`}
-                meta={[{ icon: Hash, text: doc.context_note }]}
-                url={url}
-                urlLabel="Open"
-                trailing={
-                  <button onClick={() => handleRemove(doc.ref_id)}
-                    className="text-gray-300 hover:text-red-500 transition-colors p-1 mt-1" title="Remove">
-                    <Trash2 size={13} />
-                  </button>
-                }
-              />
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-};
+//       {docs.length === 0 ? (
+//         <p className="text-xs text-gray-400 py-2 italic">No supporting documents attached yet.</p>
+//       ) : (
+//         <div className="space-y-3">
+//           {docs.map(doc => {
+//             const meta = DOC_META[doc.reference_table] ?? { icon: Link2, bg: 'bg-surface-400', label: doc.reference_table };
+//             const url  = urlMap[doc.ref_id];
+//             return (
+//               <DocRow
+//                 key={doc.ref_id}
+//                 icon={meta.icon}
+//                 iconBg={meta.bg}
+//                 label={meta.label}
+//                 sublabel={`#${doc.ref_id_value}`}
+//                 meta={[{ icon: Hash, text: doc.context_note }]}
+//                 url={url}
+//                 urlLabel="Open"
+//                 trailing={
+//                   <button onClick={() => handleRemove(doc.ref_id)}
+//                     className="text-gray-300 hover:text-red-500 transition-colors p-1 mt-1" title="Remove">
+//                     <Trash2 size={13} />
+//                   </button>
+//                 }
+//               />
+//             );
+//           })}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
 
 
 const actorConfig = {
