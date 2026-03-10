@@ -11,6 +11,7 @@ const LoginPage    = lazy(() => import('@/features/auth/components/LoginPage'));
 const SignupPage   = lazy(() => import('@/features/auth/components/SignupPage'));
 const DashboardPage = lazy(() => import('@/features/disputes/components/DashboardPage'));
 const DocumentsPage = lazy(() => import('@/features/documents/components/DocumentsPage'));
+const DisputesPage = lazy(() => import('@/features/disputes/components/DisputesPage'));
 
 // ─── Route Guards ─────────────────────────────────────────────────────────────
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -37,6 +38,8 @@ const AppRoutes = () => (
       <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
         <Route path={ROUTES.DOCUMENTS} element={<DocumentsPage />} />
+        <Route path={ROUTES.DISPUTES} element={<DisputesPage />} />
+
       </Route>
 
       {/* Fallback */}

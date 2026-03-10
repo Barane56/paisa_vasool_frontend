@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, LogOut, Menu,
-  ChevronRight, Bell
+  ChevronRight, Bell,
+  ShieldAlert
 } from 'lucide-react';
 import { ROUTES } from '@/config/constants';
 import { useAppDispatch, useUser } from '@/hooks';
@@ -11,6 +12,8 @@ import clsx from 'clsx';
 
 const NAV_ITEMS = [
   { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
+    { to: ROUTES.DISPUTES,  icon: ShieldAlert,     label: 'Disputes'   },  // ← ADD
+
   { to: ROUTES.DOCUMENTS, icon: FileText,         label: 'Documents' },
 ];
 
