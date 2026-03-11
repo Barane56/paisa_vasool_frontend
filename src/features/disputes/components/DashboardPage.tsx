@@ -1264,7 +1264,7 @@ const DashboardPage = () => {
       {/* Page header */}
       <PageHeader
         title={`Welcome back, ${user?.name?.split(' ')[0] ?? 'Associate'} 👋`}
-        subtitle="Review and manage your assigned dispute tickets below."
+        subtitle="Review and manage your assigned incident tickets below."
         action={
           <button
             onClick={() => loadDisputes(true)}
@@ -1287,7 +1287,7 @@ const DashboardPage = () => {
       {/* Summary banner */}
       <div className="card px-5 py-3.5 mb-6 flex items-center gap-3 bg-gradient-to-r from-brand-600 to-brand-700 border-0">
         <TrendingUp size={16} className="text-brand-200 shrink-0" />
-        <span className="text-sm text-brand-100">{total} total dispute{total !== 1 ? 's' : ''} tracked</span>
+        <span className="text-sm text-brand-100">{total} total incident{total !== 1 ? 's' : ''} tracked</span>
         <span className="text-brand-200 mx-1">·</span>
         <span className="text-sm text-brand-200">Click any row to view full details, documents, and conversation</span>
       </div>
@@ -1366,7 +1366,7 @@ const DashboardPage = () => {
                 <td colSpan={6}>
                   <div className="flex items-center justify-center gap-3 py-20">
                     <Loader2 size={22} className="animate-spin text-brand-400" />
-                    <span className="text-sm text-gray-600">Loading disputes…</span>
+                    <span className="text-sm text-gray-600">Loading incidents…</span>
                   </div>
                 </td>
               </tr>
@@ -1378,7 +1378,7 @@ const DashboardPage = () => {
               <tr>
                 <td colSpan={6}>
                   <EmptyState
-                    title="No disputes found"
+                    title="No incidents found"
                     description={error ? 'Could not load from server.' : 'Try adjusting your filters or search query.'}
                   />
                 </td>

@@ -1,8 +1,11 @@
 // ─── User & Auth ────────────────────────────────────────────────────────────
+export type UserRole = 'admin' | 'finance_associate';
+
 export interface User {
   user_id: number;
   name: string;
   email: string;
+  role: UserRole;
   created_at: string;
 }
 
@@ -10,6 +13,7 @@ export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isBootstrapping: boolean;
   error: string | null;
 }
 

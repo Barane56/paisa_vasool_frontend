@@ -54,6 +54,7 @@ const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
   isLoading: false,
+  isBootstrapping: true,   // true until fetchCurrentUser resolves/rejects on app load
   error: null,
 };
 
@@ -123,13 +124,15 @@ const authSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.user = action.payload;
+        state.isLoading       = false;
+        state.isBootstrapping = false;
+        state.user            = action.payload;
         state.isAuthenticated = true;
       })
       .addCase(fetchCurrentUser.rejected, (state) => {
-        state.isLoading = false;
-        state.user = null;
+        state.isLoading       = false;
+        state.isBootstrapping = false;
+        state.user            = null;
         state.isAuthenticated = false;
       });
   },

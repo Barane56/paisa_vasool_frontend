@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, FileText, LogOut, Menu,
+  UserPlus, AlertTriangle, LogOut, Menu,
   ChevronRight, Bell,
 } from 'lucide-react';
 import { ROUTES } from '@/config/constants';
@@ -10,8 +10,8 @@ import { logoutUser } from '@/features/auth';
 import clsx from 'clsx';
 
 const NAV_ITEMS = [
-  { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Incidents' },
-  { to: ROUTES.DOCUMENTS, icon: FileText,         label: 'Documents' },
+  { to: ROUTES.ADMIN_ADD_FA,     icon: UserPlus,      label: 'Add Finance Associate' },
+  { to: ROUTES.ADMIN_INCIDENTS,  icon: AlertTriangle, label: 'Incidents'             },
 ];
 
 const Sidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) => {
@@ -27,19 +27,22 @@ const Sidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
   return (
     <aside className={clsx(
       'flex flex-col bg-surface-900 text-white transition-all duration-300 shrink-0',
-      collapsed ? 'w-16' : 'w-60'
+      collapsed ? 'w-16' : 'w-64'
     )}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-surface-800">
-        <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center shrink-0">
           <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
         </div>
         {!collapsed && (
-          <span className="font-display font-bold text-base tracking-tight whitespace-nowrap overflow-hidden">
-            PaisaVasool
-          </span>
+          <div className="overflow-hidden">
+            <span className="font-display font-bold text-base tracking-tight whitespace-nowrap block">
+              PaisaVasool
+            </span>
+            <span className="text-xs text-amber-400 font-medium whitespace-nowrap block">Admin Panel</span>
+          </div>
         )}
         <button
           onClick={onToggle}
@@ -58,7 +61,7 @@ const Sidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
             className={({ isActive }) => clsx(
               'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group',
               isActive
-                ? 'bg-brand-600 text-white'
+                ? 'bg-amber-600 text-white'
                 : 'text-surface-400 hover:bg-surface-800 hover:text-white'
             )}
           >
@@ -73,7 +76,7 @@ const Sidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         {!collapsed && user && (
           <div className="px-3 py-2 mb-1">
             <p className="text-xs text-surface-300 font-medium truncate">{user.name}</p>
-            <p className="text-xs text-surface-500 truncate">{user.email}</p>
+            <p className="text-xs text-amber-400 truncate">Administrator</p>
           </div>
         )}
         <button
@@ -88,7 +91,7 @@ const Sidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
   );
 };
 
-const DashboardLayout = () => {
+const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const user = useUser();
@@ -126,7 +129,7 @@ const DashboardLayout = () => {
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
           </button>
           <div className="flex items-center gap-2.5 pl-2 border-l border-surface-200">
-            <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center">
               <span className="text-white text-xs font-semibold font-display">
                 {user?.name?.charAt(0).toUpperCase()}
               </span>
@@ -134,7 +137,7 @@ const DashboardLayout = () => {
             {user && (
               <div className="hidden sm:block">
                 <p className="text-sm font-medium text-surface-900 leading-none">{user.name}</p>
-                <p className="text-xs text-surface-400 mt-0.5">Finance Associate</p>
+                <p className="text-xs text-amber-600 mt-0.5">Administrator</p>
               </div>
             )}
           </div>
@@ -149,4 +152,4 @@ const DashboardLayout = () => {
   );
 };
 
-export default DashboardLayout;
+export default AdminLayout;

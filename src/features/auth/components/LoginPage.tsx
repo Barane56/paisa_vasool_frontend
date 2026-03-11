@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -7,6 +7,7 @@ import { useAppDispatch, useAuth } from '@/hooks';
 import { loginUser, clearError } from '@/features/auth';
 import { Button, Input } from '@/components/ui';
 import { ROUTES } from '@/config/constants';
+import type { User } from '@/types';
 
 interface LoginFormValues {
   email: string;
@@ -30,7 +31,12 @@ const LoginPage = () => {
     const result = await dispatch(loginUser(values));
     if (loginUser.fulfilled.match(result)) {
       toast.success('Welcome back!');
-      navigate(ROUTES.DASHBOARD);
+      const user = result.payload as User;
+      if (user.role === 'admin') {
+        navigate(ROUTES.ADMIN_ADD_FA);
+      } else {
+        navigate(ROUTES.DASHBOARD);
+      }
     } else {
       const msg = (result.payload as { message?: string })?.message ?? 'Invalid credentials';
       toast.error(msg);
@@ -93,20 +99,6 @@ const LoginPage = () => {
           <ArrowRight size={16} />
         </Button>
       </form>
-
-      <p className="text-center text-sm text-surface-500">
-        Don't have an account?{' '}
-        <Link to={ROUTES.SIGNUP} className="text-brand-600 font-medium hover:text-brand-700 transition-colors">
-          Create account
-        </Link>
-      </p>
-
-      {/* Demo credentials hint */}
-      <div className="rounded-xl bg-brand-50 border border-brand-100 px-4 py-3">
-        <p className="text-xs text-brand-600 font-mono">
-          <span className="font-semibold">Dev hint:</span> Use any registered account credentials.
-        </p>
-      </div>
     </div>
   );
 };
