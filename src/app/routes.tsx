@@ -6,36 +6,28 @@ import AuthLayout from '@/layouts/AuthLayout';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { LoadingScreen } from '@/components/common';
 
-const AdminLayout = lazy(() => import('@/layouts/AdminLayout'));
-
-// Lazy-loaded pages
-const LoginPage               = lazy(() => import('@/features/auth/components/LoginPage'));
-const SignupPage               = lazy(() => import('@/features/auth/components/SignupPage'));
-const DashboardPage           = lazy(() => import('@/features/disputes/components/DashboardPage'));
-const DocumentsPage           = lazy(() => import('@/features/documents/components/DocumentsPage'));
+const AdminLayout            = lazy(() => import('@/layouts/AdminLayout'));
+const LoginPage              = lazy(() => import('@/features/auth/components/LoginPage'));
+const SignupPage             = lazy(() => import('@/features/auth/components/SignupPage'));
+const DashboardPage          = lazy(() => import('@/features/disputes/components/DashboardPage'));
+const DocumentsPage          = lazy(() => import('@/features/documents/components/DocumentsPage'));
 const AddFinanceAssociatePage = lazy(() => import('@/features/admin/components/AddFinanceAssociatePage'));
-const AdminIncidentsPage      = lazy(() => import('@/features/admin/components/AdminIncidentsPage'));
+const AdminIncidentsPage     = lazy(() => import('@/features/admin/components/AdminIncidentsPage'));
+const MailboxesPage          = lazy(() => import('@/features/admin/components/MailboxesPage'));
 
-// ─── Route Guards ─────────────────────────────────────────────────────────────
-
-/** Block render until fetchCurrentUser resolves — prevents flash-redirects on refresh */
 const BootstrapGate = ({ children }: { children: React.ReactNode }) => {
   const isBootstrapping = useIsBootstrapping();
   if (isBootstrapping) return <LoadingScreen />;
   return <>{children}</>;
 };
 
-/** Redirect authenticated users to their role-appropriate home */
 const GuestRoute = () => {
   const isAuthenticated = useIsAuthenticated();
   const role = useUserRole();
-  if (isAuthenticated) {
-    return <Navigate to={role === 'admin' ? ROUTES.ADMIN_ADD_FA : ROUTES.DASHBOARD} replace />;
-  }
+  if (isAuthenticated) return <Navigate to={role === 'admin' ? ROUTES.ADMIN_ADD_FA : ROUTES.DASHBOARD} replace />;
   return <Outlet />;
 };
 
-/** Finance-Associate-only — redirects admins away, unauthenticated to login */
 const FARoute = () => {
   const isAuthenticated = useIsAuthenticated();
   const role = useUserRole();
@@ -44,7 +36,6 @@ const FARoute = () => {
   return <Outlet />;
 };
 
-/** Admin-only — redirects non-admins away, unauthenticated to login */
 const AdminRoute = () => {
   const isAuthenticated = useIsAuthenticated();
   const role = useUserRole();
@@ -53,12 +44,10 @@ const AdminRoute = () => {
   return <Outlet />;
 };
 
-// ─── App Routes ───────────────────────────────────────────────────────────────
 const AppRoutes = () => (
   <BootstrapGate>
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
-        {/* Guest-only routes */}
         <Route element={<GuestRoute />}>
           <Route element={<AuthLayout />}>
             <Route path={ROUTES.LOGIN}  element={<LoginPage />} />
@@ -66,7 +55,6 @@ const AppRoutes = () => (
           </Route>
         </Route>
 
-        {/* Finance Associate routes */}
         <Route element={<FARoute />}>
           <Route element={<DashboardLayout />}>
             <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
@@ -74,16 +62,15 @@ const AppRoutes = () => (
           </Route>
         </Route>
 
-        {/* Admin routes */}
         <Route element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route path={ROUTES.ADMIN_ADD_FA}    element={<AddFinanceAssociatePage />} />
             <Route path={ROUTES.ADMIN_INCIDENTS} element={<AdminIncidentsPage />} />
+            <Route path={ROUTES.ADMIN_MAILBOXES} element={<MailboxesPage />} />
             <Route path={ROUTES.ADMIN_DASHBOARD} element={<Navigate to={ROUTES.ADMIN_ADD_FA} replace />} />
           </Route>
         </Route>
 
-        {/* Fallback */}
         <Route path="*" element={<Navigate to={ROUTES.LOGIN} replace />} />
       </Routes>
     </Suspense>

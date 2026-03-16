@@ -49,12 +49,22 @@ export interface DisputeListResponse {
   items: Dispute[];
 }
 
+export interface TimelineAttachment {
+  attachment_id: number;
+  file_name: string;
+  file_type: string;
+  download_url: string;
+  source: 'inbound' | 'outbound';
+}
+
 export interface TimelineEpisode {
   episode_id: number;
   actor: string;
+  actor_name?: string | null;
   episode_type: string;
   content_text: string;
   created_at: string;
+  attachments: TimelineAttachment[];
 }
 
 // ─── Invoice ──────────────────────────────────────────────────────────────────

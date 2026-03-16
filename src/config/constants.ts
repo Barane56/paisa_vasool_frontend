@@ -12,9 +12,11 @@ export const ROUTES = {
   DASHBOARD: '/dashboard',
   DOCUMENTS: '/documents',
   DISPUTES: '/disputes',
+  INBOX: '/inbox',
   ADMIN_DASHBOARD: '/admin/dashboard',
   ADMIN_ADD_FA: '/admin/add-associate',
   ADMIN_INCIDENTS: '/admin/incidents',
+  ADMIN_MAILBOXES: '/admin/mailboxes',
 } as const;
 
 export const TICKET_STATUS_LABELS: Record<string, string> = {

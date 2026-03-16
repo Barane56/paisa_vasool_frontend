@@ -26,28 +26,20 @@ const initialState: DisputeState = {
 export const fetchDisputes = createAsyncThunk(
   'disputes/fetchAll',
   async (_, { getState }) => {
-    const state    = getState() as { disputes: DisputeState };
+    const state = getState() as { disputes: DisputeState };
     const { filters } = state.disputes;
-
-    const params = {
+    let res = await disputeService.myDisputes({
       search:   filters.search   || undefined,
       status:   filters.status   !== 'all' ? filters.status   : undefined,
       priority: filters.priority !== 'all' ? filters.priority : undefined,
-      limit: 100,
-      offset: 0,
-    };
-
-    // Try my-disputes first; fall back to all-disputes — both get the same filter params
-    let res = await disputeService.myDisputes(params).catch(() => null);
+      limit: 100, offset: 0,
+    }).catch(() => null);
     if (!res || res.items.length === 0) {
-      res = await disputeService.list(params);
+      res = await disputeService.list({ limit: 100, offset: 0 });
     }
-
-    // Hydrate with detail (latest_analysis, open_questions_count, assigned_to)
     const detailed = await Promise.all(
-      res.items.map(d => disputeService.getDetail(d.dispute_id).catch(() => d))
+      res.items.map((d) => disputeService.getDetail(d.dispute_id).catch(() => d))
     );
-
     return { items: detailed, total: res.total };
   }
 );
@@ -74,7 +66,7 @@ const disputeSlice = createSlice({
     builder
       .addCase(fetchDisputes.pending,   (state) => { state.loading = true; state.error = null; })
       .addCase(fetchDisputes.fulfilled, (state, action) => {
-        state.loading  = false;
+        state.loading = false;
         state.disputes = action.payload.items;
         state.total    = action.payload.total;
       })
@@ -83,7 +75,7 @@ const disputeSlice = createSlice({
         state.error   = action.error.message ?? 'Failed to load disputes';
       })
       .addCase(updateDisputeStatus.fulfilled, (state, action) => {
-        const d = state.disputes.find(x => x.dispute_id === action.payload.disputeId);
+        const d = state.disputes.find((x) => x.dispute_id === action.payload.disputeId);
         if (d) d.status = action.payload.status;
         if (state.selectedDispute?.dispute_id === action.payload.disputeId) {
           state.selectedDispute.status = action.payload.status;
@@ -92,16 +84,12 @@ const disputeSlice = createSlice({
   },
 });
 
-export const {
-  setSearch, setStatusFilter, setPriorityFilter,
-  setSelectedDispute, clearError,
-} = disputeSlice.actions;
-
+export const { setSearch, setStatusFilter, setPriorityFilter, setSelectedDispute, clearError } = disputeSlice.actions;
 export default disputeSlice.reducer;
 
-export const selectDisputes        = (s: { disputes: DisputeState }) => s.disputes.disputes;
-export const selectTotal           = (s: { disputes: DisputeState }) => s.disputes.total;
-export const selectLoading         = (s: { disputes: DisputeState }) => s.disputes.loading;
-export const selectError           = (s: { disputes: DisputeState }) => s.disputes.error;
-export const selectFilters         = (s: { disputes: DisputeState }) => s.disputes.filters;
-export const selectSelectedDispute = (s: { disputes: DisputeState }) => s.disputes.selectedDispute;
+export const selectDisputes       = (s: { disputes: DisputeState }) => s.disputes.disputes;
+export const selectTotal          = (s: { disputes: DisputeState }) => s.disputes.total;
+export const selectLoading        = (s: { disputes: DisputeState }) => s.disputes.loading;
+export const selectError          = (s: { disputes: DisputeState }) => s.disputes.error;
+export const selectFilters        = (s: { disputes: DisputeState }) => s.disputes.filters;
+export const selectSelectedDispute= (s: { disputes: DisputeState }) => s.disputes.selectedDispute;
