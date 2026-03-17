@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   Search, Filter, CheckCircle2, Clock, FileText,
   X, ChevronRight, Paperclip, Brain, MessageSquare, User2,
@@ -685,26 +685,34 @@ const DisputesPage = () => {
 
   // Filters
   const [search,           setSearch]           = useState('');
+  const [debouncedSearch,  setDebouncedSearch]  = useState('');
   const [statusFilter,     setStatusFilter]     = useState<string>('all');
   const [priorityFilter,   setPriorityFilter]   = useState<string>('all');
   const [showFilters,      setShowFilters]       = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Debounce search — fires server call 400ms after user stops typing
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(val), 400);
+  };
+
+  // All filters sent to server — bulk detail in one round-trip, no N+1
   const loadDisputes = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Load all disputes (not just "my") — this is the all-disputes view
-      const res = await disputeService.list({ limit: 100, offset: 0 });
-
-      // Hydrate with detail (latest_analysis, open_questions_count)
-      const detailed = await Promise.allSettled(
-        res.items.map((d) => disputeService.getDetail(d.dispute_id))
-      );
-      const hydrated = detailed.map((result, i) =>
-        result.status === 'fulfilled' ? result.value : res.items[i]
-      );
-
-      setDisputes(hydrated);
+      const params = {
+        status:   statusFilter   !== 'all' ? statusFilter   : undefined,
+        priority: priorityFilter !== 'all' ? priorityFilter : undefined,
+        search:   debouncedSearch.trim()   || undefined,
+        limit: 100, offset: 0,
+      };
+      const res = await disputeService.list(params);
+      const ids = res.items.map((d: Dispute) => d.dispute_id);
+      const enriched = ids.length ? await disputeService.bulkDetail(ids) : [];
+      setDisputes(enriched);
       setTotal(res.total);
     } catch (err: unknown) {
       const e = err as { message?: string };
@@ -712,9 +720,15 @@ const DisputesPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [statusFilter, priorityFilter, debouncedSearch]);
 
   useEffect(() => { loadDisputes(); }, [loadDisputes]);
+
+  // Update single dispute in place — no full reload on status change
+  const updateLocalDispute = useCallback((disputeId: number, patch: Partial<Dispute>) => {
+    setDisputes(prev => prev.map(d => d.dispute_id === disputeId ? { ...d, ...patch } : d));
+    setSelectedDispute(prev => prev?.dispute_id === disputeId ? { ...prev, ...patch } : prev);
+  }, []);
 
   const stats = useMemo(() => ({
     total:      disputes.length,
@@ -724,18 +738,8 @@ const DisputesPage = () => {
     autoSent:   disputes.filter((d) => d.latest_analysis?.auto_response_generated).length,
   }), [disputes]);
 
-  const filtered = useMemo(() => disputes.filter((d) => {
-    const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
-      String(d.dispute_id).includes(q) ||
-      d.customer_id.toLowerCase().includes(q) ||
-      (d.dispute_type?.reason_name ?? '').toLowerCase().includes(q) ||
-      (d.description ?? '').toLowerCase().includes(q);
-    const matchStatus   = statusFilter   === 'all' || d.status   === statusFilter;
-    const matchPriority = priorityFilter === 'all' || d.priority === priorityFilter;
-    return matchSearch && matchStatus && matchPriority;
-  }), [disputes, search, statusFilter, priorityFilter]);
+  // Server already filtered — kept as alias for rendering
+  const filtered = disputes;
 
   const activeFilterCount = [statusFilter, priorityFilter].filter((f) => f !== 'all').length;
 
@@ -784,7 +788,7 @@ const DisputesPage = () => {
             className="input-base pl-9 py-2 text-sm"
             placeholder="Search by ID, customer, type…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
 

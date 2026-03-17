@@ -226,6 +226,14 @@ export const disputeService = {
     return data;
   },
 
+  bulkDetail: async (ids: number[]): Promise<Dispute[]> => {
+    if (!ids.length) return [];
+    const { data } = await axiosInstance.get<Dispute[]>(`${DISPUTES_BASE}/bulk-detail`, {
+      params: { ids: ids.join(',') },
+    });
+    return data;
+  },
+
   getTimeline: async (disputeId: number): Promise<{
     dispute_id: number;
     customer_id: string;

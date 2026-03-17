@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   Search, Filter, Clock, CheckCircle2, AlertCircle, FileText,
   X, ChevronRight, Brain, MessageSquare,
@@ -417,7 +417,8 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
 
 // ─── Full-screen Dispute Modal ────────────────────────────────────────────────
 const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
-  dispute: Dispute; onClose: () => void; onStatusUpdate: () => void;
+  dispute: Dispute; onClose: () => void;
+  onStatusUpdate: (disputeId: number, patch: Partial<Dispute>) => void;
 }) => {
   const [dispute, setDispute]  = useState<Dispute>(initDispute);
   const [invoice, setInvoice]  = useState<InvoiceData | null>(null);
@@ -480,9 +481,11 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
     try {
       setUpdating(newStatus);
       await disputeService.updateStatus(dispute.dispute_id, newStatus);
+      // Update local modal state immediately — no flicker, no reload
       setDispute(prev => ({ ...prev, status: newStatus }));
+      // Patch parent list in-place — only this row updates
+      onStatusUpdate(dispute.dispute_id, { status: newStatus });
       toast.success('Status updated');
-      onStatusUpdate();
     } catch { toast.error('Failed to update status'); } finally { setUpdating(null); }
   };
 
@@ -757,39 +760,55 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const DashboardPage = () => {
   const user = useUser();
-  const [disputes, setDisputes]               = useState<Dispute[]>([]);
-  const [total, setTotal]                     = useState(0);
-  const [loading, setLoading]                 = useState(true);
-  const [error, setError]                     = useState<string | null>(null);
-  const [search, setSearch]                   = useState('');
+  const [disputes, setDisputes]             = useState<Dispute[]>([]);
+  const [total, setTotal]                   = useState(0);
+  const [loading, setLoading]               = useState(true);
+  const [error, setError]                   = useState<string | null>(null);
+  const [search, setSearch]                 = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [statusFilter, setStatusFilter]       = useState('all');
-  const [priorityFilter, setPriorityFilter]   = useState('all');
-  const [selected, setSelected]               = useState<Dispute | null>(null);
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [statusFilter, setStatusFilter]     = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [selected, setSelected]             = useState<Dispute | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Debounce search input — fires server call 400ms after user stops typing
   const handleSearchChange = (val: string) => {
     setSearch(val);
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => setDebouncedSearch(val), 350);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(val), 400);
   };
 
+  // ── Single bulk call — filters sent to server, no N+1 ─────────────────────
   const loadDisputes = useCallback(async (showToast = false) => {
     setLoading(true); setError(null);
     try {
-      const params = { status: statusFilter !== 'all' ? statusFilter : undefined, priority: priorityFilter !== 'all' ? priorityFilter : undefined, search: debouncedSearch.trim() || undefined, limit: 100, offset: 0 };
-      let res = await disputeService.myDisputes(params).catch(() => null);
-      if (!res || res.items.length === 0) res = await disputeService.list(params);
-      const enriched = await Promise.all(res.items.map(d => disputeService.getDetail(d.dispute_id).catch(() => d)));
-      setDisputes(enriched); setTotal(res.total);
+      const params = {
+        status:   statusFilter   !== 'all' ? statusFilter   : undefined,
+        priority: priorityFilter !== 'all' ? priorityFilter : undefined,
+        search:   debouncedSearch.trim()   || undefined,
+        limit: 100, offset: 0,
+      };
+      // Always use list() with full params — myDisputes only for unfiltered "my" view
+      const res = await disputeService.list(params);
+      // Bulk detail: one call returns all enriched data — no per-row getDetail
+      const ids = res.items.map((d: Dispute) => d.dispute_id);
+      const enriched = ids.length ? await disputeService.bulkDetail(ids) : [];
+      setDisputes(enriched);
+      setTotal(res.total);
       if (showToast) toast.success('Refreshed');
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message ?? 'Failed to load disputes';
-      setError(msg); toast.error('Failed to load');
+      setError(msg);
     } finally { setLoading(false); }
   }, [statusFilter, priorityFilter, debouncedSearch]);
 
   useEffect(() => { loadDisputes(); }, [loadDisputes]);
+
+  // ── Update single dispute in local state — no full reload on status change ─
+  const updateLocalDispute = useCallback((disputeId: number, patch: Partial<Dispute>) => {
+    setDisputes(prev => prev.map(d => d.dispute_id === disputeId ? { ...d, ...patch } : d));
+    setSelected(prev => prev?.dispute_id === disputeId ? { ...prev, ...patch } : prev);
+  }, []);
 
   const stats = {
     total:    disputes.length,
@@ -844,7 +863,7 @@ const DashboardPage = () => {
           <option value="all">All Priorities</option>
           {Object.entries(PRIORITY_CONFIG).map(([v, c]) => <option key={v} value={v}>{c.label}</option>)}
         </select>
-        <span className="text-xs text-gray-400 ml-auto">{disputes.length} of {disputes.length}</span>
+        <span className="text-xs text-gray-400 ml-auto">{disputes.length} of {total}</span>
       </div>
 
       <div className="card overflow-hidden">
@@ -868,7 +887,7 @@ const DashboardPage = () => {
         </table>
       </div>
 
-      {selected && <DisputeModal dispute={selected} onClose={() => setSelected(null)} onStatusUpdate={loadDisputes} />}
+      {selected && <DisputeModal dispute={selected} onClose={() => setSelected(null)} onStatusUpdate={updateLocalDispute} />}
     </div>
   );
 };
