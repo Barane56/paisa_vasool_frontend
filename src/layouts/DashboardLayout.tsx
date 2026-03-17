@@ -68,7 +68,7 @@ const DashboardLayout = () => {
         <header className="bg-white border-b border-surface-200 flex items-center px-6 py-3 gap-4 shrink-0">
           <button className="md:hidden p-2 rounded-lg hover:bg-surface-100" onClick={() => setMobileOpen(true)}><Menu size={18} /></button>
           <div className="flex-1" />
-          <button className="relative p-2 rounded-xl hover:bg-surface-100 transition-colors"><Bell size={17} className="text-surface-500" /><span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" /></button>
+          {/* <button className="relative p-2 rounded-xl hover:bg-surface-100 transition-colors"><Bell size={17} className="text-surface-500" /><span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" /></button> */}
           <div className="flex items-center gap-2.5 pl-3 border-l border-surface-200">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center"><span className="text-white text-xs font-bold font-display">{user?.name?.charAt(0).toUpperCase()}</span></div>
             {user && (<div className="hidden sm:block"><p className="text-sm font-semibold text-surface-900 leading-none">{user.name}</p><p className="text-xs text-violet-500 mt-0.5 font-medium">Finance Associate</p></div>)}

@@ -51,6 +51,8 @@ const StatCard = ({ icon: Icon, label, value, accent, sub }: {
   </div>
 );
 
+
+
 // ─── Invoice detail card ──────────────────────────────────────────────────────
 const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
   const d = invoice.invoice_details ?? {};
@@ -548,7 +550,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                 <div className="px-8 py-6 space-y-6">
                   <section>
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Dispute Description</h3>
-                    <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">{dispute.description || <em className="text-gray-400">No description available</em>}</p>
+                    <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">{dispute.latest_analysis?.ai_summary || <em className="text-gray-400">No description available</em>}</p>
                   </section>
 
                   <section>
@@ -585,7 +587,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                     </section>
                   )}
 
-                  {dispute.latest_analysis && (
+                  {/* {dispute.latest_analysis && (
                     <section>
                       <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Brain size={11} /> AI Analysis</h3>
                       <div className="bg-purple-50 border border-purple-100 rounded-2xl overflow-hidden">
@@ -606,7 +608,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                         )}
                       </div>
                     </section>
-                  )}
+                  )} */}
 
                   <section className="border-t border-surface-100 pt-5">
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Update Status</h3>
