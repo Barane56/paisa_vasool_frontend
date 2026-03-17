@@ -7,8 +7,7 @@ import { logoutUser } from '@/features/auth';
 import clsx from 'clsx';
 
 const NAV_ITEMS = [
-  { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Incidents' },
-  { to: ROUTES.DOCUMENTS, icon: FileText,         label: 'Documents' },
+  { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Incidents' }
 ];
 
 const Sidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) => {
@@ -80,3 +79,5 @@ const DashboardLayout = () => {
   );
 };
 export default DashboardLayout;
+
+
