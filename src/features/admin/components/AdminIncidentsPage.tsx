@@ -124,8 +124,8 @@ const IncidentDrawer = ({
       setUpdating(newStatus);
       await disputeService.updateStatus(dispute.dispute_id, newStatus);
       setDispute(prev => ({ ...prev, status: newStatus }));
+      onStatusUpdate(dispute.dispute_id, { status: newStatus });
       toast.success('Status updated');
-      onStatusUpdate();
     } catch { toast.error('Failed to update status'); } finally { setUpdating(null); }
   };
 

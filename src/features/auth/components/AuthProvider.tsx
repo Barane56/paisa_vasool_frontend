@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, ReactNode } from 'react';
-import { useAppDispatch, useIsAuthenticated } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import { fetchCurrentUser } from '@/features/auth';
 
 interface AuthContextValue {
@@ -10,20 +10,18 @@ const AuthContext = createContext<AuthContextValue>({ isBootstrapping: true });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const dispatch = useAppDispatch();
-  const isAuthenticated = useIsAuthenticated();
   const bootstrapped = useRef(false);
-  const isBootstrapping = !bootstrapped.current && !isAuthenticated;
 
   useEffect(() => {
     if (bootstrapped.current) return;
     bootstrapped.current = true;
-
-    // Try to hydrate user from existing cookies on app load
+    // Try to hydrate user from existing session on app load.
+    // isBootstrapping in Redux stays true until this resolves or rejects.
     dispatch(fetchCurrentUser());
   }, [dispatch]);
 
   return (
-    <AuthContext.Provider value={{ isBootstrapping }}>
+    <AuthContext.Provider value={{ isBootstrapping: true }}>
       {children}
     </AuthContext.Provider>
   );
