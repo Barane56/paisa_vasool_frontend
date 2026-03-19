@@ -6,7 +6,7 @@ import {
   User2, RefreshCw, Loader2, AlertTriangle, Receipt,
   Calendar, DollarSign, Building2, Hash, Zap,
   ArrowUpRight, Package, CheckCheck, TrendingUp, CreditCard,
-  Send, Paperclip, Mail, Download, Sparkles, Wand2,
+  Send, Paperclip, Mail, Download, Sparkles, Wand2, Plus, Upload, Trash2, FileIcon, Eye,
 } from 'lucide-react';
 import { useUser } from '@/hooks';
 import { Badge } from '@/components/ui';
@@ -15,7 +15,12 @@ import { formatDate, formatCurrency } from '@/utils';
 import {
   disputeService,
   draftEmailService,
-  Dispute, InvoiceData, PaymentDetailData, TimelineEpisode, TimelineAttachment,
+  newMessageService,
+  faDisputeService,
+  disputeDocumentService,
+  disputeTypeService,
+  Dispute, DisputeDocument, DisputeType as DisputeTypeOption,
+  InvoiceData, PaymentDetailData, TimelineEpisode, TimelineAttachment,
 } from '../services/disputeService';
 import { mailboxService, OutboundEmail } from '@/services/mailboxService';
 import clsx from 'clsx';
@@ -760,6 +765,15 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                         </div>
                       ) : (<DocRow icon={CreditCard} iconBg="bg-green-600" label="Payment Records" missing missingText="No payment records found" urlLabel="Open" />)}
                   </section>
+
+                  {/* Other Documents — FA uploads, visible to all FAs on this dispute */}
+                  <section>
+                    <div className="flex items-center gap-2 mb-3">
+                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><Upload size={11} /> Other Documents</h3>
+                      <span className="text-xs text-gray-400 font-normal normal-case">(any supporting files — visible to all FAs on this dispute)</span>
+                    </div>
+                    <DisputeDocumentsPanel dispute={dispute} />
+                  </section>
                 </div>
               )}
 
@@ -830,11 +844,24 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
 const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => void }) => {
   const s = sc(dispute.status);
   const p = pc(dispute.priority);
+  const hasNew = dispute.has_new_customer_message ?? false;
   return (
-    <tr className="group cursor-pointer hover:bg-violet-50/60 transition-colors duration-100" onClick={onClick}>
-      <td className="px-5 py-3.5"><code className="text-xs font-mono text-gray-700 bg-surface-100 px-2 py-0.5 rounded-lg">#{dispute.dispute_id}</code></td>
+    <tr className={clsx('group cursor-pointer transition-colors duration-100', hasNew ? 'bg-blue-50/40 hover:bg-blue-50' : 'hover:bg-violet-50/60')} onClick={onClick}>
+      <td className="px-5 py-3.5">
+        <div className="flex items-center gap-2">
+          {hasNew && <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0 animate-pulse" title="New customer message" />}
+          <code className="text-xs font-mono text-gray-700 bg-surface-100 px-2 py-0.5 rounded-lg">#{dispute.dispute_id}</code>
+        </div>
+      </td>
       <td className="px-5 py-3.5 max-w-[240px]">
-        <p className="text-sm font-semibold text-surface-900 truncate">{dispute.dispute_type?.reason_name ?? 'Unknown'}</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-sm font-semibold text-surface-900 truncate">{dispute.dispute_type?.reason_name ?? 'Unknown'}</p>
+          {hasNew && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full shrink-0">
+              <MessageSquare size={9} /> New message
+            </span>
+          )}
+        </div>
         <p className="text-xs text-gray-500 truncate mt-0.5">{dispute.customer_id}</p>
       </td>
       <td className="px-5 py-3.5">
@@ -846,6 +873,371 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
       <td className="px-5 py-3.5 text-sm text-gray-600 whitespace-nowrap">{formatDate(dispute.created_at)}</td>
       <td className="px-4 py-3.5"><ChevronRight size={16} className="text-gray-400 group-hover:text-violet-400 transition-colors" /></td>
     </tr>
+  );
+};
+
+// ─── Create Dispute Modal ─────────────────────────────────────────────────────
+const CreateDisputeModal = ({ onClose, onCreated }: {
+  onClose: () => void;
+  onCreated: (d: Dispute) => void;
+}) => {
+  const [disputeTypes, setDisputeTypes] = useState<DisputeTypeOption[]>([]);
+  const [selectedTypeId, setSelectedTypeId] = useState<number | ''>('');
+  const [customTypeName, setCustomTypeName] = useState('');
+  const [customTypeDesc, setCustomTypeDesc] = useState('');
+  const [useCustom, setUseCustom] = useState(false);
+  const [customerId, setCustomerId] = useState('');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [invoiceLookup, setInvoiceLookup] = useState<{ id: number; number: string; vendor?: string; total?: number } | null>(null);
+  const [invoiceLookupLoading, setInvoiceLookupLoading] = useState(false);
+  const [invoiceLookupError, setInvoiceLookupError] = useState<string | null>(null);
+  const [priority, setPriority] = useState<'LOW'|'MEDIUM'|'HIGH'>('MEDIUM');
+  const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    disputeTypeService.list().then(setDisputeTypes).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [onClose]);
+
+  const handleInvoiceLookup = async () => {
+    if (!invoiceNumber.trim()) return;
+    try {
+      setInvoiceLookupLoading(true);
+      setInvoiceLookupError(null);
+      const { default: axiosInstance } = await import('@/lib/axios');
+      // Pass customer_email so the backend enforces ownership — same logic as agent pipeline
+      const params: Record<string, string> = {};
+      if (customerId.trim()) params.customer_email = customerId.trim();
+      const { data } = await axiosInstance.get(
+        `/dispute/api/v1/invoices/by-number/${encodeURIComponent(invoiceNumber.trim())}`,
+        { params }
+      );
+      setInvoiceLookup({
+        id: data.invoice_id,
+        number: data.invoice_number,
+        vendor: data.invoice_details?.vendor_name,
+        total: data.invoice_details?.total_amount,
+      });
+    } catch (err: unknown) {
+      const status = (err as { status_code?: number })?.status_code;
+      if (status === 403) {
+        setInvoiceLookupError('This invoice does not belong to this customer — ownership check failed');
+      } else {
+        setInvoiceLookupError('Invoice not found — check the number and try again');
+      }
+      setInvoiceLookup(null);
+    } finally {
+      setInvoiceLookupLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!customerId.trim()) { toast.error('Customer email is required'); return; }
+    if (!description.trim()) { toast.error('Description is required'); return; }
+    if (!useCustom && !selectedTypeId) { toast.error('Select a dispute type or enter a custom one'); return; }
+    if (useCustom && !customTypeName.trim()) { toast.error('Custom type name is required'); return; }
+
+    try {
+      setSubmitting(true);
+      const dispute = await faDisputeService.create({
+        customer_id:      customerId.trim(),
+        dispute_type_id:  useCustom ? null : Number(selectedTypeId),
+        custom_type_name: useCustom ? customTypeName.trim() : null,
+        custom_type_desc: useCustom ? customTypeDesc.trim() : null,
+        priority,
+        description:      description.trim(),
+        invoice_id:       invoiceLookup?.id ?? null,
+      });
+      toast.success(`Dispute #${dispute.dispute_id} created`);
+      onCreated(dispute);
+      onClose();
+    } catch { toast.error('Failed to create dispute'); }
+    finally { setSubmitting(false); }
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-modal w-full max-w-lg animate-scale-in overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-7 py-5 border-b border-surface-100 bg-gradient-to-r from-violet-50 to-white">
+            <div>
+              <h2 className="font-display font-bold text-surface-900 text-lg">Create New Dispute</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Manually open a dispute without an inbound email</p>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-surface-100 text-gray-400"><X size={18} /></button>
+          </div>
+
+          {/* Body */}
+          <div className="px-7 py-6 space-y-5 max-h-[70vh] overflow-y-auto">
+            {/* Customer ID */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Customer Email *</label>
+              <input className="input-base text-sm" placeholder="customer@domain.com" value={customerId} onChange={e => setCustomerId(e.target.value)} />
+            </div>
+
+            {/* Invoice Number */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
+                Invoice Number <span className="text-gray-400 font-normal normal-case">(optional — helps anchor the dispute)</span>
+              </label>
+              <div className="flex gap-2">
+                <input
+                  className="input-base text-sm flex-1"
+                  placeholder="e.g. INV-2024-001"
+                  value={invoiceNumber}
+                  onChange={e => { setInvoiceNumber(e.target.value); setInvoiceLookup(null); setInvoiceLookupError(null); }}
+                  onBlur={handleInvoiceLookup}
+                  onKeyDown={e => e.key === 'Enter' && handleInvoiceLookup()}
+                />
+                <button
+                  type="button"
+                  onClick={handleInvoiceLookup}
+                  disabled={!invoiceNumber.trim() || invoiceLookupLoading}
+                  className="px-3 py-2 rounded-xl border border-surface-200 hover:border-violet-300 text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all disabled:opacity-40 shrink-0"
+                >
+                  {invoiceLookupLoading ? <Loader2 size={13} className="animate-spin" /> : 'Lookup'}
+                </button>
+              </div>
+              {invoiceLookup && (
+                <div className="mt-2 flex items-start gap-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
+                  <CheckCircle2 size={13} className="shrink-0 mt-0.5 text-green-500" />
+                  <div>
+                    <p className="font-bold">{invoiceLookup.number} — found ✓</p>
+                    <p className="text-green-600 mt-0.5">
+                      {invoiceLookup.vendor && <span>{invoiceLookup.vendor}</span>}
+                      {invoiceLookup.total != null && <span> · {formatCurrency(invoiceLookup.total)}</span>}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {invoiceLookupError && (
+                <div className="mt-2 flex items-center gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                  <AlertTriangle size={12} className="shrink-0" /> {invoiceLookupError}
+                </div>
+              )}
+            </div>
+
+            {/* Dispute Type */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Dispute Type *</label>
+              <div className="flex items-center gap-2 p-1 bg-surface-100 rounded-xl mb-3 w-fit">
+                <button onClick={() => setUseCustom(false)} className={clsx('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all', !useCustom ? 'bg-white text-violet-700 shadow-sm border border-violet-200' : 'text-gray-500')}>
+                  Pick existing
+                </button>
+                <button onClick={() => setUseCustom(true)} className={clsx('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all', useCustom ? 'bg-white text-orange-600 shadow-sm border border-orange-200' : 'text-gray-500')}>
+                  Create new type
+                </button>
+              </div>
+              {!useCustom ? (
+                <select className="input-base text-sm" value={selectedTypeId} onChange={e => setSelectedTypeId(e.target.value as any)}>
+                  <option value="">— Select a dispute type —</option>
+                  {disputeTypes.map(t => <option key={t.dispute_type_id} value={t.dispute_type_id}>{t.reason_name}</option>)}
+                </select>
+              ) : (
+                <div className="space-y-3">
+                  <input className="input-base text-sm" placeholder="Type name e.g. 'Currency Exchange Dispute'" value={customTypeName} onChange={e => setCustomTypeName(e.target.value)} />
+                  <textarea className="input-base text-sm resize-none" rows={2} placeholder="Short description (optional)" value={customTypeDesc} onChange={e => setCustomTypeDesc(e.target.value)} />
+                  <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+                    <AlertTriangle size={12} className="shrink-0 mt-0.5" />
+                    This will create a new dispute type in the system permanently.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Priority */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Priority</label>
+              <div className="flex gap-2">
+                {(['LOW','MEDIUM','HIGH'] as const).map(p => (
+                  <button key={p} onClick={() => setPriority(p)} className={clsx('flex-1 py-2 rounded-xl text-xs font-bold border transition-all', priority === p
+                    ? p === 'HIGH' ? 'bg-red-500 text-white border-red-500' : p === 'MEDIUM' ? 'bg-amber-400 text-white border-amber-400' : 'bg-green-500 text-white border-green-500'
+                    : 'bg-white text-gray-500 border-surface-200 hover:border-surface-300'
+                  )}>{p}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Description *</label>
+              <textarea className="input-base text-sm resize-none" rows={4} placeholder="Describe the dispute — what's the issue, which invoice, what amount…" value={description} onChange={e => setDescription(e.target.value)} />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 px-7 py-4 border-t border-surface-100 bg-surface-50">
+            <button onClick={onClose} className="btn-secondary btn-sm">Cancel</button>
+            <button onClick={handleSubmit} disabled={submitting} className="btn-primary btn-sm flex items-center gap-2">
+              {submitting ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+              {submitting ? 'Creating…' : 'Create Dispute'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// ─── Dispute Documents Panel ──────────────────────────────────────────────────
+const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
+  const [docs, setDocs] = useState<DisputeDocument[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [notes, setNotes] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await disputeDocumentService.list(dispute.dispute_id);
+      setDocs(res.items);
+    } catch { setDocs([]); }
+    finally { setLoading(false); }
+  }, [dispute.dispute_id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    try {
+      setUploading(true);
+      const doc = await disputeDocumentService.upload(dispute.dispute_id, file, file.name, notes || undefined);
+      setDocs(prev => [doc, ...prev]);
+      setNotes('');
+      toast.success(`${file.name} uploaded`);
+    } catch { toast.error('Upload failed'); }
+    finally { setUploading(false); }
+  };
+
+  const handleDelete = async (docId: number, fileName: string) => {
+    if (!confirm(`Delete "${fileName}"?`)) return;
+    try {
+      await disputeDocumentService.delete(dispute.dispute_id, docId);
+      setDocs(prev => prev.filter(d => d.document_id !== docId));
+      toast.success('Document deleted');
+    } catch { toast.error('Delete failed'); }
+  };
+
+  const formatSize = (bytes: number | null) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const fileIcon = (type: string) => {
+    if (type.includes('pdf')) return '📄';
+    if (type.includes('image')) return '🖼';
+    if (type.includes('sheet') || type.includes('excel') || type.includes('csv')) return '📊';
+    if (type.includes('word') || type.includes('document')) return '📝';
+    return '📎';
+  };
+
+  return (
+    <div className="px-8 py-6 space-y-6">
+      {/* Upload area */}
+      <div className="rounded-2xl border-2 border-dashed border-violet-200 bg-violet-50/40 p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
+            <Upload size={18} className="text-violet-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-surface-900 mb-0.5">Upload Supporting Document</p>
+            <p className="text-xs text-gray-500 mb-3">PDF, images, spreadsheets, Word docs — any file type accepted.</p>
+            <div className="flex items-center gap-2 mb-3">
+              <input
+                className="input-base text-xs py-1.5 flex-1"
+                placeholder="Notes about this document (optional)"
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+              />
+            </div>
+            <input ref={fileRef} type="file" className="hidden" onChange={handleUpload} />
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all disabled:opacity-50"
+            >
+              {uploading ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+              {uploading ? 'Uploading…' : 'Choose File'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Document list */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Uploaded Documents</p>
+          {docs.length > 0 && <span className="text-xs text-gray-400">{docs.length} file{docs.length !== 1 ? 's' : ''}</span>}
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-10 bg-surface-50 rounded-2xl border border-surface-100">
+            <Loader2 size={16} className="animate-spin text-violet-400" />
+            <span className="text-sm text-gray-500">Loading documents…</span>
+          </div>
+        ) : docs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 bg-surface-50 rounded-2xl border border-surface-100">
+            <FileIcon size={28} className="text-gray-300 mb-2" />
+            <p className="text-sm font-semibold text-surface-700">No documents uploaded yet</p>
+            <p className="text-xs text-gray-400 mt-0.5">Upload any file above to attach it to this dispute.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {docs.map(doc => (
+              <div key={doc.document_id} className="flex items-center gap-3 bg-white border border-surface-200 rounded-xl px-4 py-3 hover:border-violet-200 transition-all group">
+                <span className="text-2xl leading-none shrink-0">{fileIcon(doc.file_type)}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-surface-900 truncate">{doc.display_name || doc.file_name}</p>
+                  <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                    {doc.file_size && <span className="text-xs text-gray-400">{formatSize(doc.file_size)}</span>}
+                    {doc.uploader_name && <span className="text-xs text-gray-400">by {doc.uploader_name}</span>}
+                    <span className="text-xs text-gray-400">{formatDate(doc.created_at)}</span>
+                    {doc.notes && <span className="text-xs text-violet-600 italic truncate max-w-[180px]">{doc.notes}</span>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <a
+                    href={doc.download_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 px-2.5 py-1.5 rounded-lg transition-all"
+                  >
+                    <Eye size={12} /> View
+                  </a>
+                  <a
+                    href={doc.download_url}
+                    download={doc.file_name}
+                    className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-surface-800 bg-surface-100 hover:bg-surface-200 px-2.5 py-1.5 rounded-lg transition-all"
+                  >
+                    <Download size={12} /> Save
+                  </a>
+                  <button
+                    onClick={() => handleDelete(doc.document_id, doc.file_name)}
+                    className="flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition-all"
+                    title="Delete document"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -862,6 +1254,7 @@ const DashboardPage = () => {
   const [statusFilter, setStatusFilter]     = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [selected, setSelected]             = useState<Dispute | null>(null);
+  const [showCreate, setShowCreate]           = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Open dispute when notification bell is clicked ─────────────────────────
@@ -870,6 +1263,9 @@ const DashboardPage = () => {
     const target = disputes.find(d => d.dispute_id === openDisputeId);
     if (target) {
       setSelected(target);
+      // Mark read when opened from notification
+      newMessageService.markDisputeRead(openDisputeId).catch(() => {});
+      updateLocalDispute(openDisputeId, { has_new_customer_message: false } as Partial<Dispute>);
     }
   }, [openDisputeId, disputes]);
 
@@ -925,7 +1321,17 @@ const DashboardPage = () => {
       <PageHeader
         title={`Welcome back, ${user?.name?.split(' ')[0] ?? 'Associate'} 👋`}
         subtitle="Review and manage your assigned incident tickets below."
-        action={<button onClick={() => loadDisputes(true)} title="Refresh" className="p-2 rounded-xl hover:bg-surface-100 text-gray-500 hover:text-surface-800 transition-colors"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /></button>}
+        action={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+            >
+              <Plus size={15} /> New Dispute
+            </button>
+            <button onClick={() => loadDisputes(true)} title="Refresh" className="p-2 rounded-xl hover:bg-surface-100 text-gray-500 hover:text-surface-800 transition-colors"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /></button>
+          </div>
+        }
       />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard icon={FileText}     label="Total"     value={stats.total}    accent="bg-violet-600" />
@@ -981,7 +1387,18 @@ const DashboardPage = () => {
             {loading ? (
               <tr><td colSpan={6}><div className="flex items-center justify-center gap-3 py-20"><Loader2 size={22} className="animate-spin text-violet-400" /><span className="text-sm text-gray-500">Loading incidents…</span></div></td></tr>
             ) : disputes.length > 0 ? (
-              disputes.map(d => <DisputeRow key={d.dispute_id} dispute={d} onClick={() => setSelected(d)} />)
+              disputes.map(d => (
+                <DisputeRow
+                  key={d.dispute_id}
+                  dispute={d}
+                  onClick={() => {
+                    setSelected(d);
+                    // Clear new message flag on backend + locally in row
+                    newMessageService.markDisputeRead(d.dispute_id).catch(() => {});
+                    updateLocalDispute(d.dispute_id, { has_new_customer_message: false } as Partial<Dispute>);
+                  }}
+                />
+              ))
             ) : (
               <tr><td colSpan={6}><EmptyState title="No incidents found" description={error ? 'Could not load from server.' : 'Try adjusting your filters or search query.'} /></td></tr>
             )}
@@ -990,6 +1407,7 @@ const DashboardPage = () => {
       </div>
 
       {selected && <DisputeModal dispute={selected} onClose={() => setSelected(null)} onStatusUpdate={updateLocalDispute} />}
+      {showCreate && <CreateDisputeModal onClose={() => setShowCreate(false)} onCreated={(d) => { loadDisputes(); }} />}
     </div>
   );
 };
