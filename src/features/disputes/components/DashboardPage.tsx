@@ -650,7 +650,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                 <div className="px-8 py-6 space-y-6">
                   <section>
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Dispute Description</h3>
-                    <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">{dispute.latest_analysis?.ai_summary || <em className="text-gray-400">No description available</em>}</p>
+                    <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">{dispute.latest_analysis?.ai_summary || dispute.description || <em className="text-gray-400">No description available</em>}</p>
                   </section>
 
                   <section>
