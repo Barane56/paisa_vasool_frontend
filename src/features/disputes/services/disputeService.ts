@@ -333,3 +333,24 @@ export const emailService = {
     return data;
   },
 };
+// ─── AI Draft Email ───────────────────────────────────────────────────────────
+
+export interface DraftEmailResponse {
+  dispute_id: number;
+  draft_body: string;
+  customer_id: string;
+  suggested_subject: string;
+}
+
+export const draftEmailService = {
+  /**
+   * Calls POST /dispute/api/v1/disputes/{id}/draft-email
+   * Backend uses Groq (llama-3.3-70b-versatile) to generate the draft.
+   */
+  generateDraft: async (disputeId: number): Promise<DraftEmailResponse> => {
+    const { data } = await axiosInstance.post<DraftEmailResponse>(
+      `${DISPUTES_BASE}/${disputeId}/draft-email`
+    );
+    return data;
+  },
+};

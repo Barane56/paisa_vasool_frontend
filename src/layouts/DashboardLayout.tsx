@@ -1,10 +1,17 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, LogOut, Menu, ChevronLeft, Bell } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, ChevronLeft } from 'lucide-react';
 import { ROUTES } from '@/config/constants';
 import { useAppDispatch, useUser } from '@/hooks';
 import { logoutUser } from '@/features/auth';
 import clsx from 'clsx';
+import { NotificationBell } from '@/features/disputes/components/NotificationBell';
+import { useNewMessageNotifications } from '@/features/disputes/hooks/useNewMessageNotifications';
+
+// Global notification context so child pages can open disputes from bell clicks
+import { createContext, useContext } from 'react';
+export const OpenDisputeContext = createContext<((id: number) => void) | null>(null);
+export const useOpenDispute = () => useContext(OpenDisputeContext);
 
 const NAV_ITEMS = [
   { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Incidents' }
@@ -59,23 +66,47 @@ const DashboardLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const user = useUser();
+
+  // Notification system
+  const { notifications, isPolling, markRead, markAllRead } = useNewMessageNotifications();
+
+  // openDisputeId is set when FA clicks a notification — DashboardPage listens
+  const [openDisputeId, setOpenDisputeId] = useState<number | null>(null);
+  const handleOpenDispute = useCallback((id: number) => {
+    setOpenDisputeId(id);
+    // Reset after a tick so DashboardPage can detect the change even if same id
+    setTimeout(() => setOpenDisputeId(null), 500);
+  }, []);
+
   return (
-    <div className="flex h-screen overflow-hidden bg-surface-50">
-      <div className="hidden md:flex"><Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} /></div>
-      {mobileOpen && (<div className="md:hidden fixed inset-0 z-50 flex"><div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} /><div className="relative z-10 flex"><Sidebar collapsed={false} onToggle={() => setMobileOpen(false)} /></div></div>)}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-surface-200 flex items-center px-6 py-3 gap-4 shrink-0">
-          <button className="md:hidden p-2 rounded-lg hover:bg-surface-100" onClick={() => setMobileOpen(true)}><Menu size={18} /></button>
-          <div className="flex-1" />
-          {/* <button className="relative p-2 rounded-xl hover:bg-surface-100 transition-colors"><Bell size={17} className="text-surface-500" /><span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" /></button> */}
-          <div className="flex items-center gap-2.5 pl-3 border-l border-surface-200">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center"><span className="text-white text-xs font-bold font-display">{user?.name?.charAt(0).toUpperCase()}</span></div>
-            {user && (<div className="hidden sm:block"><p className="text-sm font-semibold text-surface-900 leading-none">{user.name}</p><p className="text-xs text-violet-500 mt-0.5 font-medium">Finance Associate</p></div>)}
+    <OpenDisputeContext.Provider value={handleOpenDispute}>
+      <div className="flex h-screen overflow-hidden bg-surface-50">
+        <div className="hidden md:flex"><Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} /></div>
+        {mobileOpen && (<div className="md:hidden fixed inset-0 z-50 flex"><div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} /><div className="relative z-10 flex"><Sidebar collapsed={false} onToggle={() => setMobileOpen(false)} /></div></div>)}
+        <main className="flex-1 flex flex-col overflow-hidden">
+          <header className="bg-white border-b border-surface-200 flex items-center px-6 py-3 gap-4 shrink-0">
+            <button className="md:hidden p-2 rounded-lg hover:bg-surface-100" onClick={() => setMobileOpen(true)}><Menu size={18} /></button>
+            <div className="flex-1" />
+            {/* 🔔 Notification Bell */}
+            <NotificationBell
+              notifications={notifications}
+              onOpen={handleOpenDispute}
+              onMarkRead={markRead}
+              onMarkAllRead={markAllRead}
+              isPolling={isPolling}
+            />
+            <div className="flex items-center gap-2.5 pl-3 border-l border-surface-200">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center"><span className="text-white text-xs font-bold font-display">{user?.name?.charAt(0).toUpperCase()}</span></div>
+              {user && (<div className="hidden sm:block"><p className="text-sm font-semibold text-surface-900 leading-none">{user.name}</p><p className="text-xs text-violet-500 mt-0.5 font-medium">Finance Associate</p></div>)}
+            </div>
+          </header>
+          <div className="flex-1 overflow-y-auto">
+            {/* Pass openDisputeId down via Outlet context */}
+            <Outlet context={{ openDisputeId }} />
           </div>
-        </header>
-        <div className="flex-1 overflow-y-auto"><Outlet /></div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </OpenDisputeContext.Provider>
   );
 };
 export default DashboardLayout;
