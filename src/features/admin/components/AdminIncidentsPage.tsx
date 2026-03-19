@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Search, Filter, Clock, CheckCircle2, AlertCircle, FileText,
   X, ChevronRight, Brain, MessageSquare, HelpCircle,
@@ -61,7 +61,7 @@ const IncidentDrawer = ({
 }: {
   dispute: Dispute;
   onClose: () => void;
-  onStatusUpdate: () => void;
+  onStatusUpdate: (disputeId: number, patch: Partial<Dispute>) => void;
 }) => {
   const [dispute, setDispute]   = useState<Dispute>(initDispute);
   const [invoice, setInvoice]   = useState<InvoiceData | null>(null);
@@ -124,8 +124,8 @@ const IncidentDrawer = ({
       setUpdating(newStatus);
       await disputeService.updateStatus(dispute.dispute_id, newStatus);
       setDispute(prev => ({ ...prev, status: newStatus }));
+      onStatusUpdate(dispute.dispute_id, { status: newStatus });
       toast.success('Status updated');
-      onStatusUpdate();
     } catch { toast.error('Failed to update status'); } finally { setUpdating(null); }
   };
 
@@ -339,18 +339,33 @@ const AdminIncidentsPage = () => {
   const [loading,        setLoading]        = useState(true);
   const [error,          setError]          = useState<string | null>(null);
   const [search,         setSearch]         = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter,   setStatusFilter]   = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [selected,       setSelected]       = useState<Dispute | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Debounce search — fires server call 400ms after user stops typing
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(val), 400);
+  };
+
+  // Filters + search sent to server — bulk detail in one round-trip
   const loadDisputes = useCallback(async (showToast = false) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await disputeService.list({ limit: 100, offset: 0 });
-      const enriched = await Promise.all(
-        res.items.map(d => disputeService.getDetail(d.dispute_id).catch(() => d))
-      );
+      const params = {
+        status:   statusFilter   !== 'all' ? statusFilter   : undefined,
+        priority: priorityFilter !== 'all' ? priorityFilter : undefined,
+        search:   debouncedSearch.trim()   || undefined,
+        limit: 100, offset: 0,
+      };
+      const res = await disputeService.list(params);
+      const ids = res.items.map((d: Dispute) => d.dispute_id);
+      const enriched = ids.length ? await disputeService.bulkDetail(ids) : [];
       setDisputes(enriched);
       setTotal(res.total);
       if (showToast) toast.success('Refreshed');
@@ -365,9 +380,15 @@ const AdminIncidentsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [statusFilter, priorityFilter, debouncedSearch]);
 
   useEffect(() => { loadDisputes(); }, [loadDisputes]);
+
+  // ── Update single dispute in place — no full reload on status change ───────
+  const updateLocalDispute = useCallback((disputeId: number, patch: Partial<Dispute>) => {
+    setDisputes(prev => prev.map(d => d.dispute_id === disputeId ? { ...d, ...patch } : d));
+    setSelected(prev => prev?.dispute_id === disputeId ? { ...prev, ...patch } : prev);
+  }, []);
 
   const stats = {
     total:    disputes.length,
@@ -376,19 +397,8 @@ const AdminIncidentsPage = () => {
     resolved: disputes.filter(d => d.status === 'RESOLVED').length,
   };
 
-  const filtered = useMemo(() => disputes.filter(d => {
-    const q = search.trim().toLowerCase();
-    const matchSearch =
-      !q ||
-      String(d.dispute_id).includes(q) ||
-      d.customer_id.toLowerCase().includes(q) ||
-      (d.dispute_type?.reason_name ?? '').toLowerCase().includes(q) ||
-      d.status.toLowerCase().includes(q) ||
-      d.priority.toLowerCase().includes(q);
-    const matchStatus   = statusFilter   === 'all' || d.status   === statusFilter;
-    const matchPriority = priorityFilter === 'all' || d.priority === priorityFilter;
-    return matchSearch && matchStatus && matchPriority;
-  }), [disputes, search, statusFilter, priorityFilter]);
+  // filtered = disputes (server already filtered; kept for count display consistency)
+  const filtered = disputes;
 
   return (
     <div className="p-6 max-w-screen-xl mx-auto">
@@ -430,7 +440,7 @@ const AdminIncidentsPage = () => {
             className="input-base pl-9 py-2 text-sm"
             placeholder="Search by ID, customer, type…"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => handleSearchChange(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-2">
@@ -478,7 +488,7 @@ const AdminIncidentsPage = () => {
       </div>
 
       {selected && (
-        <IncidentDrawer dispute={selected} onClose={() => setSelected(null)} onStatusUpdate={loadDisputes} />
+        <IncidentDrawer dispute={selected} onClose={() => setSelected(null)} onStatusUpdate={updateLocalDispute} />
       )}
     </div>
   );

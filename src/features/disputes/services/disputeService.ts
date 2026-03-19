@@ -42,6 +42,7 @@ export interface Dispute {
   latest_analysis?: AIAnalysis | null;
   open_questions_count?: number;
   assigned_to?: string | null;
+  has_new_customer_message?: boolean;  // from dispute_new_message table
 }
 
 export interface DisputeListResponse {
@@ -226,6 +227,14 @@ export const disputeService = {
     return data;
   },
 
+  bulkDetail: async (ids: number[]): Promise<Dispute[]> => {
+    if (!ids.length) return [];
+    const { data } = await axiosInstance.get<Dispute[]>(`${DISPUTES_BASE}/bulk-detail`, {
+      params: { ids: ids.join(',') },
+    });
+    return data;
+  },
+
   getTimeline: async (disputeId: number): Promise<{
     dispute_id: number;
     customer_id: string;
@@ -322,6 +331,131 @@ export const emailService = {
 
   getEmail: async (emailId: number): Promise<EmailResponse> => {
     const { data } = await axiosInstance.get<EmailResponse>(`${EMAILS_BASE}/${emailId}`);
+    return data;
+  },
+};
+// ─── AI Draft Email ───────────────────────────────────────────────────────────
+
+export interface DraftEmailResponse {
+  dispute_id: number;
+  draft_body: string;
+  customer_id: string;
+  suggested_subject: string;
+}
+
+export const newMessageService = {
+  /**
+   * Calls PATCH /dispute/api/v1/disputes/{id}/mark-read
+   * Clears the has_new_message flag in the dispute_new_message table.
+   * Called whenever an FA opens a dispute modal.
+   */
+  markDisputeRead: async (disputeId: number): Promise<void> => {
+    await axiosInstance.patch(`${DISPUTES_BASE}/${disputeId}/mark-read`);
+  },
+};
+
+export const draftEmailService = {
+  /**
+   * Calls POST /dispute/api/v1/disputes/{id}/draft-email
+   * Backend uses Groq (llama-3.3-70b-versatile) to generate the draft.
+   */
+  generateDraft: async (disputeId: number): Promise<DraftEmailResponse> => {
+    const { data } = await axiosInstance.post<DraftEmailResponse>(
+      `${DISPUTES_BASE}/${disputeId}/draft-email`
+    );
+    return data;
+  },
+};
+
+
+// ─── FA Manual Dispute Creation ───────────────────────────────────────────────
+
+export interface FADisputeCreate {
+  customer_id:       string;
+  dispute_type_id?:  number | null;
+  custom_type_name?: string | null;
+  custom_type_desc?: string | null;
+  priority:          'LOW' | 'MEDIUM' | 'HIGH';
+  description:       string;
+  invoice_id?:       number | null;
+  notes?:            string | null;
+}
+
+// ─── Dispute Documents ────────────────────────────────────────────────────────
+
+export interface DisputeDocument {
+  document_id:   number;
+  dispute_id:    number;
+  uploaded_by:   number;
+  uploader_name: string | null;
+  file_name:     string;
+  file_type:     string;
+  file_size:     number | null;
+  display_name:  string | null;
+  notes:         string | null;
+  download_url:  string;
+  created_at:    string;
+}
+
+export interface DisputeDocumentListResponse {
+  dispute_id: number;
+  total:      number;
+  items:      DisputeDocument[];
+}
+
+export interface DisputeType {
+  dispute_type_id: number;
+  reason_name:     string;
+  description:     string | null;
+  is_active:       boolean;
+}
+
+export const faDisputeService = {
+  /** Create a dispute manually — no email required */
+  create: async (data: FADisputeCreate): Promise<Dispute> => {
+    const { data: res } = await axiosInstance.post<Dispute>(`${DISPUTES_BASE}/create`, data);
+    return res;
+  },
+};
+
+export const disputeDocumentService = {
+  /** Upload a supporting document to a dispute */
+  upload: async (
+    disputeId:   number,
+    file:        File,
+    displayName?: string,
+    notes?:       string,
+  ): Promise<DisputeDocument> => {
+    const form = new FormData();
+    form.append('file', file);
+    if (displayName) form.append('display_name', displayName);
+    if (notes)       form.append('notes', notes);
+    const { data } = await axiosInstance.post<DisputeDocument>(
+      `${DISPUTES_BASE}/${disputeId}/documents`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return data;
+  },
+
+  /** List all uploaded documents for a dispute */
+  list: async (disputeId: number): Promise<DisputeDocumentListResponse> => {
+    const { data } = await axiosInstance.get<DisputeDocumentListResponse>(
+      `${DISPUTES_BASE}/${disputeId}/documents`
+    );
+    return data;
+  },
+
+  /** Delete a document */
+  delete: async (disputeId: number, documentId: number): Promise<void> => {
+    await axiosInstance.delete(`${DISPUTES_BASE}/${disputeId}/documents/${documentId}`);
+  },
+};
+
+export const disputeTypeService = {
+  /** List all active dispute types for the create form dropdown */
+  list: async (): Promise<DisputeType[]> => {
+    const { data } = await axiosInstance.get<DisputeType[]>(`/dispute/api/v1/dispute-types`);
     return data;
   },
 };

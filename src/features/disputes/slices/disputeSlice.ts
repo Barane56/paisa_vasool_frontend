@@ -37,9 +37,8 @@ export const fetchDisputes = createAsyncThunk(
     if (!res || res.items.length === 0) {
       res = await disputeService.list({ limit: 100, offset: 0 });
     }
-    const detailed = await Promise.all(
-      res.items.map((d) => disputeService.getDetail(d.dispute_id).catch(() => d))
-    );
+    const ids = res.items.map((d: { dispute_id: number }) => d.dispute_id);
+    const detailed = ids.length ? await disputeService.bulkDetail(ids) : [];
     return { items: detailed, total: res.total };
   }
 );
