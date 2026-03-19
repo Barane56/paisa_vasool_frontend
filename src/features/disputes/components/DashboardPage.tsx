@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import {
   Search, Filter, Clock, CheckCircle2, AlertCircle, FileText,
   X, ChevronRight, Brain, MessageSquare,
   User2, RefreshCw, Loader2, AlertTriangle, Receipt,
   Calendar, DollarSign, Building2, Hash, Zap,
   ArrowUpRight, Package, CheckCheck, TrendingUp, CreditCard,
-  Send, Paperclip, Mail, Download,
+  Send, Paperclip, Mail, Download, Sparkles, Wand2, Plus, Upload, Trash2, FileIcon, Eye,
 } from 'lucide-react';
 import { useUser } from '@/hooks';
 import { Badge } from '@/components/ui';
@@ -13,7 +14,13 @@ import { PageHeader, EmptyState, LoadingSpinner } from '@/components/common';
 import { formatDate, formatCurrency } from '@/utils';
 import {
   disputeService,
-  Dispute, InvoiceData, PaymentDetailData, TimelineEpisode, TimelineAttachment,
+  draftEmailService,
+  newMessageService,
+  faDisputeService,
+  disputeDocumentService,
+  disputeTypeService,
+  Dispute, DisputeDocument, DisputeType as DisputeTypeOption,
+  InvoiceData, PaymentDetailData, TimelineEpisode, TimelineAttachment,
 } from '../services/disputeService';
 import { mailboxService, OutboundEmail } from '@/services/mailboxService';
 import clsx from 'clsx';
@@ -45,7 +52,7 @@ const StatCard = ({ icon: Icon, label, value, accent, sub }: {
     </div>
     <div className="min-w-0">
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest truncate">{label}</p>
-      <p className="font-display text-3xl font-bold text-surface-900 leading-tight">{value}</p>
+      <p className="font-display text-3xl font-bold text-surface-800 leading-tight">{value}</p>
       {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
     </div>
   </div>
@@ -65,7 +72,7 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
           <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center shrink-0"><Receipt size={16} className="text-violet-600" /></div>
           <div className="min-w-0">
             <p className="text-xs text-violet-500 font-semibold uppercase tracking-wider">Invoice</p>
-            <p className="font-display font-bold text-surface-900 text-sm truncate">{d.invoice_number ?? invoice.invoice_number}</p>
+            <p className="font-display font-bold text-surface-800 text-sm truncate">{d.invoice_number ?? invoice.invoice_number}</p>
           </div>
         </div>
         {invoice.invoice_url && (<a href={invoice.invoice_url} target="_blank" rel="noopener noreferrer" className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-violet-600 hover:text-violet-700 bg-white border border-violet-200 hover:border-violet-400 px-3 py-1.5 rounded-lg transition-all">View PDF <ArrowUpRight size={12} /></a>)}
@@ -85,14 +92,14 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
         <div className="px-5 py-4 border-b border-surface-100">
           <div className="flex items-center gap-1.5 mb-3"><Package size={13} className="text-gray-500" /><p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Line Items</p></div>
           <div className="space-y-1.5">
-            {items.map((item, i) => (<div key={i} className="flex items-baseline justify-between gap-4 text-sm"><span className="text-surface-800 flex-1 min-w-0 truncate">{item.description}</span><span className="text-gray-500 shrink-0 text-xs">{(item.qty ?? item.quantity) != null ? `× ${item.qty ?? item.quantity}` : ''}{item.unit_price != null ? ` @ ${formatCurrency(item.unit_price, cur)}` : ''}</span>{item.total != null && <span className="font-semibold text-surface-900 shrink-0">{formatCurrency(item.total, cur)}</span>}</div>))}
+            {items.map((item, i) => (<div key={i} className="flex items-baseline justify-between gap-4 text-sm"><span className="text-surface-800 flex-1 min-w-0 truncate">{item.description}</span><span className="text-gray-500 shrink-0 text-xs">{(item.qty ?? item.quantity) != null ? `× ${item.qty ?? item.quantity}` : ''}{item.unit_price != null ? ` @ ${formatCurrency(item.unit_price, cur)}` : ''}</span>{item.total != null && <span className="font-semibold text-surface-800 shrink-0">{formatCurrency(item.total, cur)}</span>}</div>))}
           </div>
         </div>
       )}
       <div className="px-5 py-4 space-y-2">
         {d.subtotal != null && <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span className="font-medium text-surface-800">{formatCurrency(d.subtotal, cur)}</span></div>}
         {d.tax_amount != null && <div className="flex justify-between text-sm"><span className="text-gray-500">Tax (GST/VAT)</span><span className="font-medium text-surface-800">{formatCurrency(d.tax_amount, cur)}</span></div>}
-        {d.total_amount != null && <div className="flex justify-between items-center pt-2 mt-2 border-t border-surface-100"><span className="font-bold text-surface-900">Total</span><span className="font-display font-bold text-xl text-violet-600">{formatCurrency(d.total_amount, cur)}</span></div>}
+        {d.total_amount != null && <div className="flex justify-between items-center pt-2 mt-2 border-t border-surface-100"><span className="font-bold text-surface-800">Total</span><span className="font-display font-bold text-xl text-violet-600">{formatCurrency(d.total_amount, cur)}</span></div>}
       </div>
     </div>
   );
@@ -108,7 +115,7 @@ const PaymentRow = ({ payment, index }: { payment: PaymentDetailData; index: num
         <div className="w-7 h-7 rounded-full bg-surface-100 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold text-surface-600">{d.payment_sequence ?? index + 1}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <span className="font-semibold text-surface-900 text-sm">{d.payment_reference ?? `Payment #${payment.payment_detail_id}`}</span>
+            <span className="font-semibold text-surface-800 text-sm">{d.payment_reference ?? `Payment #${payment.payment_detail_id}`}</span>
             <div className="flex items-center gap-2 shrink-0">
               {d.status && <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusColor}`}>{d.status as string}</span>}
               {payment.payment_url && <a href={payment.payment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-700">PDF <ArrowUpRight size={10} /></a>}
@@ -133,7 +140,7 @@ const PaymentListCard = ({ payments }: { payments: PaymentDetailData[] }) => {
       <div className="bg-green-50 px-5 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-green-200 flex items-center justify-center shrink-0"><CreditCard size={16} className="text-green-700" /></div>
-          <div className="min-w-0"><p className="text-xs text-green-600 font-semibold uppercase tracking-wider">Payments</p><p className="font-display font-bold text-surface-900 text-sm">{payments.length} record{payments.length !== 1 ? 's' : ''}</p></div>
+          <div className="min-w-0"><p className="text-xs text-green-600 font-semibold uppercase tracking-wider">Payments</p><p className="font-display font-bold text-surface-800 text-sm">{payments.length} record{payments.length !== 1 ? 's' : ''}</p></div>
         </div>
         {totalPaid > 0 && <div className="shrink-0 text-right"><p className="text-xs text-gray-500">Cleared</p><p className="font-display font-bold text-green-700 text-lg">{formatCurrency(totalPaid)}</p></div>}
       </div>
@@ -266,12 +273,17 @@ const DocRow = ({ icon: Icon, iconBg, label, sublabel, meta, url, urlLabel, load
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5">{label}</p>
         {loading ? (<div className="flex items-center gap-2 mt-1"><Loader2 size={14} className="animate-spin text-gray-500" /><span className="text-sm text-gray-500">Fetching details…</span></div>)
           : missing ? (<p className="text-sm text-gray-400 italic">{missingText}</p>)
-          : (<><p className="font-display font-bold text-surface-900">{sublabel}</p>{meta && meta.length > 0 && (<div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">{meta.map(({ icon: Ic, text }, i) => (<div key={i} className="flex items-center gap-1.5"><Ic size={12} className="text-gray-500 shrink-0" /><span className="text-xs text-surface-800">{text}</span></div>))}</div>)}</>)}
+          : (<><p className="font-display font-bold text-surface-800">{sublabel}</p>{meta && meta.length > 0 && (<div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">{meta.map(({ icon: Ic, text }, i) => (<div key={i} className="flex items-center gap-1.5"><Ic size={12} className="text-gray-500 shrink-0" /><span className="text-xs text-surface-800">{text}</span></div>))}</div>)}</>)}
       </div>
       {!loading && !missing && url && (<a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 border border-violet-200 px-3 py-2 rounded-xl transition-all shrink-0">{urlLabel} <ArrowUpRight size={12} /></a>)}
     </div>
   </div>
 );
+
+// ─── AI Draft generation ──────────────────────────────────────────────────────
+// Draft is generated by the backend using Groq (llama-3.3-70b-versatile).
+// The backend reads the full dispute timeline and metadata, so no extra
+// API calls are needed from the frontend.
 
 // ─── Send Email Panel ─────────────────────────────────────────────────────────
 const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSent: () => void }) => {
@@ -282,6 +294,9 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
   const [files, setFiles]     = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const [newThread, setNewThread] = useState(false);
+  const [draftLoading, setDraftLoading]   = useState(false);
+  const [draftError, setDraftError]       = useState<string | null>(null);
+  const [isDraftFromAI, setIsDraftFromAI] = useState(false);   // true only when AI generated, reset on manual edit
   const fileRef = useRef<HTMLInputElement>(null);
 
   // When toggling thread mode, update subject to match expected behaviour
@@ -291,6 +306,28 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
       setSubj(`[DISP-${String(dispute.dispute_id).padStart(5, '0')}] ${dispute.dispute_type?.reason_name ?? 'Your Dispute'}`);
     } else {
       setSubj(defaultSubject);
+    }
+  };
+
+  // ── AI Draft ────────────────────────────────────────────────────────────────
+  const handleAIDraft = async () => {
+    setDraftLoading(true);
+    setDraftError(null);
+    try {
+      // Single backend call — Groq generates the draft server-side
+      const result = await draftEmailService.generateDraft(dispute.dispute_id);
+      setBody(result.draft_body);
+      setIsDraftFromAI(true);
+      // Also update subject if it's still the default
+      if (subject === defaultSubject) {
+        setSubj(result.suggested_subject);
+      }
+      toast.success('AI draft ready — review before sending!');
+    } catch {
+      setDraftError('Failed to generate draft. Check your connection and try again.');
+      toast.error('AI draft generation failed');
+    } finally {
+      setDraftLoading(false);
     }
   };
 
@@ -320,7 +357,7 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
   return (
     <div className="flex flex-col h-full">
       <div className="p-6">
-        <h3 className="text-sm font-bold text-surface-900 flex items-center gap-2 mb-5">
+        <h3 className="text-sm font-bold text-surface-800 flex items-center gap-2 mb-5">
           <Mail size={15} className="text-violet-500" /> Compose Email
         </h3>
 
@@ -363,6 +400,51 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
           }
         </div>
 
+        {/* ── AI Draft Banner ───────────────────────────────────────────────── */}
+        <div className="rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50 px-5 py-4 mb-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
+                <Sparkles size={16} className="text-purple-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-purple-900">AI Email Draft</p>
+                <p className="text-xs text-purple-600 mt-0.5 leading-relaxed">
+                  Reads the entire conversation history and generates a professional reply for you to review and edit.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleAIDraft}
+              disabled={draftLoading}
+              className={clsx(
+                'shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all',
+                draftLoading
+                  ? 'bg-purple-100 text-purple-400 cursor-not-allowed'
+                  : 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm hover:shadow-md'
+              )}
+            >
+              {draftLoading ? (
+                <><Loader2 size={14} className="animate-spin" /> Drafting…</>
+              ) : (
+                <><Wand2 size={14} /> Generate Draft</>
+              )}
+            </button>
+          </div>
+          {draftError && (
+            <div className="mt-3 flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+              <AlertTriangle size={12} className="shrink-0 mt-0.5" />
+              {draftError}
+            </div>
+          )}
+          {isDraftFromAI && !draftLoading && (
+            <div className="mt-3 flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-100 rounded-xl px-3 py-2">
+              <CheckCheck size={12} className="shrink-0" />
+              Draft generated — review and edit below before sending.
+            </div>
+          )}
+        </div>
+
         <div className="space-y-3">
           <div>
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">To</label>
@@ -373,8 +455,25 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
             <input className="input-base text-sm py-2" value={subject} onChange={e => setSubj(e.target.value)} />
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Message</label>
-            <textarea className="input-base text-sm py-2 resize-none" rows={7} placeholder="Type your message here…" value={body} onChange={e => setBody(e.target.value)} />
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1 flex items-center gap-1.5">
+              Message
+              {draftLoading && (
+                <span className="flex items-center gap-1 text-purple-500 font-medium">
+                  <Loader2 size={10} className="animate-spin" /> AI is writing…
+                </span>
+              )}
+            </label>
+            <textarea
+              className={clsx(
+                'input-base text-sm py-2 resize-none transition-all',
+                draftLoading && 'opacity-50 pointer-events-none',
+                isDraftFromAI && !draftLoading && 'border-purple-300 ring-1 ring-purple-200'
+              )}
+              rows={9}
+              placeholder={draftLoading ? 'Generating AI draft…' : 'Type your message here, or click Generate Draft above…'}
+              value={body}
+              onChange={e => { setBody(e.target.value); setIsDraftFromAI(false); }}
+            />
           </div>
 
           {files.length > 0 && (
@@ -519,7 +618,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                   </span>
                   <Badge variant={p.badge}>{p.label} Priority</Badge>
                 </div>
-                <h2 className="font-display font-bold text-surface-900 text-xl leading-snug">{dispute.dispute_type?.reason_name ?? 'Unknown Dispute'}</h2>
+                <h2 className="font-display font-bold text-surface-800 text-xl leading-snug">{dispute.dispute_type?.reason_name ?? 'Unknown Dispute'}</h2>
                 <p className="text-sm text-gray-500 mt-1.5 flex items-center gap-2">
                   <Building2 size={13} className="shrink-0" />{dispute.customer_id}
                   <span className="text-gray-300 mx-0.5">·</span>
@@ -553,7 +652,19 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                 <div className="px-8 py-6 space-y-6">
                   <section>
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Dispute Description</h3>
-                    <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">{dispute.latest_analysis?.ai_summary || <em className="text-gray-400">No description available</em>}</p>
+                    {dispute.latest_analysis?.ai_summary && dispute.latest_analysis?.ai_summary.trim() ? (
+                      <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5 whitespace-pre-wrap">{dispute.latest_analysis?.ai_summary.trim()}</p>
+                    ) : dispute.description ? (
+                      <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">{dispute.description}</p>
+                    ) : (
+                      <p className="text-sm bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5"><em className="text-gray-400">No description available</em></p>
+                    )}
+                    {/* {dispute.description && dispute.description.trim() && dispute.latest_analysis?.ai_summary && (
+                      <div className="mt-2 px-4 py-2.5 bg-purple-50 border border-purple-100 rounded-xl">
+                        <p className="text-xs font-bold text-purple-500 uppercase tracking-wider mb-1">AI Summary</p>
+                        <p className="text-xs text-purple-800">{dispute.latest_analysis.ai_summary}</p>
+                      </div>
+                    )} */}
                   </section>
 
                   <section>
@@ -567,7 +678,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                       ].map(({ label, val }) => (
                         <div key={label} className="bg-surface-50 border border-surface-100 rounded-xl px-3.5 py-3">
                           <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-0.5">{label}</p>
-                          <p className="text-sm font-bold text-surface-900 truncate">{val}</p>
+                          <p className="text-sm font-bold text-surface-800 truncate">{val}</p>
                         </div>
                       ))}
                     </div>
@@ -668,6 +779,15 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                         </div>
                       ) : (<DocRow icon={CreditCard} iconBg="bg-green-600" label="Payment Records" missing missingText="No payment records found" urlLabel="Open" />)}
                   </section>
+
+                  {/* Other Documents — FA uploads, visible to all FAs on this dispute */}
+                  <section>
+                    <div className="flex items-center gap-2 mb-3">
+                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><Upload size={11} /> Other Documents</h3>
+                      <span className="text-xs text-gray-400 font-normal normal-case">(any supporting files — visible to all FAs on this dispute)</span>
+                    </div>
+                    <DisputeDocumentsPanel dispute={dispute} />
+                  </section>
                 </div>
               )}
 
@@ -683,7 +803,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Customer</p>
                     <div className="flex items-center gap-2.5 bg-white border border-surface-200 rounded-xl px-3.5 py-3">
                       <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0"><User2 size={14} className="text-blue-600" /></div>
-                      <div className="min-w-0"><p className="text-sm font-bold text-surface-900 truncate">{dispute.customer_id}</p><p className="text-xs text-gray-400">Customer ID</p></div>
+                      <div className="min-w-0"><p className="text-sm font-bold text-surface-800 truncate">{dispute.customer_id}</p><p className="text-xs text-gray-400">Customer ID</p></div>
                     </div>
                   </div>
                   <div>
@@ -738,11 +858,24 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
 const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => void }) => {
   const s = sc(dispute.status);
   const p = pc(dispute.priority);
+  const hasNew = dispute.has_new_customer_message ?? false;
   return (
-    <tr className="group cursor-pointer hover:bg-violet-50/60 transition-colors duration-100" onClick={onClick}>
-      <td className="px-5 py-3.5"><code className="text-xs font-mono text-gray-700 bg-surface-100 px-2 py-0.5 rounded-lg">#{dispute.dispute_id}</code></td>
+    <tr className={clsx('group cursor-pointer transition-colors duration-100', hasNew ? 'bg-blue-50/40 hover:bg-blue-50' : 'hover:bg-violet-50/60')} onClick={onClick}>
+      <td className="px-5 py-3.5">
+        <div className="flex items-center gap-2">
+          {hasNew && <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0 animate-pulse" title="New customer message" />}
+          <code className="text-xs font-mono text-gray-700 bg-surface-100 px-2 py-0.5 rounded-lg">#{dispute.dispute_id}</code>
+        </div>
+      </td>
       <td className="px-5 py-3.5 max-w-[240px]">
-        <p className="text-sm font-semibold text-surface-900 truncate">{dispute.dispute_type?.reason_name ?? 'Unknown'}</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-sm font-semibold text-surface-800 truncate">{dispute.dispute_type?.reason_name ?? 'Unknown'}</p>
+          {hasNew && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full shrink-0">
+              <MessageSquare size={9} /> New message
+            </span>
+          )}
+        </div>
         <p className="text-xs text-gray-500 truncate mt-0.5">{dispute.customer_id}</p>
       </td>
       <td className="px-5 py-3.5">
@@ -757,9 +890,436 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
   );
 };
 
+// ─── Create Dispute Modal ─────────────────────────────────────────────────────
+const CreateDisputeModal = ({ onClose, onCreated }: {
+  onClose: () => void;
+  onCreated: (d: Dispute) => void;
+}) => {
+  const [disputeTypes, setDisputeTypes] = useState<DisputeTypeOption[]>([]);
+  const [selectedTypeId, setSelectedTypeId] = useState<number | ''>('');
+  const [customTypeName, setCustomTypeName] = useState('');
+  const [customTypeDesc, setCustomTypeDesc] = useState('');
+  const [useCustom, setUseCustom] = useState(false);
+  const [customerId, setCustomerId] = useState('');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [invoiceLookup, setInvoiceLookup] = useState<{ id: number; number: string; vendor?: string; total?: number } | null>(null);
+  const [invoiceLookupLoading, setInvoiceLookupLoading] = useState(false);
+  const [invoiceLookupError, setInvoiceLookupError] = useState<string | null>(null);
+  const [priority, setPriority] = useState<'LOW'|'MEDIUM'|'HIGH'>('MEDIUM');
+  const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    disputeTypeService.list().then(setDisputeTypes).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [onClose]);
+
+  const handleInvoiceLookup = async () => {
+    if (!invoiceNumber.trim()) return;
+    try {
+      setInvoiceLookupLoading(true);
+      setInvoiceLookupError(null);
+      const { default: axiosInstance } = await import('@/lib/axios');
+      // Pass customer_email so the backend enforces ownership — same logic as agent pipeline
+      const params: Record<string, string> = {};
+      if (customerId.trim()) params.customer_email = customerId.trim();
+      const { data } = await axiosInstance.get(
+        `/dispute/api/v1/invoices/by-number/${encodeURIComponent(invoiceNumber.trim())}`,
+        { params }
+      );
+      setInvoiceLookup({
+        id: data.invoice_id,
+        number: data.invoice_number,
+        vendor: data.invoice_details?.vendor_name,
+        total: data.invoice_details?.total_amount,
+      });
+    } catch (err: unknown) {
+      const status = (err as { status_code?: number })?.status_code;
+      if (status === 403) {
+        setInvoiceLookupError('This invoice does not belong to this customer — ownership check failed');
+      } else {
+        setInvoiceLookupError('Invoice not found — check the number and try again');
+      }
+      setInvoiceLookup(null);
+    } finally {
+      setInvoiceLookupLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!customerId.trim()) { toast.error('Customer email is required'); return; }
+    if (!description.trim()) { toast.error('Description is required'); return; }
+    if (!useCustom && !selectedTypeId) { toast.error('Select a dispute type or enter a custom one'); return; }
+    if (useCustom && !customTypeName.trim()) { toast.error('Custom type name is required'); return; }
+
+    try {
+      setSubmitting(true);
+      const dispute = await faDisputeService.create({
+        customer_id:      customerId.trim(),
+        dispute_type_id:  useCustom ? null : Number(selectedTypeId),
+        custom_type_name: useCustom ? customTypeName.trim() : null,
+        custom_type_desc: useCustom ? customTypeDesc.trim() : null,
+        priority,
+        description:      description.trim(),
+        invoice_id:       invoiceLookup?.id ?? null,
+      });
+      toast.success(`Dispute #${dispute.dispute_id} created`);
+      onCreated(dispute);
+      onClose();
+    } catch { toast.error('Failed to create dispute'); }
+    finally { setSubmitting(false); }
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-modal w-full max-w-lg animate-scale-in overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-7 py-5 border-b border-surface-100 bg-gradient-to-r from-violet-50 to-white">
+            <div>
+              <h2 className="font-display font-bold text-surface-800 text-lg">Create New Dispute</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Manually open a dispute without an inbound email</p>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-surface-100 text-gray-400"><X size={18} /></button>
+          </div>
+
+          {/* Body */}
+          <div className="px-7 py-6 space-y-5 max-h-[70vh] overflow-y-auto">
+            {/* Customer ID */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Customer Email *</label>
+              <input className="input-base text-sm" placeholder="customer@domain.com" value={customerId} onChange={e => setCustomerId(e.target.value)} />
+            </div>
+
+            {/* Invoice Number */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
+                Invoice Number <span className="text-gray-400 font-normal normal-case">(optional — helps anchor the dispute)</span>
+              </label>
+              <div className="flex gap-2">
+                <input
+                  className="input-base text-sm flex-1"
+                  placeholder="e.g. INV-2024-001"
+                  value={invoiceNumber}
+                  onChange={e => { setInvoiceNumber(e.target.value); setInvoiceLookup(null); setInvoiceLookupError(null); }}
+                  onBlur={handleInvoiceLookup}
+                  onKeyDown={e => e.key === 'Enter' && handleInvoiceLookup()}
+                />
+                <button
+                  type="button"
+                  onClick={handleInvoiceLookup}
+                  disabled={!invoiceNumber.trim() || invoiceLookupLoading}
+                  className="px-3 py-2 rounded-xl border border-surface-200 hover:border-violet-300 text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all disabled:opacity-40 shrink-0"
+                >
+                  {invoiceLookupLoading ? <Loader2 size={13} className="animate-spin" /> : 'Lookup'}
+                </button>
+              </div>
+              {invoiceLookup && (
+                <div className="mt-2 flex items-start gap-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
+                  <CheckCircle2 size={13} className="shrink-0 mt-0.5 text-green-500" />
+                  <div>
+                    <p className="font-bold">{invoiceLookup.number} — found ✓</p>
+                    <p className="text-green-600 mt-0.5">
+                      {invoiceLookup.vendor && <span>{invoiceLookup.vendor}</span>}
+                      {invoiceLookup.total != null && <span> · {formatCurrency(invoiceLookup.total)}</span>}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {invoiceLookupError && (
+                <div className="mt-2 flex items-center gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                  <AlertTriangle size={12} className="shrink-0" /> {invoiceLookupError}
+                </div>
+              )}
+            </div>
+
+            {/* Dispute Type */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Dispute Type *</label>
+              <div className="flex items-center gap-2 p-1 bg-surface-100 rounded-xl mb-3 w-fit">
+                <button onClick={() => setUseCustom(false)} className={clsx('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all', !useCustom ? 'bg-white text-violet-700 shadow-sm border border-violet-200' : 'text-gray-500')}>
+                  Pick existing
+                </button>
+                <button onClick={() => setUseCustom(true)} className={clsx('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all', useCustom ? 'bg-white text-orange-600 shadow-sm border border-orange-200' : 'text-gray-500')}>
+                  Create new type
+                </button>
+              </div>
+              {!useCustom ? (
+                <select className="input-base text-sm" value={selectedTypeId} onChange={e => setSelectedTypeId(e.target.value as any)}>
+                  <option value="">— Select a dispute type —</option>
+                  {disputeTypes.map(t => <option key={t.dispute_type_id} value={t.dispute_type_id}>{t.reason_name}</option>)}
+                </select>
+              ) : (
+                <div className="space-y-3">
+                  <input className="input-base text-sm" placeholder="Type name e.g. 'Currency Exchange Dispute'" value={customTypeName} onChange={e => setCustomTypeName(e.target.value)} />
+                  <textarea className="input-base text-sm resize-none" rows={2} placeholder="Short description (optional)" value={customTypeDesc} onChange={e => setCustomTypeDesc(e.target.value)} />
+                  <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+                    <AlertTriangle size={12} className="shrink-0 mt-0.5" />
+                    This will create a new dispute type in the system permanently.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Priority */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Priority</label>
+              <div className="flex gap-2">
+                {(['LOW','MEDIUM','HIGH'] as const).map(p => (
+                  <button key={p} onClick={() => setPriority(p)} className={clsx('flex-1 py-2 rounded-xl text-xs font-bold border transition-all', priority === p
+                    ? p === 'HIGH' ? 'bg-red-500 text-white border-red-500' : p === 'MEDIUM' ? 'bg-amber-400 text-white border-amber-400' : 'bg-green-500 text-white border-green-500'
+                    : 'bg-white text-gray-500 border-surface-200 hover:border-surface-300'
+                  )}>{p}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Description *</label>
+              <textarea className="input-base text-sm resize-none" rows={4} placeholder="Describe the dispute — what's the issue, which invoice, what amount…" value={description} onChange={e => setDescription(e.target.value)} />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 px-7 py-4 border-t border-surface-100 bg-surface-50">
+            <button onClick={onClose} className="btn-secondary btn-sm">Cancel</button>
+            <button onClick={handleSubmit} disabled={submitting} className="btn-primary btn-sm flex items-center gap-2">
+              {submitting ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+              {submitting ? 'Creating…' : 'Create Dispute'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// ─── Auth-aware file download helper ────────────────────────────────────────
+// Fetches via axios (sends JWT cookie) so protected API endpoints work.
+// Passes ?mode= so backend sets correct Content-Disposition header.
+async function fetchAndOpenDoc(url: string, fileName: string, mode: 'view' | 'save') {
+  try {
+    const { default: axiosInst } = await import('@/lib/axios');
+    // Append mode param so backend sets inline vs attachment disposition
+    const sep = url.includes('?') ? '&' : '?';
+    const fullUrl = `${url}${sep}mode=${mode}`;
+    const response = await axiosInst.get(fullUrl, { responseType: 'blob' });
+    const contentType = response.headers['content-type'] || 'application/octet-stream';
+    const blob = new Blob([response.data], { type: contentType });
+    const blobUrl = URL.createObjectURL(blob);
+
+    if (mode === 'view') {
+      // Open in new tab — browser will render PDF/images inline
+      window.open(blobUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      // Force download
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+    // Revoke after enough time for browser to load the content
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000);
+  } catch {
+    toast.error('Could not open file — please try again');
+  }
+}
+
+// ─── Dispute Documents Panel ──────────────────────────────────────────────────
+const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
+  const [docs, setDocs] = useState<DisputeDocument[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [notes, setNotes] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await disputeDocumentService.list(dispute.dispute_id);
+      setDocs(res.items);
+    } catch { setDocs([]); }
+    finally { setLoading(false); }
+  }, [dispute.dispute_id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    try {
+      setUploading(true);
+      const doc = await disputeDocumentService.upload(dispute.dispute_id, file, file.name, notes || undefined);
+      setDocs(prev => [doc, ...prev]);
+      setNotes('');
+      toast.success(`${file.name} uploaded`);
+    } catch { toast.error('Upload failed'); }
+    finally { setUploading(false); }
+  };
+
+  const handleDelete = async (docId: number, fileName: string) => {
+    if (!confirm(`Delete "${fileName}"?`)) return;
+    try {
+      await disputeDocumentService.delete(dispute.dispute_id, docId);
+      setDocs(prev => prev.filter(d => d.document_id !== docId));
+      toast.success('Document deleted');
+    } catch { toast.error('Delete failed'); }
+  };
+
+  /**
+   * Open or download a document.
+   * download_url is a protected API endpoint — we must fetch it with axios
+   * (which sends the JWT cookie) then create a temporary blob URL.
+   * This avoids the 401 that a bare <a href> would get.
+   */
+  const handleDocOpen = async (doc: DisputeDocument, forceDownload: boolean) => {
+    try {
+      const { default: axiosInstance } = await import('@/lib/axios');
+      const res = await axiosInstance.get(doc.download_url, { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: doc.file_type || 'application/octet-stream' });
+      const blobUrl = URL.createObjectURL(blob);
+      if (forceDownload) {
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = doc.file_name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        window.open(blobUrl, '_blank');
+      }
+      // Revoke after a short delay to allow the browser to start loading
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
+    } catch {
+      toast.error('Could not open file — try downloading instead');
+    }
+  };
+
+  const formatSize = (bytes: number | null) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const fileIcon = (type: string) => {
+    if (type.includes('pdf')) return '📄';
+    if (type.includes('image')) return '🖼';
+    if (type.includes('sheet') || type.includes('excel') || type.includes('csv')) return '📊';
+    if (type.includes('word') || type.includes('document')) return '📝';
+    return '📎';
+  };
+
+  return (
+    <div className="px-8 py-6 space-y-6">
+      {/* Upload area */}
+      <div className="rounded-2xl border-2 border-dashed border-violet-200 bg-violet-50/40 p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
+            <Upload size={18} className="text-violet-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-surface-800 mb-0.5">Upload Supporting Document</p>
+            <p className="text-xs text-gray-500 mb-3">PDF, images, spreadsheets, Word docs — any file type accepted.</p>
+            <div className="flex items-center gap-2 mb-3">
+              <input
+                className="input-base text-xs py-1.5 flex-1"
+                placeholder="Notes about this document (optional)"
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+              />
+            </div>
+            <input ref={fileRef} type="file" className="hidden" onChange={handleUpload} />
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all disabled:opacity-50"
+            >
+              {uploading ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+              {uploading ? 'Uploading…' : 'Choose File'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Document list */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Uploaded Documents</p>
+          {docs.length > 0 && <span className="text-xs text-gray-400">{docs.length} file{docs.length !== 1 ? 's' : ''}</span>}
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-10 bg-surface-50 rounded-2xl border border-surface-100">
+            <Loader2 size={16} className="animate-spin text-violet-400" />
+            <span className="text-sm text-gray-500">Loading documents…</span>
+          </div>
+        ) : docs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 bg-surface-50 rounded-2xl border border-surface-100">
+            <FileIcon size={28} className="text-gray-300 mb-2" />
+            <p className="text-sm font-semibold text-surface-700">No documents uploaded yet</p>
+            <p className="text-xs text-gray-400 mt-0.5">Upload any file above to attach it to this dispute.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {docs.map(doc => (
+              <div key={doc.document_id} className="flex items-center gap-3 bg-white border border-surface-200 rounded-xl px-4 py-3 hover:border-violet-200 transition-all group">
+                <span className="text-2xl leading-none shrink-0">{fileIcon(doc.file_type)}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-surface-800 truncate">{doc.display_name || doc.file_name}</p>
+                  <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                    {doc.file_size && <span className="text-xs text-gray-400">{formatSize(doc.file_size)}</span>}
+                    {doc.uploader_name && <span className="text-xs text-gray-400">by {doc.uploader_name}</span>}
+                    <span className="text-xs text-gray-400">{formatDate(doc.created_at)}</span>
+                    {doc.notes && <span className="text-xs text-violet-600 italic truncate max-w-[180px]">{doc.notes}</span>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => fetchAndOpenDoc(doc.download_url, doc.file_name, 'view')}
+                    className="flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 px-2.5 py-1.5 rounded-lg transition-all"
+                    title="View file"
+                  >
+                    <Eye size={12} /> View
+                  </button>
+                  <button
+                    onClick={() => fetchAndOpenDoc(doc.download_url, doc.file_name, 'save')}
+                    className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-surface-800 bg-surface-100 hover:bg-surface-200 px-2.5 py-1.5 rounded-lg transition-all"
+                    title="Download file"
+                  >
+                    <Download size={12} /> Save
+                  </button>
+                  <button
+                    onClick={() => handleDelete(doc.document_id, doc.file_name)}
+                    className="flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition-all"
+                    title="Delete document"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const DashboardPage = () => {
   const user = useUser();
+  const { openDisputeId } = (useOutletContext<{ openDisputeId: number | null }>()) ?? { openDisputeId: null };
   const [disputes, setDisputes]             = useState<Dispute[]>([]);
   const [total, setTotal]                   = useState(0);
   const [loading, setLoading]               = useState(true);
@@ -769,7 +1329,20 @@ const DashboardPage = () => {
   const [statusFilter, setStatusFilter]     = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [selected, setSelected]             = useState<Dispute | null>(null);
+  const [showCreate, setShowCreate]           = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Open dispute when notification bell is clicked ─────────────────────────
+  useEffect(() => {
+    if (!openDisputeId || !disputes.length) return;
+    const target = disputes.find(d => d.dispute_id === openDisputeId);
+    if (target) {
+      setSelected(target);
+      // Mark read when opened from notification
+      newMessageService.markDisputeRead(openDisputeId).catch(() => {});
+      updateLocalDispute(openDisputeId, { has_new_customer_message: false } as Partial<Dispute>);
+    }
+  }, [openDisputeId, disputes]);
 
   // Debounce search input — fires server call 400ms after user stops typing
   const handleSearchChange = (val: string) => {
@@ -823,7 +1396,17 @@ const DashboardPage = () => {
       <PageHeader
         title={`Welcome back, ${user?.name?.split(' ')[0] ?? 'Associate'} 👋`}
         subtitle="Review and manage your assigned incident tickets below."
-        action={<button onClick={() => loadDisputes(true)} title="Refresh" className="p-2 rounded-xl hover:bg-surface-100 text-gray-500 hover:text-surface-800 transition-colors"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /></button>}
+        action={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+            >
+              <Plus size={15} /> New Dispute
+            </button>
+            <button onClick={() => loadDisputes(true)} title="Refresh" className="p-2 rounded-xl hover:bg-surface-100 text-gray-500 hover:text-surface-800 transition-colors"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /></button>
+          </div>
+        }
       />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard icon={FileText}     label="Total"     value={stats.total}    accent="bg-violet-600" />
@@ -879,7 +1462,18 @@ const DashboardPage = () => {
             {loading ? (
               <tr><td colSpan={6}><div className="flex items-center justify-center gap-3 py-20"><Loader2 size={22} className="animate-spin text-violet-400" /><span className="text-sm text-gray-500">Loading incidents…</span></div></td></tr>
             ) : disputes.length > 0 ? (
-              disputes.map(d => <DisputeRow key={d.dispute_id} dispute={d} onClick={() => setSelected(d)} />)
+              disputes.map(d => (
+                <DisputeRow
+                  key={d.dispute_id}
+                  dispute={d}
+                  onClick={() => {
+                    setSelected(d);
+                    // Clear new message flag on backend + locally in row
+                    newMessageService.markDisputeRead(d.dispute_id).catch(() => {});
+                    updateLocalDispute(d.dispute_id, { has_new_customer_message: false } as Partial<Dispute>);
+                  }}
+                />
+              ))
             ) : (
               <tr><td colSpan={6}><EmptyState title="No incidents found" description={error ? 'Could not load from server.' : 'Try adjusting your filters or search query.'} /></td></tr>
             )}
@@ -888,6 +1482,7 @@ const DashboardPage = () => {
       </div>
 
       {selected && <DisputeModal dispute={selected} onClose={() => setSelected(null)} onStatusUpdate={updateLocalDispute} />}
+      {showCreate && <CreateDisputeModal onClose={() => setShowCreate(false)} onCreated={(d) => { loadDisputes(); }} />}
     </div>
   );
 };
