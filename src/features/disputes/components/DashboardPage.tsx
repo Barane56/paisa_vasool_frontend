@@ -52,7 +52,7 @@ const StatCard = ({ icon: Icon, label, value, accent, sub }: {
     </div>
     <div className="min-w-0">
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest truncate">{label}</p>
-      <p className="font-display text-3xl font-bold text-surface-900 leading-tight">{value}</p>
+      <p className="font-display text-3xl font-bold text-surface-800 leading-tight">{value}</p>
       {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
     </div>
   </div>
@@ -72,7 +72,7 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
           <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center shrink-0"><Receipt size={16} className="text-violet-600" /></div>
           <div className="min-w-0">
             <p className="text-xs text-violet-500 font-semibold uppercase tracking-wider">Invoice</p>
-            <p className="font-display font-bold text-surface-900 text-sm truncate">{d.invoice_number ?? invoice.invoice_number}</p>
+            <p className="font-display font-bold text-surface-800 text-sm truncate">{d.invoice_number ?? invoice.invoice_number}</p>
           </div>
         </div>
         {invoice.invoice_url && (<a href={invoice.invoice_url} target="_blank" rel="noopener noreferrer" className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-violet-600 hover:text-violet-700 bg-white border border-violet-200 hover:border-violet-400 px-3 py-1.5 rounded-lg transition-all">View PDF <ArrowUpRight size={12} /></a>)}
@@ -92,14 +92,14 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
         <div className="px-5 py-4 border-b border-surface-100">
           <div className="flex items-center gap-1.5 mb-3"><Package size={13} className="text-gray-500" /><p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Line Items</p></div>
           <div className="space-y-1.5">
-            {items.map((item, i) => (<div key={i} className="flex items-baseline justify-between gap-4 text-sm"><span className="text-surface-800 flex-1 min-w-0 truncate">{item.description}</span><span className="text-gray-500 shrink-0 text-xs">{(item.qty ?? item.quantity) != null ? `× ${item.qty ?? item.quantity}` : ''}{item.unit_price != null ? ` @ ${formatCurrency(item.unit_price, cur)}` : ''}</span>{item.total != null && <span className="font-semibold text-surface-900 shrink-0">{formatCurrency(item.total, cur)}</span>}</div>))}
+            {items.map((item, i) => (<div key={i} className="flex items-baseline justify-between gap-4 text-sm"><span className="text-surface-800 flex-1 min-w-0 truncate">{item.description}</span><span className="text-gray-500 shrink-0 text-xs">{(item.qty ?? item.quantity) != null ? `× ${item.qty ?? item.quantity}` : ''}{item.unit_price != null ? ` @ ${formatCurrency(item.unit_price, cur)}` : ''}</span>{item.total != null && <span className="font-semibold text-surface-800 shrink-0">{formatCurrency(item.total, cur)}</span>}</div>))}
           </div>
         </div>
       )}
       <div className="px-5 py-4 space-y-2">
         {d.subtotal != null && <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span className="font-medium text-surface-800">{formatCurrency(d.subtotal, cur)}</span></div>}
         {d.tax_amount != null && <div className="flex justify-between text-sm"><span className="text-gray-500">Tax (GST/VAT)</span><span className="font-medium text-surface-800">{formatCurrency(d.tax_amount, cur)}</span></div>}
-        {d.total_amount != null && <div className="flex justify-between items-center pt-2 mt-2 border-t border-surface-100"><span className="font-bold text-surface-900">Total</span><span className="font-display font-bold text-xl text-violet-600">{formatCurrency(d.total_amount, cur)}</span></div>}
+        {d.total_amount != null && <div className="flex justify-between items-center pt-2 mt-2 border-t border-surface-100"><span className="font-bold text-surface-800">Total</span><span className="font-display font-bold text-xl text-violet-600">{formatCurrency(d.total_amount, cur)}</span></div>}
       </div>
     </div>
   );
@@ -115,7 +115,7 @@ const PaymentRow = ({ payment, index }: { payment: PaymentDetailData; index: num
         <div className="w-7 h-7 rounded-full bg-surface-100 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold text-surface-600">{d.payment_sequence ?? index + 1}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <span className="font-semibold text-surface-900 text-sm">{d.payment_reference ?? `Payment #${payment.payment_detail_id}`}</span>
+            <span className="font-semibold text-surface-800 text-sm">{d.payment_reference ?? `Payment #${payment.payment_detail_id}`}</span>
             <div className="flex items-center gap-2 shrink-0">
               {d.status && <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusColor}`}>{d.status as string}</span>}
               {payment.payment_url && <a href={payment.payment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-700">PDF <ArrowUpRight size={10} /></a>}
@@ -140,7 +140,7 @@ const PaymentListCard = ({ payments }: { payments: PaymentDetailData[] }) => {
       <div className="bg-green-50 px-5 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 rounded-xl bg-green-200 flex items-center justify-center shrink-0"><CreditCard size={16} className="text-green-700" /></div>
-          <div className="min-w-0"><p className="text-xs text-green-600 font-semibold uppercase tracking-wider">Payments</p><p className="font-display font-bold text-surface-900 text-sm">{payments.length} record{payments.length !== 1 ? 's' : ''}</p></div>
+          <div className="min-w-0"><p className="text-xs text-green-600 font-semibold uppercase tracking-wider">Payments</p><p className="font-display font-bold text-surface-800 text-sm">{payments.length} record{payments.length !== 1 ? 's' : ''}</p></div>
         </div>
         {totalPaid > 0 && <div className="shrink-0 text-right"><p className="text-xs text-gray-500">Cleared</p><p className="font-display font-bold text-green-700 text-lg">{formatCurrency(totalPaid)}</p></div>}
       </div>
@@ -273,7 +273,7 @@ const DocRow = ({ icon: Icon, iconBg, label, sublabel, meta, url, urlLabel, load
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5">{label}</p>
         {loading ? (<div className="flex items-center gap-2 mt-1"><Loader2 size={14} className="animate-spin text-gray-500" /><span className="text-sm text-gray-500">Fetching details…</span></div>)
           : missing ? (<p className="text-sm text-gray-400 italic">{missingText}</p>)
-          : (<><p className="font-display font-bold text-surface-900">{sublabel}</p>{meta && meta.length > 0 && (<div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">{meta.map(({ icon: Ic, text }, i) => (<div key={i} className="flex items-center gap-1.5"><Ic size={12} className="text-gray-500 shrink-0" /><span className="text-xs text-surface-800">{text}</span></div>))}</div>)}</>)}
+          : (<><p className="font-display font-bold text-surface-800">{sublabel}</p>{meta && meta.length > 0 && (<div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">{meta.map(({ icon: Ic, text }, i) => (<div key={i} className="flex items-center gap-1.5"><Ic size={12} className="text-gray-500 shrink-0" /><span className="text-xs text-surface-800">{text}</span></div>))}</div>)}</>)}
       </div>
       {!loading && !missing && url && (<a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 border border-violet-200 px-3 py-2 rounded-xl transition-all shrink-0">{urlLabel} <ArrowUpRight size={12} /></a>)}
     </div>
@@ -294,8 +294,9 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
   const [files, setFiles]     = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const [newThread, setNewThread] = useState(false);
-  const [draftLoading, setDraftLoading] = useState(false);
-  const [draftError, setDraftError]     = useState<string | null>(null);
+  const [draftLoading, setDraftLoading]   = useState(false);
+  const [draftError, setDraftError]       = useState<string | null>(null);
+  const [isDraftFromAI, setIsDraftFromAI] = useState(false);   // true only when AI generated, reset on manual edit
   const fileRef = useRef<HTMLInputElement>(null);
 
   // When toggling thread mode, update subject to match expected behaviour
@@ -316,6 +317,7 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
       // Single backend call — Groq generates the draft server-side
       const result = await draftEmailService.generateDraft(dispute.dispute_id);
       setBody(result.draft_body);
+      setIsDraftFromAI(true);
       // Also update subject if it's still the default
       if (subject === defaultSubject) {
         setSubj(result.suggested_subject);
@@ -355,7 +357,7 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
   return (
     <div className="flex flex-col h-full">
       <div className="p-6">
-        <h3 className="text-sm font-bold text-surface-900 flex items-center gap-2 mb-5">
+        <h3 className="text-sm font-bold text-surface-800 flex items-center gap-2 mb-5">
           <Mail size={15} className="text-violet-500" /> Compose Email
         </h3>
 
@@ -435,7 +437,7 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
               {draftError}
             </div>
           )}
-          {body && !draftLoading && (
+          {isDraftFromAI && !draftLoading && (
             <div className="mt-3 flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-100 rounded-xl px-3 py-2">
               <CheckCheck size={12} className="shrink-0" />
               Draft generated — review and edit below before sending.
@@ -465,12 +467,12 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
               className={clsx(
                 'input-base text-sm py-2 resize-none transition-all',
                 draftLoading && 'opacity-50 pointer-events-none',
-                body && !draftLoading && 'border-purple-300 ring-1 ring-purple-200'
+                isDraftFromAI && !draftLoading && 'border-purple-300 ring-1 ring-purple-200'
               )}
               rows={9}
               placeholder={draftLoading ? 'Generating AI draft…' : 'Type your message here, or click Generate Draft above…'}
               value={body}
-              onChange={e => setBody(e.target.value)}
+              onChange={e => { setBody(e.target.value); setIsDraftFromAI(false); }}
             />
           </div>
 
@@ -616,7 +618,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                   </span>
                   <Badge variant={p.badge}>{p.label} Priority</Badge>
                 </div>
-                <h2 className="font-display font-bold text-surface-900 text-xl leading-snug">{dispute.dispute_type?.reason_name ?? 'Unknown Dispute'}</h2>
+                <h2 className="font-display font-bold text-surface-800 text-xl leading-snug">{dispute.dispute_type?.reason_name ?? 'Unknown Dispute'}</h2>
                 <p className="text-sm text-gray-500 mt-1.5 flex items-center gap-2">
                   <Building2 size={13} className="shrink-0" />{dispute.customer_id}
                   <span className="text-gray-300 mx-0.5">·</span>
@@ -650,7 +652,19 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                 <div className="px-8 py-6 space-y-6">
                   <section>
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Dispute Description</h3>
-                    <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">{dispute.latest_analysis?.ai_summary || dispute.description || <em className="text-gray-400">No description available</em>}</p>
+                    {dispute.latest_analysis?.ai_summary && dispute.latest_analysis?.ai_summary.trim() ? (
+                      <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5 whitespace-pre-wrap">{dispute.latest_analysis?.ai_summary.trim()}</p>
+                    ) : dispute.description ? (
+                      <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">{dispute.description}</p>
+                    ) : (
+                      <p className="text-sm bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5"><em className="text-gray-400">No description available</em></p>
+                    )}
+                    {/* {dispute.description && dispute.description.trim() && dispute.latest_analysis?.ai_summary && (
+                      <div className="mt-2 px-4 py-2.5 bg-purple-50 border border-purple-100 rounded-xl">
+                        <p className="text-xs font-bold text-purple-500 uppercase tracking-wider mb-1">AI Summary</p>
+                        <p className="text-xs text-purple-800">{dispute.latest_analysis.ai_summary}</p>
+                      </div>
+                    )} */}
                   </section>
 
                   <section>
@@ -664,7 +678,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                       ].map(({ label, val }) => (
                         <div key={label} className="bg-surface-50 border border-surface-100 rounded-xl px-3.5 py-3">
                           <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-0.5">{label}</p>
-                          <p className="text-sm font-bold text-surface-900 truncate">{val}</p>
+                          <p className="text-sm font-bold text-surface-800 truncate">{val}</p>
                         </div>
                       ))}
                     </div>
@@ -789,7 +803,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Customer</p>
                     <div className="flex items-center gap-2.5 bg-white border border-surface-200 rounded-xl px-3.5 py-3">
                       <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0"><User2 size={14} className="text-blue-600" /></div>
-                      <div className="min-w-0"><p className="text-sm font-bold text-surface-900 truncate">{dispute.customer_id}</p><p className="text-xs text-gray-400">Customer ID</p></div>
+                      <div className="min-w-0"><p className="text-sm font-bold text-surface-800 truncate">{dispute.customer_id}</p><p className="text-xs text-gray-400">Customer ID</p></div>
                     </div>
                   </div>
                   <div>
@@ -855,7 +869,7 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
       </td>
       <td className="px-5 py-3.5 max-w-[240px]">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-semibold text-surface-900 truncate">{dispute.dispute_type?.reason_name ?? 'Unknown'}</p>
+          <p className="text-sm font-semibold text-surface-800 truncate">{dispute.dispute_type?.reason_name ?? 'Unknown'}</p>
           {hasNew && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full shrink-0">
               <MessageSquare size={9} /> New message
@@ -969,7 +983,7 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
           {/* Header */}
           <div className="flex items-center justify-between px-7 py-5 border-b border-surface-100 bg-gradient-to-r from-violet-50 to-white">
             <div>
-              <h2 className="font-display font-bold text-surface-900 text-lg">Create New Dispute</h2>
+              <h2 className="font-display font-bold text-surface-800 text-lg">Create New Dispute</h2>
               <p className="text-xs text-gray-500 mt-0.5">Manually open a dispute without an inbound email</p>
             </div>
             <button onClick={onClose} className="p-2 rounded-xl hover:bg-surface-100 text-gray-400"><X size={18} /></button>
@@ -1087,6 +1101,39 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
   );
 };
 
+// ─── Auth-aware file download helper ────────────────────────────────────────
+// Fetches via axios (sends JWT cookie) so protected API endpoints work.
+// Passes ?mode= so backend sets correct Content-Disposition header.
+async function fetchAndOpenDoc(url: string, fileName: string, mode: 'view' | 'save') {
+  try {
+    const { default: axiosInst } = await import('@/lib/axios');
+    // Append mode param so backend sets inline vs attachment disposition
+    const sep = url.includes('?') ? '&' : '?';
+    const fullUrl = `${url}${sep}mode=${mode}`;
+    const response = await axiosInst.get(fullUrl, { responseType: 'blob' });
+    const contentType = response.headers['content-type'] || 'application/octet-stream';
+    const blob = new Blob([response.data], { type: contentType });
+    const blobUrl = URL.createObjectURL(blob);
+
+    if (mode === 'view') {
+      // Open in new tab — browser will render PDF/images inline
+      window.open(blobUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      // Force download
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+    // Revoke after enough time for browser to load the content
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000);
+  } catch {
+    toast.error('Could not open file — please try again');
+  }
+}
+
 // ─── Dispute Documents Panel ──────────────────────────────────────────────────
 const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
   const [docs, setDocs] = useState<DisputeDocument[]>([]);
@@ -1129,6 +1176,35 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
     } catch { toast.error('Delete failed'); }
   };
 
+  /**
+   * Open or download a document.
+   * download_url is a protected API endpoint — we must fetch it with axios
+   * (which sends the JWT cookie) then create a temporary blob URL.
+   * This avoids the 401 that a bare <a href> would get.
+   */
+  const handleDocOpen = async (doc: DisputeDocument, forceDownload: boolean) => {
+    try {
+      const { default: axiosInstance } = await import('@/lib/axios');
+      const res = await axiosInstance.get(doc.download_url, { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: doc.file_type || 'application/octet-stream' });
+      const blobUrl = URL.createObjectURL(blob);
+      if (forceDownload) {
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = doc.file_name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        window.open(blobUrl, '_blank');
+      }
+      // Revoke after a short delay to allow the browser to start loading
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
+    } catch {
+      toast.error('Could not open file — try downloading instead');
+    }
+  };
+
   const formatSize = (bytes: number | null) => {
     if (!bytes) return '';
     if (bytes < 1024) return `${bytes} B`;
@@ -1153,7 +1229,7 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
             <Upload size={18} className="text-violet-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-surface-900 mb-0.5">Upload Supporting Document</p>
+            <p className="text-sm font-bold text-surface-800 mb-0.5">Upload Supporting Document</p>
             <p className="text-xs text-gray-500 mb-3">PDF, images, spreadsheets, Word docs — any file type accepted.</p>
             <div className="flex items-center gap-2 mb-3">
               <input
@@ -1200,7 +1276,7 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
               <div key={doc.document_id} className="flex items-center gap-3 bg-white border border-surface-200 rounded-xl px-4 py-3 hover:border-violet-200 transition-all group">
                 <span className="text-2xl leading-none shrink-0">{fileIcon(doc.file_type)}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-surface-900 truncate">{doc.display_name || doc.file_name}</p>
+                  <p className="text-sm font-semibold text-surface-800 truncate">{doc.display_name || doc.file_name}</p>
                   <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                     {doc.file_size && <span className="text-xs text-gray-400">{formatSize(doc.file_size)}</span>}
                     {doc.uploader_name && <span className="text-xs text-gray-400">by {doc.uploader_name}</span>}
@@ -1209,21 +1285,20 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <a
-                    href={doc.download_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => fetchAndOpenDoc(doc.download_url, doc.file_name, 'view')}
                     className="flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 px-2.5 py-1.5 rounded-lg transition-all"
+                    title="View file"
                   >
                     <Eye size={12} /> View
-                  </a>
-                  <a
-                    href={doc.download_url}
-                    download={doc.file_name}
+                  </button>
+                  <button
+                    onClick={() => fetchAndOpenDoc(doc.download_url, doc.file_name, 'save')}
                     className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-surface-800 bg-surface-100 hover:bg-surface-200 px-2.5 py-1.5 rounded-lg transition-all"
+                    title="Download file"
                   >
                     <Download size={12} /> Save
-                  </a>
+                  </button>
                   <button
                     onClick={() => handleDelete(doc.document_id, doc.file_name)}
                     className="flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition-all"
