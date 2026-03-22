@@ -78,13 +78,13 @@ export const NotificationBell = ({
         className={clsx(
           'relative p-2 rounded-xl transition-all duration-150',
           open
-            ? 'bg-violet-100 text-violet-700'
+            ? 'bg-brand-100 text-brand-700'
             : 'hover:bg-surface-100 text-surface-500 hover:text-surface-800'
         )}
         aria-label={`${count} new message${count !== 1 ? 's' : ''}`}
       >
         {isPolling ? (
-          <Loader2 size={17} className="animate-spin text-violet-400" />
+          <Loader2 size={17} className="animate-spin text-brand-400" />
         ) : (
           <Bell size={17} />
         )}
@@ -104,17 +104,17 @@ export const NotificationBell = ({
           className="absolute right-0 top-full mt-2 w-96 bg-white rounded-2xl shadow-modal border border-surface-200 z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200"
         >
           {/* Panel header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-surface-100 bg-gradient-to-r from-violet-50 to-white">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-surface-100 bg-gradient-to-r from-brand-50 to-white">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center">
-                <MessageSquare size={15} className="text-violet-600" />
+              <div className="w-8 h-8 rounded-xl bg-brand-100 flex items-center justify-center">
+                <MessageSquare size={15} className="text-brand-600" />
               </div>
               <div>
                 <p className="text-sm font-bold text-surface-900">New Messages</p>
                 <p className="text-xs text-gray-400">
                   {count === 0
                     ? 'All caught up!'
-                    : `${count} unread dispute${count !== 1 ? 's' : ''}`}
+                    : `${count} unread case${count !== 1 ? 's' : ''}`}
                 </p>
               </div>
             </div>
@@ -122,7 +122,7 @@ export const NotificationBell = ({
               {count > 0 && (
                 <button
                   onClick={onMarkAllRead}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 px-2.5 py-1.5 rounded-lg transition-all"
+                  className="flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 px-2.5 py-1.5 rounded-lg transition-all"
                   title="Mark all read"
                 >
                   <CheckCheck size={12} /> All read
@@ -153,7 +153,7 @@ export const NotificationBell = ({
               notifications.map((n) => (
                 <div
                   key={n.dispute_id}
-                  className="group flex items-start gap-3 px-5 py-4 hover:bg-violet-50/60 cursor-pointer transition-colors"
+                  className="group flex items-start gap-3 px-5 py-4 hover:bg-brand-50/60 cursor-pointer transition-colors"
                   onClick={() => {
                     onOpen(n.dispute_id);
                     onMarkRead(n.dispute_id);
@@ -183,7 +183,7 @@ export const NotificationBell = ({
                         {timeAgo(n.received_at)}
                       </span>
                     </div>
-                    <p className="text-xs text-violet-600 font-semibold mb-1 truncate">
+                    <p className="text-xs text-brand-600 font-semibold mb-1 truncate">
                       {n.customer_id}
                     </p>
                     <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
@@ -211,10 +211,10 @@ export const NotificationBell = ({
           {count > 0 && (
             <div className="px-5 py-3 border-t border-surface-100 bg-surface-50 flex items-center justify-between">
               <p className="text-[10px] text-gray-400 font-medium">
-                Polling every 30s · Click a dispute to open it
+                Polling every 30s · Click a case to open it
               </p>
-              <span className="flex items-center gap-1 text-[10px] font-semibold text-violet-500">
-                <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+              <span className="flex items-center gap-1 text-[10px] font-semibold text-brand-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" />
                 Live
               </span>
             </div>

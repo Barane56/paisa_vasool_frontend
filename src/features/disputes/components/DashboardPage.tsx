@@ -29,8 +29,8 @@ import toast from 'react-hot-toast';
 // ─── Status / Priority helpers ────────────────────────────────────────────────
 const STATUS_CONFIG: Record<string, { label: string; badge: 'danger'|'warning'|'success'|'default'; dot: string }> = {
   OPEN:         { label: 'Open',         badge: 'danger',  dot: 'bg-red-500'      },
-  UNVERIFIED:   { label: 'Unverified',   badge: 'warning', dot: 'bg-orange-400'   },
-  UNDER_REVIEW: { label: 'Under Review', badge: 'warning', dot: 'bg-amber-400'    },
+  UNVERIFIED:   { label: 'Unverified',   badge: 'warning', dot: 'bg-brand-300'   },
+  UNDER_REVIEW: { label: 'Under Review', badge: 'warning', dot: 'bg-brand-400'    },
   RESOLVED:     { label: 'Resolved',     badge: 'success', dot: 'bg-green-500'    },
   CLOSED:       { label: 'Closed',       badge: 'default', dot: 'bg-surface-300'  },
 };
@@ -67,15 +67,15 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
   const items = d.line_items ?? [];
   return (
     <div className="rounded-2xl border border-surface-200 overflow-hidden">
-      <div className="bg-violet-50 px-5 py-4 flex items-center justify-between gap-4">
+      <div className="bg-brand-50 px-5 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center shrink-0"><Receipt size={16} className="text-violet-600" /></div>
+          <div className="w-9 h-9 rounded-xl bg-brand-100 flex items-center justify-center shrink-0"><Receipt size={16} className="text-brand-600" /></div>
           <div className="min-w-0">
-            <p className="text-xs text-violet-500 font-semibold uppercase tracking-wider">Invoice</p>
+            <p className="text-xs text-brand-500 font-semibold uppercase tracking-wider">Invoice</p>
             <p className="font-display font-bold text-surface-800 text-sm truncate">{d.invoice_number ?? invoice.invoice_number}</p>
           </div>
         </div>
-        {invoice.invoice_url && (<a href={invoice.invoice_url} target="_blank" rel="noopener noreferrer" className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-violet-600 hover:text-violet-700 bg-white border border-violet-200 hover:border-violet-400 px-3 py-1.5 rounded-lg transition-all">View PDF <ArrowUpRight size={12} /></a>)}
+        {invoice.invoice_url && (<a href={invoice.invoice_url} target="_blank" rel="noopener noreferrer" className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700 bg-white border border-brand-200 hover:border-brand-400 px-3 py-1.5 rounded-lg transition-all">View PDF <ArrowUpRight size={12} /></a>)}
       </div>
       <div className="px-5 py-4 grid grid-cols-2 gap-x-6 gap-y-3 border-b border-surface-100">
         {d.vendor_name && (<div className="col-span-2 flex items-center gap-2"><Building2 size={13} className="text-gray-500 shrink-0" /><span className="text-sm text-surface-800 font-medium">{d.vendor_name}</span>{d.customer_name && (<><ChevronRight size={13} className="text-gray-400" /><span className="text-sm text-surface-800 font-medium">{d.customer_name}</span></>)}</div>)}
@@ -99,7 +99,7 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
       <div className="px-5 py-4 space-y-2">
         {d.subtotal != null && <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span className="font-medium text-surface-800">{formatCurrency(d.subtotal, cur)}</span></div>}
         {d.tax_amount != null && <div className="flex justify-between text-sm"><span className="text-gray-500">Tax (GST/VAT)</span><span className="font-medium text-surface-800">{formatCurrency(d.tax_amount, cur)}</span></div>}
-        {d.total_amount != null && <div className="flex justify-between items-center pt-2 mt-2 border-t border-surface-100"><span className="font-bold text-surface-800">Total</span><span className="font-display font-bold text-xl text-violet-600">{formatCurrency(d.total_amount, cur)}</span></div>}
+        {d.total_amount != null && <div className="flex justify-between items-center pt-2 mt-2 border-t border-surface-100"><span className="font-bold text-surface-800">Total</span><span className="font-display font-bold text-xl text-brand-600">{formatCurrency(d.total_amount, cur)}</span></div>}
       </div>
     </div>
   );
@@ -108,7 +108,7 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
 // ─── Payment row ──────────────────────────────────────────────────────────────
 const PaymentRow = ({ payment, index }: { payment: PaymentDetailData; index: number }) => {
   const d = payment.payment_details ?? {};
-  const statusColor = d.status === 'CLEARED' ? 'bg-green-100 text-green-700' : d.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : d.status === 'FAILED' ? 'bg-red-100 text-red-700' : 'bg-surface-100 text-surface-800';
+  const statusColor = d.status === 'CLEARED' ? 'bg-green-100 text-green-700' : d.status === 'PENDING' ? 'bg-brand-100 text-brand-700' : d.status === 'FAILED' ? 'bg-red-100 text-red-700' : 'bg-surface-100 text-surface-800';
   return (
     <div className={clsx('border-b border-surface-100 last:border-b-0', index % 2 === 1 ? 'bg-surface-50' : 'bg-white')}>
       <div className="px-5 py-3.5 flex items-start gap-4">
@@ -118,7 +118,7 @@ const PaymentRow = ({ payment, index }: { payment: PaymentDetailData; index: num
             <span className="font-semibold text-surface-800 text-sm">{d.payment_reference ?? `Payment #${payment.payment_detail_id}`}</span>
             <div className="flex items-center gap-2 shrink-0">
               {d.status && <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusColor}`}>{d.status as string}</span>}
-              {payment.payment_url && <a href={payment.payment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-700">PDF <ArrowUpRight size={10} /></a>}
+              {payment.payment_url && <a href={payment.payment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700">PDF <ArrowUpRight size={10} /></a>}
             </div>
           </div>
           <div className="mt-1.5 flex items-center gap-4 flex-wrap text-xs text-gray-500">
@@ -126,7 +126,7 @@ const PaymentRow = ({ payment, index }: { payment: PaymentDetailData; index: num
             {d.payment_mode && <span className="flex items-center gap-1"><Zap size={11} />{d.payment_mode as string}</span>}
             {d.amount_paid != null && <span className="flex items-center gap-1 font-bold text-green-700 text-sm"><DollarSign size={11} />{formatCurrency(d.amount_paid as number)}</span>}
           </div>
-          {(d.note || d.failure_reason) && (<div className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-800 bg-amber-50 rounded-lg px-2.5 py-1.5"><AlertTriangle size={11} className="shrink-0 mt-0.5 text-amber-500" />{(d.failure_reason ?? d.note) as string}</div>)}
+          {(d.note || d.failure_reason) && (<div className="mt-1.5 flex items-start gap-1.5 text-xs text-brand-800 bg-brand-50 rounded-lg px-2.5 py-1.5"><AlertTriangle size={11} className="shrink-0 mt-0.5 text-brand-500" />{(d.failure_reason ?? d.note) as string}</div>)}
         </div>
       </div>
     </div>
@@ -152,8 +152,8 @@ const PaymentListCard = ({ payments }: { payments: PaymentDetailData[] }) => {
 // ─── Timeline message ─────────────────────────────────────────────────────────
 const actorConfig = {
   CUSTOMER:  { color: 'bg-blue-500',   ring: 'ring-blue-200',   bubble: 'bg-slate-50 border border-slate-200',    text: 'text-blue-600'   },
-  AI:        { color: 'bg-purple-600', ring: 'ring-purple-200', bubble: 'bg-purple-50 border border-purple-100',  text: 'text-purple-600' },
-  ASSOCIATE: { color: 'bg-violet-600', ring: 'ring-violet-200', bubble: 'bg-violet-50 border border-violet-100',  text: 'text-violet-600' },
+  AI:        { color: 'bg-brand-600', ring: 'ring-brand-200', bubble: 'bg-brand-50 border border-brand-100',  text: 'text-brand-600' },
+  ASSOCIATE: { color: 'bg-brand-600', ring: 'ring-brand-200', bubble: 'bg-brand-50 border border-brand-100',  text: 'text-brand-600' },
   SYSTEM:    { color: 'bg-slate-400',  ring: 'ring-slate-200',  bubble: 'bg-slate-100 border border-slate-200',   text: 'text-slate-600'  },
 };
 const getActorCfg = (actor: string) => actorConfig[actor as keyof typeof actorConfig] ?? actorConfig.ASSOCIATE;
@@ -275,7 +275,7 @@ const DocRow = ({ icon: Icon, iconBg, label, sublabel, meta, url, urlLabel, load
           : missing ? (<p className="text-sm text-gray-400 italic">{missingText}</p>)
           : (<><p className="font-display font-bold text-surface-800">{sublabel}</p>{meta && meta.length > 0 && (<div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">{meta.map(({ icon: Ic, text }, i) => (<div key={i} className="flex items-center gap-1.5"><Ic size={12} className="text-gray-500 shrink-0" /><span className="text-xs text-surface-800">{text}</span></div>))}</div>)}</>)}
       </div>
-      {!loading && !missing && url && (<a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 border border-violet-200 px-3 py-2 rounded-xl transition-all shrink-0">{urlLabel} <ArrowUpRight size={12} /></a>)}
+      {!loading && !missing && url && (<a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-3 py-2 rounded-xl transition-all shrink-0">{urlLabel} <ArrowUpRight size={12} /></a>)}
     </div>
   </div>
 );
@@ -287,7 +287,7 @@ const DocRow = ({ icon: Icon, iconBg, label, sublabel, meta, url, urlLabel, load
 
 // ─── Send Email Panel ─────────────────────────────────────────────────────────
 const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSent: () => void }) => {
-  const defaultSubject = `Re: Dispute #${dispute.dispute_id} – ${dispute.dispute_type?.reason_name ?? 'Dispute'}`;
+  const defaultSubject = `Re: Case #${dispute.dispute_id} – ${dispute.dispute_type?.reason_name ?? 'Case'}`;
   const [to, setTo]           = useState(dispute.customer_id ?? '');
   const [subject, setSubj]    = useState(defaultSubject);
   const [body, setBody]       = useState('');
@@ -303,7 +303,7 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
   const handleToggleThread = (val: boolean) => {
     setNewThread(val);
     if (val) {
-      setSubj(`[DISP-${String(dispute.dispute_id).padStart(5, '0')}] ${dispute.dispute_type?.reason_name ?? 'Your Dispute'}`);
+      setSubj(`[PV-${String(dispute.dispute_id).padStart(5, '0')}] ${dispute.dispute_type?.reason_name ?? 'Your Case'}`);
     } else {
       setSubj(defaultSubject);
     }
@@ -358,7 +358,7 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
     <div className="flex flex-col h-full">
       <div className="p-6">
         <h3 className="text-sm font-bold text-surface-800 flex items-center gap-2 mb-5">
-          <Mail size={15} className="text-violet-500" /> Compose Email
+          <Mail size={15} className="text-brand-500" /> Compose Email
         </h3>
 
         {/* Thread mode toggle */}
@@ -368,7 +368,7 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
             className={clsx(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
               !newThread
-                ? 'bg-white text-violet-700 shadow-sm border border-violet-200'
+                ? 'bg-white text-brand-700 shadow-sm border border-brand-200'
                 : 'text-gray-500 hover:text-surface-700'
             )}
           >
@@ -379,7 +379,7 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
             className={clsx(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
               newThread
-                ? 'bg-white text-orange-600 shadow-sm border border-orange-200'
+                ? 'bg-white text-brand-600 shadow-sm border border-brand-200'
                 : 'text-gray-500 hover:text-surface-700'
             )}
           >
@@ -391,8 +391,8 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
         <div className={clsx(
           'flex items-start gap-2 rounded-xl px-3.5 py-2.5 mb-4 text-xs',
           newThread
-            ? 'bg-orange-50 border border-orange-100 text-orange-700'
-            : 'bg-violet-50 border border-violet-100 text-violet-700'
+            ? 'bg-brand-50 border border-brand-100 text-brand-700'
+            : 'bg-brand-50 border border-brand-100 text-brand-700'
         )}>
           {newThread
             ? <><AlertTriangle size={13} className="shrink-0 mt-0.5" /> <span>This will appear as a <strong>new conversation</strong> in the customer's inbox — not linked to any previous email thread.</span></>
@@ -401,15 +401,15 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
         </div>
 
         {/* ── AI Draft Banner ───────────────────────────────────────────────── */}
-        <div className="rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50 px-5 py-4 mb-5">
+        <div className="rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-brand-50 px-5 py-4 mb-5">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
-                <Sparkles size={16} className="text-purple-600" />
+              <div className="w-9 h-9 rounded-xl bg-brand-100 flex items-center justify-center shrink-0">
+                <Sparkles size={16} className="text-brand-600" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-bold text-purple-900">AI Email Draft</p>
-                <p className="text-xs text-purple-600 mt-0.5 leading-relaxed">
+                <p className="text-sm font-bold text-brand-900">AI Email Draft</p>
+                <p className="text-xs text-brand-600 mt-0.5 leading-relaxed">
                   Reads the entire conversation history and generates a professional reply for you to review and edit.
                 </p>
               </div>
@@ -420,8 +420,8 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
               className={clsx(
                 'shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all',
                 draftLoading
-                  ? 'bg-purple-100 text-purple-400 cursor-not-allowed'
-                  : 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm hover:shadow-md'
+                  ? 'bg-brand-100 text-brand-400 cursor-not-allowed'
+                  : 'bg-brand-600 hover:bg-brand-700 text-white shadow-sm hover:shadow-md'
               )}
             >
               {draftLoading ? (
@@ -458,7 +458,7 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1 flex items-center gap-1.5">
               Message
               {draftLoading && (
-                <span className="flex items-center gap-1 text-purple-500 font-medium">
+                <span className="flex items-center gap-1 text-brand-500 font-medium">
                   <Loader2 size={10} className="animate-spin" /> AI is writing…
                 </span>
               )}
@@ -467,7 +467,7 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
               className={clsx(
                 'input-base text-sm py-2 resize-none transition-all',
                 draftLoading && 'opacity-50 pointer-events-none',
-                isDraftFromAI && !draftLoading && 'border-purple-300 ring-1 ring-purple-200'
+                isDraftFromAI && !draftLoading && 'border-brand-300 ring-1 ring-brand-200'
               )}
               rows={9}
               placeholder={draftLoading ? 'Generating AI draft…' : 'Type your message here, or click Generate Draft above…'}
@@ -501,7 +501,7 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
               disabled={sending || !to || !body}
               className={clsx(
                 'ml-auto flex items-center gap-2 text-sm font-semibold text-white px-4 py-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed',
-                newThread ? 'bg-orange-500 hover:bg-orange-600' : 'bg-violet-600 hover:bg-violet-700'
+                newThread ? 'bg-brand-500 hover:bg-brand-600' : 'bg-brand-600 hover:bg-brand-700'
               )}
             >
               {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
@@ -613,7 +613,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2.5 mb-2 flex-wrap">
                   <code className="text-xs font-mono bg-surface-100 text-surface-700 px-2.5 py-1 rounded-lg">#{dispute.dispute_id}</code>
-                  <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold', s.badge === 'danger' ? 'bg-red-50 text-red-700' : s.badge === 'warning' ? 'bg-amber-50 text-amber-700' : s.badge === 'success' ? 'bg-green-50 text-green-700' : 'bg-surface-100 text-surface-700')}>
+                  <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold', s.badge === 'danger' ? 'bg-red-50 text-red-700' : s.badge === 'warning' ? 'bg-brand-50 text-brand-700' : s.badge === 'success' ? 'bg-green-50 text-green-700' : 'bg-surface-100 text-surface-700')}>
                     <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />{s.label}
                   </span>
                   <Badge variant={p.badge}>{p.label} Priority</Badge>
@@ -634,7 +634,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
           {/* ── Tabs ── */}
           <div className="flex-shrink-0 flex gap-0 border-b border-surface-100 px-8 bg-white">
             {TABS.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} className={clsx('relative flex items-center gap-2 py-4 mr-7 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap', tab === t.id ? 'border-violet-500 text-violet-600' : 'border-transparent text-gray-500 hover:text-surface-800')}>
+              <button key={t.id} onClick={() => setTab(t.id)} className={clsx('relative flex items-center gap-2 py-4 mr-7 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap', tab === t.id ? 'border-brand-500 text-brand-600' : 'border-transparent text-gray-500 hover:text-surface-800')}>
                 {t.label}
                 {t.pill != null && t.pill > 0 && <span className="text-xs bg-surface-100 text-surface-700 rounded-full px-1.5 py-px font-bold">{t.pill}</span>}
               </button>
@@ -651,20 +651,20 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
               {tab === 'overview' && (
                 <div className="px-8 py-6 space-y-6">
                   <section>
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Dispute Description</h3>
-                    {dispute.latest_analysis?.ai_summary && dispute.latest_analysis?.ai_summary.trim() ? (
-                      <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5 whitespace-pre-wrap">{dispute.latest_analysis?.ai_summary.trim()}</p>
-                    ) : dispute.description ? (
-                      <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">{dispute.description}</p>
+                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Case Description</h3>
+                    {dispute.description && dispute.description.trim() ? (
+                      <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5 whitespace-pre-wrap">{dispute.description.trim()}</p>
+                    ) : dispute.latest_analysis?.ai_summary ? (
+                      <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">{dispute.latest_analysis.ai_summary}</p>
                     ) : (
                       <p className="text-sm bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5"><em className="text-gray-400">No description available</em></p>
                     )}
-                    {/* {dispute.description && dispute.description.trim() && dispute.latest_analysis?.ai_summary && (
-                      <div className="mt-2 px-4 py-2.5 bg-purple-50 border border-purple-100 rounded-xl">
-                        <p className="text-xs font-bold text-purple-500 uppercase tracking-wider mb-1">AI Summary</p>
-                        <p className="text-xs text-purple-800">{dispute.latest_analysis.ai_summary}</p>
+                    {dispute.description && dispute.description.trim() && dispute.latest_analysis?.ai_summary && (
+                      <div className="mt-2 px-4 py-2.5 bg-brand-50 border border-brand-100 rounded-xl">
+                        <p className="text-xs font-bold text-brand-500 uppercase tracking-wider mb-1">AI Summary</p>
+                        <p className="text-xs text-brand-800">{dispute.latest_analysis.ai_summary}</p>
                       </div>
-                    )} */}
+                    )}
                   </section>
 
                   <section>
@@ -704,20 +704,20 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                   {/* {dispute.latest_analysis && (
                     <section>
                       <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Brain size={11} /> AI Analysis</h3>
-                      <div className="bg-purple-50 border border-purple-100 rounded-2xl overflow-hidden">
-                        <div className="px-5 py-4 flex items-center justify-between gap-3 border-b border-purple-100">
-                          <p className="text-sm font-bold text-purple-900">{dispute.latest_analysis.predicted_category}</p>
+                      <div className="bg-brand-50 border border-brand-100 rounded-2xl overflow-hidden">
+                        <div className="px-5 py-4 flex items-center justify-between gap-3 border-b border-brand-100">
+                          <p className="text-sm font-bold text-brand-900">{dispute.latest_analysis.predicted_category}</p>
                           <div className="flex items-center gap-2 shrink-0">
-                            <div className="w-20 h-1.5 bg-purple-200 rounded-full overflow-hidden"><div className="h-full bg-purple-600 rounded-full" style={{ width: `${Math.round(dispute.latest_analysis.confidence_score * 100)}%` }} /></div>
-                            <span className="text-xs font-bold text-purple-700">{Math.round(dispute.latest_analysis.confidence_score * 100)}%</span>
+                            <div className="w-20 h-1.5 bg-brand-200 rounded-full overflow-hidden"><div className="h-full bg-brand-600 rounded-full" style={{ width: `${Math.round(dispute.latest_analysis.confidence_score * 100)}%` }} /></div>
+                            <span className="text-xs font-bold text-brand-700">{Math.round(dispute.latest_analysis.confidence_score * 100)}%</span>
                           </div>
                         </div>
-                        <div className="px-5 py-4"><p className="text-sm text-purple-900 leading-relaxed">{dispute.latest_analysis.ai_summary}</p></div>
-                        {dispute.latest_analysis.ai_response && (<div className="px-5 py-4 bg-white border-t border-purple-100"><p className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-1.5">Suggested Response</p><p className="text-sm text-surface-800 leading-relaxed">{dispute.latest_analysis.ai_response}</p></div>)}
+                        <div className="px-5 py-4"><p className="text-sm text-brand-900 leading-relaxed">{dispute.latest_analysis.ai_summary}</p></div>
+                        {dispute.latest_analysis.ai_response && (<div className="px-5 py-4 bg-white border-t border-brand-100"><p className="text-xs font-bold text-brand-600 uppercase tracking-wider mb-1.5">Suggested Response</p><p className="text-sm text-surface-800 leading-relaxed">{dispute.latest_analysis.ai_response}</p></div>)}
                         {(dispute.latest_analysis.auto_response_generated || dispute.latest_analysis.memory_context_used) && (
-                          <div className="px-5 py-2.5 bg-purple-100 flex items-center gap-4 flex-wrap">
+                          <div className="px-5 py-2.5 bg-brand-100 flex items-center gap-4 flex-wrap">
                             {dispute.latest_analysis.auto_response_generated && <div className="flex items-center gap-1.5"><CheckCheck size={13} className="text-green-600" /><span className="text-xs font-semibold text-green-700">Auto-response sent</span></div>}
-                            {dispute.latest_analysis.memory_context_used && <div className="flex items-center gap-1.5"><Brain size={13} className="text-purple-600" /><span className="text-xs font-semibold text-purple-700">Memory context used</span></div>}
+                            {dispute.latest_analysis.memory_context_used && <div className="flex items-center gap-1.5"><Brain size={13} className="text-brand-600" /><span className="text-xs font-semibold text-brand-700">Memory context used</span></div>}
                           </div>
                         )}
                       </div>
@@ -735,7 +735,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                             {updating === nextStatus && <Loader2 size={11} className="animate-spin" />}
                             {nextStatus === 'UNDER_REVIEW' && 'Mark Under Review'}
                             {nextStatus === 'RESOLVED'     && 'Mark Resolved'}
-                            {nextStatus === 'CLOSED'       && 'Close Dispute'}
+                            {nextStatus === 'CLOSED'       && 'Close Case'}
                           </button>
                         );
                       })}
@@ -762,7 +762,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                 <div className="px-8 py-6 space-y-5">
                   <section>
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Receipt size={11} /> Invoice</h3>
-                    <DocRow icon={Receipt} iconBg="bg-violet-600" label="Invoice Document" sublabel={invoice ? (invoice.invoice_details?.invoice_number ?? invoice.invoice_number) : dispute.invoice_id ? `Invoice #${dispute.invoice_id}` : undefined} loading={invoiceLoading} missing={!invoiceLoading && !invoice && !dispute.invoice_id} missingText="No invoice linked" url={invoice?.invoice_url} urlLabel="Open Invoice"
+                    <DocRow icon={Receipt} iconBg="bg-brand-600" label="Invoice Document" sublabel={invoice ? (invoice.invoice_details?.invoice_number ?? invoice.invoice_number) : dispute.invoice_id ? `Invoice #${dispute.invoice_id}` : undefined} loading={invoiceLoading} missing={!invoiceLoading && !invoice && !dispute.invoice_id} missingText="No invoice linked" url={invoice?.invoice_url} urlLabel="Open Invoice"
                       meta={invoice ? [...(invoice.invoice_details?.invoice_date ? [{ icon: Calendar, text: formatDate(invoice.invoice_details.invoice_date as string) }] : []), ...(invoice.invoice_details?.total_amount != null ? [{ icon: DollarSign, text: formatCurrency(invoice.invoice_details.total_amount, invoice.invoice_details?.currency ?? 'INR') }] : []), ...(invoice.invoice_details?.vendor_name ? [{ icon: Building2, text: invoice.invoice_details.vendor_name as string }] : [])] : []} />
                   </section>
                   <section>
@@ -780,11 +780,11 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                       ) : (<DocRow icon={CreditCard} iconBg="bg-green-600" label="Payment Records" missing missingText="No payment records found" urlLabel="Open" />)}
                   </section>
 
-                  {/* Other Documents — FA uploads, visible to all FAs on this dispute */}
+                  {/* Other Documents — FA uploads, visible to all FAs on this casete */}
                   <section>
                     <div className="flex items-center gap-2 mb-3">
                       <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><Upload size={11} /> Other Documents</h3>
-                      <span className="text-xs text-gray-400 font-normal normal-case">(any supporting files — visible to all FAs on this dispute)</span>
+                      <span className="text-xs text-gray-400 font-normal normal-case">(any supporting files — visible to all FAs on this casete)</span>
                     </div>
                     <DisputeDocumentsPanel dispute={dispute} />
                   </section>
@@ -809,7 +809,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                   <div>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Quick Actions</p>
                     <div className="space-y-2">
-                      <button onClick={() => setTab('email')} className="w-full flex items-center gap-2.5 bg-white border border-violet-200 hover:border-violet-400 hover:bg-violet-50 text-violet-700 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all">
+                      <button onClick={() => setTab('email')} className="w-full flex items-center gap-2.5 bg-white border border-brand-200 hover:border-brand-400 hover:bg-brand-50 text-brand-700 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all">
                         <Mail size={14} /> Send Email
                       </button>
                       <button onClick={() => setTab('timeline')} className="w-full flex items-center gap-2.5 bg-white border border-surface-200 hover:bg-surface-100 text-surface-700 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all">
@@ -823,14 +823,14 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                       <div className="bg-white border border-surface-200 rounded-xl px-3.5 py-3">
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-xs font-medium text-surface-700 truncate max-w-[140px]">{dispute.latest_analysis.predicted_category}</span>
-                          <span className="text-xs font-bold text-purple-700">{Math.round(dispute.latest_analysis.confidence_score * 100)}%</span>
+                          <span className="text-xs font-bold text-brand-700">{Math.round(dispute.latest_analysis.confidence_score * 100)}%</span>
                         </div>
-                        <div className="w-full h-1.5 bg-purple-100 rounded-full"><div className="h-full bg-purple-500 rounded-full" style={{ width: `${Math.round(dispute.latest_analysis.confidence_score * 100)}%` }} /></div>
+                        <div className="w-full h-1.5 bg-brand-100 rounded-full"><div className="h-full bg-brand-500 rounded-full" style={{ width: `${Math.round(dispute.latest_analysis.confidence_score * 100)}%` }} /></div>
                       </div>
                     </div>
                   )}
                   <div>
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Dispute Info</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Case Info</p>
                     <div className="space-y-2">
                       {[
                         { label: 'Created', val: formatDate(dispute.created_at) },
@@ -860,7 +860,7 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
   const p = pc(dispute.priority);
   const hasNew = dispute.has_new_customer_message ?? false;
   return (
-    <tr className={clsx('group cursor-pointer transition-colors duration-100', hasNew ? 'bg-blue-50/40 hover:bg-blue-50' : 'hover:bg-violet-50/60')} onClick={onClick}>
+    <tr className={clsx('group cursor-pointer transition-colors duration-100', hasNew ? 'bg-blue-50/40 hover:bg-blue-50' : 'hover:bg-brand-50/60')} onClick={onClick}>
       <td className="px-5 py-3.5">
         <div className="flex items-center gap-2">
           {hasNew && <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0 animate-pulse" title="New customer message" />}
@@ -879,13 +879,13 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
         <p className="text-xs text-gray-500 truncate mt-0.5">{dispute.customer_id}</p>
       </td>
       <td className="px-5 py-3.5">
-        <span className={clsx('badge flex items-center gap-1.5 w-fit', { 'bg-red-50 text-red-700': s.badge === 'danger', 'bg-amber-50 text-amber-700': s.badge === 'warning', 'bg-green-50 text-green-700': s.badge === 'success', 'bg-surface-100 text-surface-800': s.badge === 'default' })}>
+        <span className={clsx('badge flex items-center gap-1.5 w-fit', { 'bg-red-50 text-red-700': s.badge === 'danger', 'bg-brand-50 text-brand-700': s.badge === 'warning', 'bg-green-50 text-green-700': s.badge === 'success', 'bg-surface-100 text-surface-800': s.badge === 'default' })}>
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />{s.label}
         </span>
       </td>
       <td className="px-5 py-3.5"><Badge variant={p.badge}>{p.label}</Badge></td>
       <td className="px-5 py-3.5 text-sm text-gray-600 whitespace-nowrap">{formatDate(dispute.created_at)}</td>
-      <td className="px-4 py-3.5"><ChevronRight size={16} className="text-gray-400 group-hover:text-violet-400 transition-colors" /></td>
+      <td className="px-4 py-3.5"><ChevronRight size={16} className="text-gray-400 group-hover:text-brand-400 transition-colors" /></td>
     </tr>
   );
 };
@@ -971,7 +971,7 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
       toast.success(`Dispute #${dispute.dispute_id} created`);
       onCreated(dispute);
       onClose();
-    } catch { toast.error('Failed to create dispute'); }
+    } catch { toast.error('Failed to create case'); }
     finally { setSubmitting(false); }
   };
 
@@ -981,10 +981,10 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-modal w-full max-w-lg animate-scale-in overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-7 py-5 border-b border-surface-100 bg-gradient-to-r from-violet-50 to-white">
+          <div className="flex items-center justify-between px-7 py-5 border-b border-surface-100 bg-gradient-to-r from-brand-50 to-white">
             <div>
-              <h2 className="font-display font-bold text-surface-800 text-lg">Create New Dispute</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Manually open a dispute without an inbound email</p>
+              <h2 className="font-display font-bold text-surface-800 text-lg">Create New Case</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Manually open a case without an inbound email</p>
             </div>
             <button onClick={onClose} className="p-2 rounded-xl hover:bg-surface-100 text-gray-400"><X size={18} /></button>
           </div>
@@ -1000,7 +1000,7 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
             {/* Invoice Number */}
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
-                Invoice Number <span className="text-gray-400 font-normal normal-case">(optional — helps anchor the dispute)</span>
+                Invoice Number <span className="text-gray-400 font-normal normal-case">(optional — helps anchor the case)</span>
               </label>
               <div className="flex gap-2">
                 <input
@@ -1015,7 +1015,7 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
                   type="button"
                   onClick={handleInvoiceLookup}
                   disabled={!invoiceNumber.trim() || invoiceLookupLoading}
-                  className="px-3 py-2 rounded-xl border border-surface-200 hover:border-violet-300 text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all disabled:opacity-40 shrink-0"
+                  className="px-3 py-2 rounded-xl border border-surface-200 hover:border-brand-300 text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 transition-all disabled:opacity-40 shrink-0"
                 >
                   {invoiceLookupLoading ? <Loader2 size={13} className="animate-spin" /> : 'Lookup'}
                 </button>
@@ -1041,27 +1041,27 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
 
             {/* Dispute Type */}
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Dispute Type *</label>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Case Type *</label>
               <div className="flex items-center gap-2 p-1 bg-surface-100 rounded-xl mb-3 w-fit">
-                <button onClick={() => setUseCustom(false)} className={clsx('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all', !useCustom ? 'bg-white text-violet-700 shadow-sm border border-violet-200' : 'text-gray-500')}>
+                <button onClick={() => setUseCustom(false)} className={clsx('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all', !useCustom ? 'bg-white text-brand-700 shadow-sm border border-brand-200' : 'text-gray-500')}>
                   Pick existing
                 </button>
-                <button onClick={() => setUseCustom(true)} className={clsx('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all', useCustom ? 'bg-white text-orange-600 shadow-sm border border-orange-200' : 'text-gray-500')}>
+                <button onClick={() => setUseCustom(true)} className={clsx('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all', useCustom ? 'bg-white text-brand-600 shadow-sm border border-brand-200' : 'text-gray-500')}>
                   Create new type
                 </button>
               </div>
               {!useCustom ? (
                 <select className="input-base text-sm" value={selectedTypeId} onChange={e => setSelectedTypeId(e.target.value as any)}>
-                  <option value="">— Select a dispute type —</option>
+                  <option value="">— Select a case type —</option>
                   {disputeTypes.map(t => <option key={t.dispute_type_id} value={t.dispute_type_id}>{t.reason_name}</option>)}
                 </select>
               ) : (
                 <div className="space-y-3">
                   <input className="input-base text-sm" placeholder="Type name e.g. 'Currency Exchange Dispute'" value={customTypeName} onChange={e => setCustomTypeName(e.target.value)} />
                   <textarea className="input-base text-sm resize-none" rows={2} placeholder="Short description (optional)" value={customTypeDesc} onChange={e => setCustomTypeDesc(e.target.value)} />
-                  <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+                  <div className="flex items-start gap-2 text-xs text-brand-700 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2">
                     <AlertTriangle size={12} className="shrink-0 mt-0.5" />
-                    This will create a new dispute type in the system permanently.
+                    This will create a new case type in the system permanently.
                   </div>
                 </div>
               )}
@@ -1073,7 +1073,7 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
               <div className="flex gap-2">
                 {(['LOW','MEDIUM','HIGH'] as const).map(p => (
                   <button key={p} onClick={() => setPriority(p)} className={clsx('flex-1 py-2 rounded-xl text-xs font-bold border transition-all', priority === p
-                    ? p === 'HIGH' ? 'bg-red-500 text-white border-red-500' : p === 'MEDIUM' ? 'bg-amber-400 text-white border-amber-400' : 'bg-green-500 text-white border-green-500'
+                    ? p === 'HIGH' ? 'bg-red-500 text-white border-red-500' : p === 'MEDIUM' ? 'bg-brand-400 text-white border-brand-400' : 'bg-green-500 text-white border-green-500'
                     : 'bg-white text-gray-500 border-surface-200 hover:border-surface-300'
                   )}>{p}</button>
                 ))}
@@ -1083,7 +1083,7 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
             {/* Description */}
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Description *</label>
-              <textarea className="input-base text-sm resize-none" rows={4} placeholder="Describe the dispute — what's the issue, which invoice, what amount…" value={description} onChange={e => setDescription(e.target.value)} />
+              <textarea className="input-base text-sm resize-none" rows={4} placeholder="Describe the case — what's the issue, which invoice, what amount…" value={description} onChange={e => setDescription(e.target.value)} />
             </div>
           </div>
 
@@ -1092,7 +1092,7 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
             <button onClick={onClose} className="btn-secondary btn-sm">Cancel</button>
             <button onClick={handleSubmit} disabled={submitting} className="btn-primary btn-sm flex items-center gap-2">
               {submitting ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
-              {submitting ? 'Creating…' : 'Create Dispute'}
+              {submitting ? 'Creating…' : 'Create Case'}
             </button>
           </div>
         </div>
@@ -1223,10 +1223,10 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
   return (
     <div className="px-8 py-6 space-y-6">
       {/* Upload area */}
-      <div className="rounded-2xl border-2 border-dashed border-violet-200 bg-violet-50/40 p-6">
+      <div className="rounded-2xl border-2 border-dashed border-brand-200 bg-brand-50/40 p-6">
         <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
-            <Upload size={18} className="text-violet-600" />
+          <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center shrink-0">
+            <Upload size={18} className="text-brand-600" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-surface-800 mb-0.5">Upload Supporting Document</p>
@@ -1243,7 +1243,7 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
             <button
               onClick={() => fileRef.current?.click()}
               disabled={uploading}
-              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all disabled:opacity-50"
+              className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all disabled:opacity-50"
             >
               {uploading ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
               {uploading ? 'Uploading…' : 'Choose File'}
@@ -1261,7 +1261,7 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
 
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-10 bg-surface-50 rounded-2xl border border-surface-100">
-            <Loader2 size={16} className="animate-spin text-violet-400" />
+            <Loader2 size={16} className="animate-spin text-brand-400" />
             <span className="text-sm text-gray-500">Loading documents…</span>
           </div>
         ) : docs.length === 0 ? (
@@ -1273,7 +1273,7 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
         ) : (
           <div className="space-y-2">
             {docs.map(doc => (
-              <div key={doc.document_id} className="flex items-center gap-3 bg-white border border-surface-200 rounded-xl px-4 py-3 hover:border-violet-200 transition-all group">
+              <div key={doc.document_id} className="flex items-center gap-3 bg-white border border-surface-200 rounded-xl px-4 py-3 hover:border-brand-200 transition-all group">
                 <span className="text-2xl leading-none shrink-0">{fileIcon(doc.file_type)}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-surface-800 truncate">{doc.display_name || doc.file_name}</p>
@@ -1281,13 +1281,13 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
                     {doc.file_size && <span className="text-xs text-gray-400">{formatSize(doc.file_size)}</span>}
                     {doc.uploader_name && <span className="text-xs text-gray-400">by {doc.uploader_name}</span>}
                     <span className="text-xs text-gray-400">{formatDate(doc.created_at)}</span>
-                    {doc.notes && <span className="text-xs text-violet-600 italic truncate max-w-[180px]">{doc.notes}</span>}
+                    {doc.notes && <span className="text-xs text-brand-600 italic truncate max-w-[180px]">{doc.notes}</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => fetchAndOpenDoc(doc.download_url, doc.file_name, 'view')}
-                    className="flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 px-2.5 py-1.5 rounded-lg transition-all"
+                    className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-2.5 py-1.5 rounded-lg transition-all"
                     title="View file"
                   >
                     <Eye size={12} /> View
@@ -1395,31 +1395,31 @@ const DashboardPage = () => {
     <div className="p-6 max-w-screen-xl mx-auto">
       <PageHeader
         title={`Welcome back, ${user?.name?.split(' ')[0] ?? 'Associate'} 👋`}
-        subtitle="Review and manage your assigned incident tickets below."
+        subtitle="Review and manage your assigned cases below."
         action={
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all"
+              className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all" style={{ background: '#9333ea' }} onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background='#7e22ce'} onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background='#9333ea'}
             >
-              <Plus size={15} /> New Dispute
+              <Plus size={15} /> New Case
             </button>
             <button onClick={() => loadDisputes(true)} title="Refresh" className="p-2 rounded-xl hover:bg-surface-100 text-gray-500 hover:text-surface-800 transition-colors"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /></button>
           </div>
         }
       />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={FileText}     label="Total"     value={stats.total}    accent="bg-violet-600" />
+        <StatCard icon={FileText}     label="Total"     value={stats.total}    accent="bg-brand-600" />
         <StatCard icon={AlertCircle}  label="Open"      value={stats.open}     accent="bg-red-500"    sub="Needs attention" />
-        <StatCard icon={Clock}        label="In Review"  value={stats.review}   accent="bg-amber-500" />
+        <StatCard icon={Clock}        label="In Review"  value={stats.review}   accent="bg-brand-500" />
         <StatCard icon={CheckCircle2} label="Resolved"  value={stats.resolved} accent="bg-green-500" />
       </div>
 
-      <div className="card px-5 py-3.5 mb-6 flex items-center gap-3 bg-gradient-to-r from-violet-600 to-purple-700 border-0">
-        <TrendingUp size={16} className="text-violet-200 shrink-0" />
-        <span className="text-sm text-violet-100">{total} total incident{total !== 1 ? 's' : ''} tracked</span>
-        <span className="text-violet-300 mx-1">·</span>
-        <span className="text-sm text-violet-200">Click any row to view full details, documents, timeline and send emails</span>
+      <div className="card px-5 py-3.5 mb-6 flex items-center gap-3 bg-gradient-to-r from-brand-600 to-brand-700 border-0">
+        <TrendingUp size={16} className="text-brand-200 shrink-0" />
+        <span className="text-sm text-brand-100">{total} total case{total !== 1 ? 's' : ''} tracked</span>
+        <span className="text-brand-200 mx-1">·</span>
+        <span className="text-sm text-brand-200">Click any row to view full details, documents, timeline and send emails</span>
       </div>
 
       {error && (
@@ -1460,7 +1460,7 @@ const DashboardPage = () => {
           </thead>
           <tbody className="divide-y divide-surface-100">
             {loading ? (
-              <tr><td colSpan={6}><div className="flex items-center justify-center gap-3 py-20"><Loader2 size={22} className="animate-spin text-violet-400" /><span className="text-sm text-gray-500">Loading incidents…</span></div></td></tr>
+              <tr><td colSpan={6}><div className="flex items-center justify-center gap-3 py-20"><Loader2 size={22} className="animate-spin text-brand-400" /><span className="text-sm text-gray-500">Loading incidents…</span></div></td></tr>
             ) : disputes.length > 0 ? (
               disputes.map(d => (
                 <DisputeRow
@@ -1475,7 +1475,7 @@ const DashboardPage = () => {
                 />
               ))
             ) : (
-              <tr><td colSpan={6}><EmptyState title="No incidents found" description={error ? 'Could not load from server.' : 'Try adjusting your filters or search query.'} /></td></tr>
+              <tr><td colSpan={6}><EmptyState title="No cases found" description={error ? 'Could not load from server.' : 'Try adjusting your filters or search query.'} /></td></tr>
             )}
           </tbody>
         </table>

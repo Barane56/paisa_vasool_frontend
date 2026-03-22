@@ -42,7 +42,9 @@ export interface Dispute {
   latest_analysis?: AIAnalysis | null;
   open_questions_count?: number;
   assigned_to?: string | null;
-  has_new_customer_message?: boolean;  // from dispute_new_message table
+  has_new_customer_message?: boolean;
+  dispute_token?: string | null;
+  parent_dispute_id?: number | null;
 }
 
 export interface DisputeListResponse {
