@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import {
-  Search, Filter, Clock, CheckCircle2, AlertCircle, FileText,
-  X, ChevronRight, Brain, MessageSquare,
+  Search, Filter, Link2, Clock, CheckCircle2, AlertCircle, FileText,
+  X, ChevronRight, ChevronDown, ChevronUp, Brain, MessageSquare,
   User2, RefreshCw, Loader2, AlertTriangle, Receipt,
   Calendar, DollarSign, Building2, Hash, Zap,
   ArrowUpRight, Package, CheckCheck, TrendingUp, CreditCard,
@@ -17,11 +17,14 @@ import {
   draftEmailService,
   newMessageService,
   faDisputeService,
+  forkRecommendationService,
   disputeDocumentService,
   disputeTypeService,
   Dispute, DisputeDocument, DisputeType as DisputeTypeOption,
+  ForkRecommendation,
   InvoiceData, PaymentDetailData, TimelineEpisode, TimelineAttachment,
 } from '../services/disputeService';
+import { arDocumentService, ARDocRelated, DOC_TYPE_LABELS, KEY_TYPE_LABELS } from '../services/arDocumentService';
 import { mailboxService, OutboundEmail } from '@/services/mailboxService';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
@@ -532,6 +535,18 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
   const [updating, setUpdating]   = useState<string | null>(null);
   const [tab, setTab] = useState<'overview'|'timeline'|'documents'|'email'>('overview');
 
+  // Fork recommendations — loaded once on mount
+  const [forkRecs, setForkRecs]           = useState<ForkRecommendation[]>([]);
+  const [forkRecsLoaded, setForkRecsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (forkRecsLoaded) return;
+    setForkRecsLoaded(true);
+    forkRecommendationService.list(dispute.dispute_id)
+      .then(setForkRecs)
+      .catch(() => setForkRecs([]));
+  }, [dispute.dispute_id, forkRecsLoaded]);
+
   useEffect(() => {
     const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', h);
@@ -650,6 +665,8 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
               {/* OVERVIEW */}
               {tab === 'overview' && (
                 <div className="px-8 py-6 space-y-6">
+
+                  {/* Description + AI summary */}
                   <section>
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Case Description</h3>
                     {dispute.description && dispute.description.trim() ? (
@@ -667,14 +684,34 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                     )}
                   </section>
 
+                  {/* Fork recommendations — AI-suggested case splits */}
+                  {forkRecs.length > 0 && (
+                    <div className="space-y-3">
+                      {forkRecs.map(rec => (
+                        <ForkRecommendationCard
+                          key={rec.recommendation_id}
+                          rec={rec}
+                          dispute={dispute}
+                          onAccepted={newId => {
+                            setForkRecs(prev => prev.filter(r => r.recommendation_id !== rec.recommendation_id));
+                            toast.success(`Case PV-${String(newId).padStart(5, '0')} created and linked`);
+                          }}
+                          onDismissed={() =>
+                            setForkRecs(prev => prev.filter(r => r.recommendation_id !== rec.recommendation_id))
+                          }
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Case meta grid */}
                   <section>
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Case Details</h3>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                       {[
+                        { label: 'Customer',     val: dispute.customer_id ?? '—' },
                         { label: 'Assigned To',  val: dispute.assigned_to ?? 'Unassigned' },
                         { label: 'Last Updated', val: formatDate(dispute.updated_at) },
-                        { label: 'Invoice',      val: invoice?.invoice_details?.invoice_number ?? invoice?.invoice_number ?? (dispute.invoice_id ? `#${dispute.invoice_id}` : '—') },
-                        { label: 'Payments',     val: payments.length > 0 ? `${payments.length} record${payments.length !== 1 ? 's' : ''}` : (dispute.payment_detail_id ? `#${dispute.payment_detail_id}` : '—') },
                       ].map(({ label, val }) => (
                         <div key={label} className="bg-surface-50 border border-surface-100 rounded-xl px-3.5 py-3">
                           <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-0.5">{label}</p>
@@ -684,46 +721,24 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                     </div>
                   </section>
 
-                  {dispute.invoice_id && (
+                  {/* AI response (if exists) */}
+                  {dispute.latest_analysis?.ai_response && (
                     <section>
-                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Receipt size={11} /> Invoice Details</h3>
-                      {invoiceLoading ? (<div className="flex items-center justify-center gap-2 py-10 bg-surface-50 rounded-2xl border border-surface-100"><LoadingSpinner /><span className="text-sm text-gray-500">Loading invoice…</span></div>)
-                        : invoice ? (<InvoiceCard invoice={invoice} />) : (<div className="bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5 flex items-center gap-2"><Receipt size={14} className="text-gray-400" /><span className="text-sm text-gray-500">Invoice #{dispute.invoice_id} — details not available</span></div>)}
-                    </section>
-                  )}
-
-                  {(dispute.payment_detail_id || payments.length > 0 || paymentLoading) && (
-                    <section>
-                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><DollarSign size={11} /> Payment Details</h3>
-                      {paymentLoading ? (<div className="flex items-center justify-center gap-2 py-10 bg-surface-50 rounded-2xl border border-surface-100"><LoadingSpinner /><span className="text-sm text-gray-500">Loading payments…</span></div>)
-                        : payments.length > 0 ? (<PaymentListCard payments={payments} />)
-                        : dispute.payment_detail_id ? (<div className="bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5 flex items-center gap-2"><DollarSign size={14} className="text-gray-400" /><span className="text-sm text-gray-500">Payment #{dispute.payment_detail_id} — details not available</span></div>) : null}
-                    </section>
-                  )}
-
-                  {/* {dispute.latest_analysis && (
-                    <section>
-                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Brain size={11} /> AI Analysis</h3>
-                      <div className="bg-brand-50 border border-brand-100 rounded-2xl overflow-hidden">
-                        <div className="px-5 py-4 flex items-center justify-between gap-3 border-b border-brand-100">
-                          <p className="text-sm font-bold text-brand-900">{dispute.latest_analysis.predicted_category}</p>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <div className="w-20 h-1.5 bg-brand-200 rounded-full overflow-hidden"><div className="h-full bg-brand-600 rounded-full" style={{ width: `${Math.round(dispute.latest_analysis.confidence_score * 100)}%` }} /></div>
-                            <span className="text-xs font-bold text-brand-700">{Math.round(dispute.latest_analysis.confidence_score * 100)}%</span>
-                          </div>
-                        </div>
-                        <div className="px-5 py-4"><p className="text-sm text-brand-900 leading-relaxed">{dispute.latest_analysis.ai_summary}</p></div>
-                        {dispute.latest_analysis.ai_response && (<div className="px-5 py-4 bg-white border-t border-brand-100"><p className="text-xs font-bold text-brand-600 uppercase tracking-wider mb-1.5">Suggested Response</p><p className="text-sm text-surface-800 leading-relaxed">{dispute.latest_analysis.ai_response}</p></div>)}
-                        {(dispute.latest_analysis.auto_response_generated || dispute.latest_analysis.memory_context_used) && (
-                          <div className="px-5 py-2.5 bg-brand-100 flex items-center gap-4 flex-wrap">
-                            {dispute.latest_analysis.auto_response_generated && <div className="flex items-center gap-1.5"><CheckCheck size={13} className="text-green-600" /><span className="text-xs font-semibold text-green-700">Auto-response sent</span></div>}
-                            {dispute.latest_analysis.memory_context_used && <div className="flex items-center gap-1.5"><Brain size={13} className="text-brand-600" /><span className="text-xs font-semibold text-brand-700">Memory context used</span></div>}
-                          </div>
+                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                        <Brain size={11} /> Suggested Response
+                        {dispute.latest_analysis.auto_response_generated && (
+                          <span className="ml-auto flex items-center gap-1 text-green-600 text-[10px] font-semibold normal-case tracking-normal">
+                            <CheckCheck size={11} /> Auto-sent
+                          </span>
                         )}
+                      </h3>
+                      <div className="bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">
+                        <p className="text-sm text-surface-800 leading-relaxed whitespace-pre-wrap">{dispute.latest_analysis.ai_response}</p>
                       </div>
                     </section>
-                  )} */}
+                  )}
 
+                  {/* Update status */}
                   <section className="border-t border-surface-100 pt-5">
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Update Status</h3>
                     <div className="flex flex-wrap gap-2">
@@ -757,34 +772,30 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                 </div>
               )}
 
-              {/* DOCUMENTS */}
+              {/* DOCUMENTS — AR graph docs + supporting files */}
               {tab === 'documents' && (
-                <div className="px-8 py-6 space-y-5">
+                <div className="px-6 py-5 space-y-6 overflow-y-auto">
+
+                  {/* AR Documents section */}
                   <section>
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Receipt size={11} /> Invoice</h3>
-                    <DocRow icon={Receipt} iconBg="bg-brand-600" label="Invoice Document" sublabel={invoice ? (invoice.invoice_details?.invoice_number ?? invoice.invoice_number) : dispute.invoice_id ? `Invoice #${dispute.invoice_id}` : undefined} loading={invoiceLoading} missing={!invoiceLoading && !invoice && !dispute.invoice_id} missingText="No invoice linked" url={invoice?.invoice_url} urlLabel="Open Invoice"
-                      meta={invoice ? [...(invoice.invoice_details?.invoice_date ? [{ icon: Calendar, text: formatDate(invoice.invoice_details.invoice_date as string) }] : []), ...(invoice.invoice_details?.total_amount != null ? [{ icon: DollarSign, text: formatCurrency(invoice.invoice_details.total_amount, invoice.invoice_details?.currency ?? 'INR') }] : []), ...(invoice.invoice_details?.vendor_name ? [{ icon: Building2, text: invoice.invoice_details.vendor_name as string }] : [])] : []} />
-                  </section>
-                  <section>
-                    <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><CreditCard size={11} /> Payment Records {payments.length > 0 && <span className="ml-1 text-xs bg-green-100 text-green-700 rounded-full px-2 py-px font-bold normal-case tracking-normal">{payments.length}</span>}</h3>
-                    {paymentLoading ? (<DocRow icon={CreditCard} iconBg="bg-green-600" label="Payment Records" loading urlLabel="Open" />)
-                      : payments.length > 0 ? (
-                        <div className="space-y-3">
-                          {payments.map(p => {
-                            const d = p.payment_details ?? {};
-                            return (<DocRow key={p.payment_detail_id} icon={CreditCard} iconBg="bg-green-600" label={`Payment${d.payment_type ? ` · ${d.payment_type}` : ''}`} sublabel={d.payment_reference as string ?? `Payment #${p.payment_detail_id}`}
-                              meta={[...(d.payment_date ? [{ icon: Calendar, text: formatDate(d.payment_date as string) }] : []), ...(d.amount_paid != null ? [{ icon: DollarSign, text: formatCurrency(d.amount_paid as number, d.currency as string ?? 'INR') }] : []), ...(d.status ? [{ icon: CheckCircle2, text: d.status as string }] : [])]}
-                              url={p.payment_url} urlLabel="Open PDF" />);
-                          })}
-                        </div>
-                      ) : (<DocRow icon={CreditCard} iconBg="bg-green-600" label="Payment Records" missing missingText="No payment records found" urlLabel="Open" />)}
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+                        <Link2 size={11} className="text-brand-500" /> Reference Documents
+                      </h3>
+                      <a href="/ar-documents" className="text-xs text-brand-600 hover:text-brand-700 font-semibold flex items-center gap-1">
+                        Manage <ArrowUpRight size={11} />
+                      </a>
+                    </div>
+                    <ARDocsInlinePanel disputeId={dispute.dispute_id} customerId={dispute.customer_id ?? ''} />
                   </section>
 
-                  {/* Other Documents — FA uploads, visible to all FAs on this casete */}
-                  <section>
+                  {/* Supporting files section */}
+                  <section className="border-t border-surface-100 pt-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><Upload size={11} /> Other Documents</h3>
-                      <span className="text-xs text-gray-400 font-normal normal-case">(any supporting files — visible to all FAs on this casete)</span>
+                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+                        <Upload size={11} /> Supporting Files
+                      </h3>
+                      <span className="text-xs text-gray-400 font-normal">(evidence, screenshots, PDFs)</span>
                     </div>
                     <DisputeDocumentsPanel dispute={dispute} />
                   </section>
@@ -796,7 +807,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
             </div>
 
             {/* Right sidebar — quick info (visible on overview/timeline/docs tabs) */}
-            {tab !== 'email' && (
+            {tab !== 'email' && tab !== 'documents' && (
               <div className="hidden xl:flex flex-col w-72 border-l border-surface-100 bg-surface-50 overflow-y-auto">
                 <div className="p-5 space-y-4">
                   <div>
@@ -891,6 +902,308 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
 };
 
 // ─── Create Dispute Modal ─────────────────────────────────────────────────────
+// ─── Fork Recommendation Card ─────────────────────────────────────────────────
+
+const ForkRecommendationCard = ({
+  rec,
+  dispute,
+  onAccepted,
+  onDismissed,
+}: {
+  rec:         ForkRecommendation;
+  dispute:     Dispute;
+  onAccepted:  (newDisputeId: number) => void;
+  onDismissed: () => void;
+}) => {
+  const [dismissing, setDismissing] = useState(false);
+  const [showAccept, setShowAccept] = useState(false);
+
+  const handleDismiss = async () => {
+    try {
+      setDismissing(true);
+      await forkRecommendationService.action(dispute.dispute_id, rec.recommendation_id, { action: 'DISMISS' });
+      toast.success('Recommendation dismissed');
+      onDismissed();
+    } catch { toast.error('Failed to dismiss'); }
+    finally { setDismissing(false); }
+  };
+
+  return (
+    <>
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 space-y-3">
+        {/* Header */}
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+            <Zap size={15} className="text-amber-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-amber-900">AI suggests splitting this case</p>
+            <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+              {rec.reasoning || 'A new topic was detected in the email thread that may require separate handling.'}
+            </p>
+          </div>
+          <span className="text-[10px] font-bold text-amber-600 bg-amber-100 border border-amber-200 rounded-full px-2 py-0.5 shrink-0">
+            {Math.round(rec.confidence * 100)}% confidence
+          </span>
+        </div>
+
+        {/* Suggested details */}
+        <div className="bg-white border border-amber-100 rounded-xl px-3 py-2.5 space-y-1">
+          {rec.suggested_type_hint && (
+            <p className="text-xs text-surface-600">
+              <span className="font-semibold text-surface-500">Type:</span> {rec.suggested_type_hint}
+            </p>
+          )}
+          {rec.suggested_invoice_number && (
+            <p className="text-xs text-surface-600">
+              <span className="font-semibold text-surface-500">Reference:</span> {rec.suggested_invoice_number}
+            </p>
+          )}
+          {rec.suggested_description && (
+            <p className="text-xs text-surface-600 line-clamp-2">
+              <span className="font-semibold text-surface-500">Issue:</span> {rec.suggested_description}
+            </p>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 pt-0.5">
+          <button
+            onClick={() => setShowAccept(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition-colors"
+          >
+            <Plus size={12} /> Create New Case
+          </button>
+          <button
+            onClick={handleDismiss}
+            disabled={dismissing}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-200 hover:border-amber-300 bg-white text-amber-700 text-xs font-semibold transition-colors disabled:opacity-50"
+          >
+            {dismissing ? <Loader2 size={11} className="animate-spin" /> : <X size={11} />}
+            Not relevant
+          </button>
+        </div>
+      </div>
+
+      {showAccept && (
+        <AcceptForkModal
+          rec={rec}
+          dispute={dispute}
+          onClose={() => setShowAccept(false)}
+          onCreated={onAccepted}
+        />
+      )}
+    </>
+  );
+};
+
+// ─── Accept Fork Modal ────────────────────────────────────────────────────────
+
+const AcceptForkModal = ({
+  rec,
+  dispute,
+  onClose,
+  onCreated,
+}: {
+  rec:      ForkRecommendation;
+  dispute:  Dispute;
+  onClose:  () => void;
+  onCreated: (newDisputeId: number) => void;
+}) => {
+  const [disputeTypes, setDisputeTypes] = useState<DisputeTypeOption[]>([]);
+  const [selectedTypeId, setSelectedTypeId] = useState<number | ''>('');
+  const [useCustom, setUseCustom] = useState(!rec.suggested_type_hint);
+  const [customTypeName, setCustomTypeName] = useState(rec.suggested_type_hint || '');
+  const [customTypeDesc, setCustomTypeDesc] = useState('');
+  const [description, setDescription] = useState(rec.suggested_description || '');
+  const [priority, setPriority] = useState<'LOW'|'MEDIUM'|'HIGH'>(
+    (rec.suggested_priority as 'LOW'|'MEDIUM'|'HIGH') || 'MEDIUM'
+  );
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    disputeTypeService.list().then(types => {
+      setDisputeTypes(types);
+      // Pre-select if a type hint matches
+      if (rec.suggested_type_hint) {
+        const match = types.find(t =>
+          t.reason_name.toLowerCase().includes(rec.suggested_type_hint!.toLowerCase())
+        );
+        if (match) {
+          setSelectedTypeId(match.dispute_type_id);
+          setUseCustom(false);
+        } else {
+          setUseCustom(true);
+        }
+      }
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [onClose]);
+
+  const handleSubmit = async () => {
+    if (!description.trim()) { toast.error('Description is required'); return; }
+    if (!useCustom && !selectedTypeId) { toast.error('Select a case type'); return; }
+    if (useCustom && !customTypeName.trim()) { toast.error('Custom type name is required'); return; }
+    try {
+      setSubmitting(true);
+      const result = await forkRecommendationService.action(
+        dispute.dispute_id,
+        rec.recommendation_id,
+        {
+          action:           'ACCEPT',
+          dispute_type_id:  useCustom ? null : Number(selectedTypeId),
+          custom_type_name: useCustom ? customTypeName.trim() : null,
+          custom_type_desc: useCustom ? customTypeDesc.trim() : null,
+          description:      description.trim(),
+          priority,
+          customer_email:   dispute.customer_id,
+        },
+      );
+      toast.success(`New case ${result.dispute_token} created`);
+      onCreated(result.new_dispute_id!);
+      onClose();
+    } catch { toast.error('Failed to create case'); }
+    finally { setSubmitting(false); }
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-modal w-full max-w-md animate-scale-in overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-surface-100 bg-gradient-to-r from-amber-50 to-white">
+            <div>
+              <h2 className="font-display font-bold text-surface-800">Create Forked Case</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Pre-filled from AI recommendation</p>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-surface-100 text-gray-400"><X size={18} /></button>
+          </div>
+
+          <div className="px-6 py-5 space-y-4 max-h-[65vh] overflow-y-auto">
+            {/* Reference info */}
+            {rec.suggested_invoice_number && (
+              <div className="flex items-center gap-2 text-xs bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+                <Hash size={11} className="text-amber-500 shrink-0" />
+                <span className="text-amber-700">Reference: <span className="font-mono font-bold">{rec.suggested_invoice_number}</span></span>
+              </div>
+            )}
+
+            {/* Case Type */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Case Type *</label>
+              <div className="flex items-center gap-2 p-1 bg-surface-100 rounded-xl mb-3 w-fit">
+                <button onClick={() => setUseCustom(false)} className={clsx('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all', !useCustom ? 'bg-white text-brand-700 shadow-sm border border-brand-200' : 'text-gray-500')}>Pick existing</button>
+                <button onClick={() => setUseCustom(true)} className={clsx('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all', useCustom ? 'bg-white text-brand-600 shadow-sm border border-brand-200' : 'text-gray-500')}>Create new</button>
+              </div>
+              {!useCustom ? (
+                <CaseTypePicker types={disputeTypes} selected={selectedTypeId === '' ? null : Number(selectedTypeId)} onSelect={id => setSelectedTypeId(id)} />
+              ) : (
+                <div className="space-y-3">
+                  <input className="input-base text-sm" placeholder="Type name" value={customTypeName} onChange={e => setCustomTypeName(e.target.value)} />
+                  <textarea className="input-base text-sm resize-none" rows={2} placeholder="Description (optional)" value={customTypeDesc} onChange={e => setCustomTypeDesc(e.target.value)} />
+                </div>
+              )}
+            </div>
+
+            {/* Priority */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Priority</label>
+              <div className="flex gap-2">
+                {(['LOW','MEDIUM','HIGH'] as const).map(p => (
+                  <button key={p} onClick={() => setPriority(p)} className={clsx('flex-1 py-2 rounded-xl text-xs font-bold border transition-all', priority === p ? p === 'HIGH' ? 'bg-red-500 text-white border-red-500' : p === 'MEDIUM' ? 'bg-brand-400 text-white border-brand-400' : 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-500 border-surface-200')}>{p}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Description *</label>
+              <textarea className="input-base text-sm resize-none" rows={3} value={description} onChange={e => setDescription(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-100 bg-surface-50">
+            <button onClick={onClose} className="btn-secondary btn-sm">Cancel</button>
+            <button onClick={handleSubmit} disabled={submitting} className="btn-sm flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl px-4 py-2 font-semibold text-xs transition-colors disabled:opacity-50">
+              {submitting ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+              {submitting ? 'Creating…' : 'Create Case'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// ─── Searchable case type picker ─────────────────────────────────────────────
+const CaseTypePicker = ({
+  types,
+  selected,
+  onSelect,
+}: {
+  types:    DisputeTypeOption[];
+  selected: number | null;
+  onSelect: (id: number) => void;
+}) => {
+  const [query, setQuery] = useState('');
+  const filtered = query.trim()
+    ? types.filter(t => t.reason_name.toLowerCase().includes(query.toLowerCase()))
+    : types;
+  const selectedType = types.find(t => t.dispute_type_id === selected);
+
+  return (
+    <div className="space-y-2">
+      <div className="relative">
+        <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <input
+          className="input-base text-sm pl-8"
+          placeholder="Search case types…"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+        />
+      </div>
+      <div className="max-h-44 overflow-y-auto space-y-1 pr-0.5">
+        {filtered.length === 0 ? (
+          <p className="text-xs text-gray-400 italic px-2 py-2">No types match "{query}"</p>
+        ) : (
+          filtered.map(t => (
+            <button
+              key={t.dispute_type_id}
+              type="button"
+              onClick={() => onSelect(t.dispute_type_id)}
+              className={clsx(
+                'w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border text-left text-xs transition-all',
+                selected === t.dispute_type_id
+                  ? 'border-brand-400 bg-brand-50 text-brand-700'
+                  : 'border-surface-200 bg-white text-surface-700 hover:border-surface-300 hover:bg-surface-50'
+              )}
+            >
+              <div className={clsx(
+                'w-3.5 h-3.5 rounded-full border-2 shrink-0 flex items-center justify-center',
+                selected === t.dispute_type_id ? 'border-brand-500' : 'border-gray-300'
+              )}>
+                {selected === t.dispute_type_id && <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />}
+              </div>
+              <span className="font-medium truncate">{t.reason_name}</span>
+            </button>
+          ))
+        )}
+      </div>
+      {selectedType && (
+        <div className="flex items-center gap-2 text-xs text-brand-700 bg-brand-50 border border-brand-200 rounded-xl px-3 py-2">
+          <CheckCircle2 size={12} className="shrink-0 text-brand-500" />
+          <span className="font-semibold">{selectedType.reason_name}</span> selected
+        </div>
+      )}
+    </div>
+  );
+};
+
 const CreateDisputeModal = ({ onClose, onCreated }: {
   onClose: () => void;
   onCreated: (d: Dispute) => void;
@@ -901,13 +1214,15 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
   const [customTypeDesc, setCustomTypeDesc] = useState('');
   const [useCustom, setUseCustom] = useState(false);
   const [customerId, setCustomerId] = useState('');
-  const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [invoiceLookup, setInvoiceLookup] = useState<{ id: number; number: string; vendor?: string; total?: number } | null>(null);
-  const [invoiceLookupLoading, setInvoiceLookupLoading] = useState(false);
-  const [invoiceLookupError, setInvoiceLookupError] = useState<string | null>(null);
   const [priority, setPriority] = useState<'LOW'|'MEDIUM'|'HIGH'>('MEDIUM');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // AR document picker — this is now the sole anchor for the case
+  const [arDocs, setArDocs] = useState<ARDocRelated[]>([]);
+  const [arDocsLoading, setArDocsLoading] = useState(false);
+  const [arDocsFetched, setArDocsFetched] = useState(false);
+  const [selectedArDocId, setSelectedArDocId] = useState<number | null>(null);
 
   useEffect(() => {
     disputeTypeService.list().then(setDisputeTypes).catch(() => {});
@@ -919,36 +1234,23 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
     return () => window.removeEventListener('keydown', h);
   }, [onClose]);
 
-  const handleInvoiceLookup = async () => {
-    if (!invoiceNumber.trim()) return;
-    try {
-      setInvoiceLookupLoading(true);
-      setInvoiceLookupError(null);
-      const { default: axiosInstance } = await import('@/lib/axios');
-      // Pass customer_email so the backend enforces ownership — same logic as agent pipeline
-      const params: Record<string, string> = {};
-      if (customerId.trim()) params.customer_email = customerId.trim();
-      const { data } = await axiosInstance.get(
-        `/dispute/api/v1/invoices/by-number/${encodeURIComponent(invoiceNumber.trim())}`,
-        { params }
-      );
-      setInvoiceLookup({
-        id: data.invoice_id,
-        number: data.invoice_number,
-        vendor: data.invoice_details?.vendor_name,
-        total: data.invoice_details?.total_amount,
-      });
-    } catch (err: unknown) {
-      const status = (err as { status_code?: number })?.status_code;
-      if (status === 403) {
-        setInvoiceLookupError('This invoice does not belong to this customer — ownership check failed');
-      } else {
-        setInvoiceLookupError('Invoice not found — check the number and try again');
-      }
-      setInvoiceLookup(null);
-    } finally {
-      setInvoiceLookupLoading(false);
-    }
+  // Fetch AR docs when customer email is valid
+  useEffect(() => {
+    const email = customerId.trim();
+    if (!email || !email.includes('@') || arDocsFetched) return;
+    setArDocsFetched(true);
+    setArDocsLoading(true);
+    arDocumentService.listForCustomer(email)
+      .then(setArDocs)
+      .catch(() => setArDocs([]))
+      .finally(() => setArDocsLoading(false));
+  }, [customerId, arDocsFetched]);
+
+  const handleCustomerIdChange = (val: string) => {
+    setCustomerId(val);
+    setArDocsFetched(false);
+    setSelectedArDocId(null);
+    setArDocs([]);
   };
 
   const handleSubmit = async () => {
@@ -961,18 +1263,49 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
       setSubmitting(true);
       const dispute = await faDisputeService.create({
         customer_id:      customerId.trim(),
+        customer_email:   customerId.trim(),
         dispute_type_id:  useCustom ? null : Number(selectedTypeId),
         custom_type_name: useCustom ? customTypeName.trim() : null,
         custom_type_desc: useCustom ? customTypeDesc.trim() : null,
         priority,
         description:      description.trim(),
-        invoice_id:       invoiceLookup?.id ?? null,
+        ar_document_id:   selectedArDocId ?? null,
       });
       toast.success(`Dispute #${dispute.dispute_id} created`);
       onCreated(dispute);
       onClose();
     } catch { toast.error('Failed to create case'); }
     finally { setSubmitting(false); }
+  };
+
+  const selectedArDoc = arDocs.find(d => d.doc_id === selectedArDocId);
+
+  // Natural key per doc type — show the identifier that actually names this document.
+  // Falls back to the first available key if the preferred type isn't extracted.
+  const DOC_TYPE_NATURAL_KEY: Record<string, string> = {
+    PO:          'po_number',
+    INVOICE:     'inv_number',
+    GRN:         'grn_number',
+    PAYMENT:     'payment_ref',
+    CONTRACT:    'contract_number',
+    CREDIT_NOTE: 'credit_note_number',
+  };
+
+  const docLabel = (doc: ARDocRelated): string => {
+    if (!doc.all_keys?.length) return `${DOC_TYPE_LABELS[doc.doc_type] ?? doc.doc_type} — no keys extracted`;
+    const preferred = DOC_TYPE_NATURAL_KEY[doc.doc_type];
+    const primary   = (preferred ? doc.all_keys.find(k => k.key_type === preferred) : null)
+                      ?? doc.all_keys[0];
+    return primary.key_value_raw;
+  };
+
+  const DOC_TYPE_COLORS_MODAL: Record<string, string> = {
+    PO:          'bg-violet-100 text-violet-700',
+    INVOICE:     'bg-brand-100 text-brand-700',
+    GRN:         'bg-green-100 text-green-700',
+    PAYMENT:     'bg-teal-100 text-teal-700',
+    CONTRACT:    'bg-slate-100 text-slate-700',
+    CREDIT_NOTE: 'bg-pink-100 text-pink-700',
   };
 
   return (
@@ -991,55 +1324,106 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
 
           {/* Body */}
           <div className="px-7 py-6 space-y-5 max-h-[70vh] overflow-y-auto">
-            {/* Customer ID */}
+
+            {/* Customer Email */}
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Customer Email *</label>
-              <input className="input-base text-sm" placeholder="customer@domain.com" value={customerId} onChange={e => setCustomerId(e.target.value)} />
+              <input
+                className="input-base text-sm"
+                placeholder="customer@domain.com"
+                value={customerId}
+                onChange={e => handleCustomerIdChange(e.target.value)}
+              />
             </div>
 
-            {/* Invoice Number */}
+            {/* AR Document — anchor for the whole case */}
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
-                Invoice Number <span className="text-gray-400 font-normal normal-case">(optional — helps anchor the case)</span>
+                Anchor Document *
+                <span className="text-gray-400 font-normal normal-case ml-1">— the case is built around this document's graph</span>
               </label>
-              <div className="flex gap-2">
-                <input
-                  className="input-base text-sm flex-1"
-                  placeholder="e.g. INV-2024-001"
-                  value={invoiceNumber}
-                  onChange={e => { setInvoiceNumber(e.target.value); setInvoiceLookup(null); setInvoiceLookupError(null); }}
-                  onBlur={handleInvoiceLookup}
-                  onKeyDown={e => e.key === 'Enter' && handleInvoiceLookup()}
-                />
-                <button
-                  type="button"
-                  onClick={handleInvoiceLookup}
-                  disabled={!invoiceNumber.trim() || invoiceLookupLoading}
-                  className="px-3 py-2 rounded-xl border border-surface-200 hover:border-brand-300 text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 transition-all disabled:opacity-40 shrink-0"
-                >
-                  {invoiceLookupLoading ? <Loader2 size={13} className="animate-spin" /> : 'Lookup'}
-                </button>
-              </div>
-              {invoiceLookup && (
-                <div className="mt-2 flex items-start gap-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">
-                  <CheckCircle2 size={13} className="shrink-0 mt-0.5 text-green-500" />
-                  <div>
-                    <p className="font-bold">{invoiceLookup.number} — found ✓</p>
-                    <p className="text-green-600 mt-0.5">
-                      {invoiceLookup.vendor && <span>{invoiceLookup.vendor}</span>}
-                      {invoiceLookup.total != null && <span> · {formatCurrency(invoiceLookup.total)}</span>}
-                    </p>
-                  </div>
+
+              {!customerId.trim() || !customerId.includes('@') ? (
+                <p className="text-xs text-gray-400 italic py-1">Enter customer email above to load their documents</p>
+              ) : arDocsLoading ? (
+                <div className="flex items-center gap-2 text-xs text-gray-400 py-2">
+                  <Loader2 size={12} className="animate-spin" /> Loading documents…
+                </div>
+              ) : arDocs.length === 0 ? (
+                <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+                  <AlertTriangle size={12} className="shrink-0 mt-0.5" />
+                  <span>
+                    No AR documents on file for this customer.{' '}
+                    <a href="/ar-documents" className="font-semibold hover:underline">Upload one first</a>
+                    {' '}so the case has document context.
+                  </span>
+                </div>
+              ) : (
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-0.5">
+                  {arDocs.map(doc => (
+                    <button
+                      key={doc.doc_id}
+                      type="button"
+                      onClick={() => setSelectedArDocId(doc.doc_id)}
+                      className={clsx(
+                        'w-full flex items-start gap-3 px-3 py-2.5 rounded-xl border text-left transition-all',
+                        selectedArDocId === doc.doc_id
+                          ? 'border-brand-400 bg-brand-50'
+                          : 'border-surface-200 bg-white hover:border-surface-300 hover:bg-surface-50'
+                      )}
+                    >
+                      {/* Radio circle */}
+                      <div className={clsx(
+                        'w-3.5 h-3.5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center',
+                        selectedArDocId === doc.doc_id ? 'border-brand-500' : 'border-gray-300'
+                      )}>
+                        {selectedArDocId === doc.doc_id && <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />}
+                      </div>
+
+                      {/* Type badge */}
+                      <span className={clsx(
+                        'inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold shrink-0',
+                        DOC_TYPE_COLORS_MODAL[doc.doc_type] ?? 'bg-surface-100 text-surface-600'
+                      )}>{doc.doc_type}</span>
+
+                      {/* Key info */}
+                      <div className="flex-1 min-w-0">
+                        <p className={clsx(
+                          'text-xs font-semibold truncate',
+                          selectedArDocId === doc.doc_id ? 'text-brand-700' : 'text-surface-700'
+                        )}>
+                          {docLabel(doc)}
+                        </p>
+                        {doc.all_keys.length > 1 && (
+                          <p className="text-[10px] text-gray-400 mt-0.5 truncate">
+                            {doc.all_keys.slice(1, 3).map(k => k.key_value_raw).join(' · ')}
+                            {doc.all_keys.length > 3 && ` +${doc.all_keys.length - 3} more`}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Date */}
+                      {doc.doc_date && (
+                        <span className="text-[10px] text-gray-400 shrink-0 mt-0.5">{doc.doc_date.slice(0, 10)}</span>
+                      )}
+                    </button>
+                  ))}
                 </div>
               )}
-              {invoiceLookupError && (
-                <div className="mt-2 flex items-center gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
-                  <AlertTriangle size={12} className="shrink-0" /> {invoiceLookupError}
+
+              {/* Confirmation pill when doc selected */}
+              {selectedArDoc && (
+                <div className="mt-2 flex items-start gap-2 text-xs text-brand-700 bg-brand-50 border border-brand-200 rounded-xl px-3 py-2.5">
+                  <Link2 size={12} className="shrink-0 mt-0.5 text-brand-500" />
+                  <span>
+                    <span className="font-bold">{docLabel(selectedArDoc)}</span> selected —
+                    full document graph will be pre-loaded as context for this case.
+                  </span>
                 </div>
               )}
             </div>
 
-            {/* Dispute Type */}
+            {/* Case Type */}
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Case Type *</label>
               <div className="flex items-center gap-2 p-1 bg-surface-100 rounded-xl mb-3 w-fit">
@@ -1051,10 +1435,11 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
                 </button>
               </div>
               {!useCustom ? (
-                <select className="input-base text-sm" value={selectedTypeId} onChange={e => setSelectedTypeId(e.target.value as any)}>
-                  <option value="">— Select a case type —</option>
-                  {disputeTypes.map(t => <option key={t.dispute_type_id} value={t.dispute_type_id}>{t.reason_name}</option>)}
-                </select>
+                <CaseTypePicker
+                  types={disputeTypes}
+                  selected={selectedTypeId === '' ? null : Number(selectedTypeId)}
+                  onSelect={id => setSelectedTypeId(id)}
+                />
               ) : (
                 <div className="space-y-3">
                   <input className="input-base text-sm" placeholder="Type name e.g. 'Currency Exchange Dispute'" value={customTypeName} onChange={e => setCustomTypeName(e.target.value)} />
@@ -1083,7 +1468,7 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
             {/* Description */}
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Description *</label>
-              <textarea className="input-base text-sm resize-none" rows={4} placeholder="Describe the case — what's the issue, which invoice, what amount…" value={description} onChange={e => setDescription(e.target.value)} />
+              <textarea className="input-base text-sm resize-none" rows={4} placeholder="Describe the case — what's the issue, which document, what amount…" value={description} onChange={e => setDescription(e.target.value)} />
             </div>
           </div>
 
@@ -1133,6 +1518,385 @@ async function fetchAndOpenDoc(url: string, fileName: string, mode: 'view' | 'sa
     toast.error('Could not open file — please try again');
   }
 }
+
+// ─── AR Docs Inline Panel ────────────────────────────────────────────────────
+
+const DOC_TYPE_COLORS_INLINE: Record<string, string> = {
+  PO:          'bg-violet-100 text-violet-700',
+  INVOICE:     'bg-brand-100 text-brand-700',
+  GRN:         'bg-green-100 text-green-700',
+  PAYMENT:     'bg-teal-100 text-teal-700',
+  CONTRACT:    'bg-slate-100 text-slate-700',
+  CREDIT_NOTE: 'bg-pink-100 text-pink-700',
+};
+
+// ─── Anchor Picker Modal ──────────────────────────────────────────────────────
+
+const AnchorPickerModal = ({
+  disputeId,
+  customerId,
+  onClose,
+  onUpdated,
+}: {
+  disputeId:  number;
+  customerId: string;
+  onClose:    () => void;
+  onUpdated:  (newDocs: ARDocRelated[]) => void;
+}) => {
+  const [customerDocs, setCustomerDocs]   = useState<ARDocRelated[]>([]);
+  const [loadingDocs,  setLoadingDocs]    = useState(true);
+  const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
+  const [saving,       setSaving]         = useState(false);
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!customerId) return;
+    arDocumentService.listForCustomer(customerId)
+      .then(setCustomerDocs)
+      .catch(() => setCustomerDocs([]))
+      .finally(() => setLoadingDocs(false));
+  }, [customerId]);
+
+  const DOC_NATURAL_KEY: Record<string, string> = {
+    PO: 'po_number', INVOICE: 'inv_number', GRN: 'grn_number',
+    PAYMENT: 'payment_ref', CONTRACT: 'contract_number', CREDIT_NOTE: 'credit_note_number',
+  };
+  const docLabel = (doc: ARDocRelated) => {
+    if (!doc.all_keys?.length) return `${DOC_TYPE_LABELS[doc.doc_type] ?? doc.doc_type} — no keys`;
+    const preferred = DOC_NATURAL_KEY[doc.doc_type];
+    const key = (preferred ? doc.all_keys.find(k => k.key_type === preferred) : null) ?? doc.all_keys[0];
+    return key.key_value_raw;
+  };
+
+  const DOC_COLORS: Record<string, string> = {
+    PO: 'bg-violet-100 text-violet-700', INVOICE: 'bg-brand-100 text-brand-700',
+    GRN: 'bg-green-100 text-green-700',  PAYMENT: 'bg-teal-100 text-teal-700',
+    CONTRACT: 'bg-slate-100 text-slate-700', CREDIT_NOTE: 'bg-pink-100 text-pink-700',
+  };
+
+  const handleConfirm = async () => {
+    if (!selectedDocId) return;
+    try {
+      setSaving(true);
+      const updated = await arDocumentService.updateAnchor(disputeId, selectedDocId, customerId);
+      toast.success('Anchor document updated — linked docs refreshed');
+      onUpdated(updated);
+    } catch {
+      toast.error('Failed to update anchor document');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-modal w-full max-w-md animate-scale-in overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-5 border-b border-surface-100 bg-gradient-to-r from-surface-50 to-white">
+            <div>
+              <h2 className="font-display font-bold text-surface-800">Change Anchor Document</h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Select a new anchor — all linked docs will be replaced with its graph
+              </p>
+            </div>
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-surface-100 text-gray-400">
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="px-6 py-5">
+            {loadingDocs ? (
+              <div className="flex items-center gap-2 text-xs text-gray-400 py-4">
+                <Loader2 size={13} className="animate-spin" /> Loading documents…
+              </div>
+            ) : customerDocs.length === 0 ? (
+              <div className="flex items-start gap-2 text-xs text-gray-500 bg-surface-50 border border-surface-200 rounded-xl px-3 py-3">
+                <FileText size={13} className="shrink-0 mt-0.5 text-gray-400" />
+                <span>No AR documents found for this customer. <a href="/ar-documents" className="text-brand-600 font-semibold hover:underline">Upload one</a> first.</span>
+              </div>
+            ) : (
+              <div className="space-y-1.5 max-h-72 overflow-y-auto pr-0.5">
+                {customerDocs.map(doc => (
+                  <button
+                    key={doc.doc_id}
+                    type="button"
+                    onClick={() => setSelectedDocId(doc.doc_id)}
+                    className={clsx(
+                      'w-full flex items-start gap-3 px-3 py-2.5 rounded-xl border text-left transition-all',
+                      selectedDocId === doc.doc_id
+                        ? 'border-brand-400 bg-brand-50'
+                        : 'border-surface-200 bg-white hover:border-surface-300 hover:bg-surface-50'
+                    )}
+                  >
+                    {/* Radio */}
+                    <div className={clsx(
+                      'w-3.5 h-3.5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center',
+                      selectedDocId === doc.doc_id ? 'border-brand-500' : 'border-gray-300'
+                    )}>
+                      {selectedDocId === doc.doc_id && <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />}
+                    </div>
+                    {/* Type badge */}
+                    <span className={clsx(
+                      'inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold shrink-0',
+                      DOC_COLORS[doc.doc_type] ?? 'bg-surface-100 text-surface-600'
+                    )}>{doc.doc_type}</span>
+                    {/* Key info */}
+                    <div className="flex-1 min-w-0">
+                      <p className={clsx(
+                        'text-xs font-semibold truncate',
+                        selectedDocId === doc.doc_id ? 'text-brand-700' : 'text-surface-700'
+                      )}>
+                        {docLabel(doc)}
+                      </p>
+                      {doc.all_keys.length > 1 && (
+                        <p className="text-[10px] text-gray-400 truncate mt-0.5">
+                          {doc.all_keys.slice(1, 3).map(k => k.key_value_raw).join(' · ')}
+                          {doc.all_keys.length > 3 && ` +${doc.all_keys.length - 3} more`}
+                        </p>
+                      )}
+                    </div>
+                    {doc.doc_date && (
+                      <span className="text-[10px] text-gray-400 shrink-0 mt-0.5">{doc.doc_date.slice(0, 10)}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-100 bg-surface-50">
+            <button onClick={onClose} className="btn-secondary btn-sm">Cancel</button>
+            <button
+              onClick={handleConfirm}
+              disabled={!selectedDocId || saving}
+              className="btn-primary btn-sm flex items-center gap-2 disabled:opacity-50"
+            >
+              {saving ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+              {saving ? 'Updating…' : 'Update Anchor'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// ─── AR Docs Inline Panel ────────────────────────────────────────────────────
+const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; customerId: string }) => {
+  const [docs,          setDocs]          = useState<ARDocRelated[]>([]);
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState(false);
+  const [expanded,      setExpanded]      = useState<Record<number, boolean>>({});
+  const [showAnchorPicker, setShowAnchorPicker] = useState(false);
+
+  const reload = () => {
+    setLoading(true);
+    setError(false);
+    arDocumentService.getForDispute(disputeId)
+      .then(setDocs)
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { reload(); }, [disputeId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-gray-400 py-4">
+        <Loader2 size={13} className="animate-spin" /> Loading AR documents…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-red-500 bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">
+        <AlertCircle size={12} className="shrink-0" /> Failed to load AR documents
+      </div>
+    );
+  }
+
+  if (docs.length === 0) {
+    return (
+      <div className="flex items-start gap-2 text-xs text-gray-500 bg-surface-50 border border-surface-200 rounded-xl px-3 py-3">
+        <FileText size={13} className="shrink-0 mt-0.5 text-gray-400" />
+        <span>
+          No AR documents linked to this case yet.
+          Documents are attached automatically when an email is processed,
+          or you can{' '}
+          <a href="/ar-documents" className="text-brand-600 font-semibold hover:underline">
+            upload and link documents manually
+          </a>.
+        </span>
+      </div>
+    );
+  }
+
+  // Group docs by type for a cleaner view
+  const byType = docs.reduce<Record<string, ARDocRelated[]>>((acc, d) => {
+    (acc[d.doc_type] = acc[d.doc_type] ?? []).push(d);
+    return acc;
+  }, {});
+
+  return (
+    <div className="space-y-4">
+      {/* Summary strip */}
+      <div className="flex flex-wrap gap-2">
+        {(Object.entries(byType) as [string, ARDocRelated[]][]).map(([type, items]) => (
+          <span key={type} className={clsx(
+            'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold border',
+            DOC_TYPE_COLORS_INLINE[type] ?? 'bg-surface-100 text-surface-600 border-surface-200'
+          )}>
+            {DOC_TYPE_LABELS[type as keyof typeof DOC_TYPE_LABELS] ?? type}
+            <span className="opacity-60 font-normal">×{items.length}</span>
+          </span>
+        ))}
+      </div>
+
+      {/* Doc cards */}
+      <div className="space-y-2">
+        {docs.map(doc => {
+          const isExpanded = expanded[doc.doc_id] ?? false;
+        const DOC_NATURAL_KEY: Record<string, string> = {
+            PO: 'po_number', INVOICE: 'inv_number', GRN: 'grn_number',
+            PAYMENT: 'payment_ref', CONTRACT: 'contract_number', CREDIT_NOTE: 'credit_note_number',
+          };
+          const preferred   = DOC_NATURAL_KEY[doc.doc_type];
+          const primaryKey  = (preferred ? doc.all_keys?.find(k => k.key_type === preferred) : null)
+                              ?? doc.all_keys?.[0];
+          return (
+            <div key={doc.doc_id} className="bg-white border border-surface-200 rounded-xl overflow-hidden">
+              <div className="flex items-center gap-3 px-3 py-2.5">
+                {/* Expand toggle — takes up most of the row */}
+                <button
+                  type="button"
+                  className="flex-1 flex items-center gap-3 text-left min-w-0"
+                  onClick={() => setExpanded(e => ({ ...e, [doc.doc_id]: !isExpanded }))}
+                >
+                  <span className={clsx(
+                    'text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0',
+                    DOC_TYPE_COLORS_INLINE[doc.doc_type] ?? 'bg-surface-100 text-surface-600 border-surface-200'
+                  )}>
+                    {doc.doc_type}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    {primaryKey ? (
+                      <p className="text-xs font-semibold text-surface-700 truncate">
+                        <span className="text-surface-400 font-normal">{KEY_TYPE_LABELS[primaryKey.key_type] ?? primaryKey.key_type}: </span>
+                        {primaryKey.key_value_raw}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic">No keys extracted</p>
+                    )}
+                    {doc.all_keys.length > 1 && (
+                      <p className="text-[10px] text-gray-400 truncate">
+                        {doc.all_keys.slice(1, 3).map(k => k.key_value_raw).join(' · ')}
+                        {doc.all_keys.length > 3 && ` +${doc.all_keys.length - 3} more`}
+                      </p>
+                    )}
+                  </div>
+                  {doc.doc_date && (
+                    <span className="text-[10px] text-surface-400 shrink-0">{doc.doc_date.slice(0, 10)}</span>
+                  )}
+                  {isExpanded
+                    ? <ChevronUp size={13} className="text-surface-400 shrink-0" />
+                    : <ChevronDown size={13} className="text-surface-400 shrink-0" />
+                  }
+                </button>
+                {/* View / Download — only shown when file exists on disk */}
+                {doc.has_file && (
+                  <div className="flex items-center gap-0.5 shrink-0 border-l border-surface-100 pl-2 ml-1">
+                    <button
+                      type="button"
+                      title="View file"
+                      onClick={e => { e.stopPropagation(); fetchAndOpenDoc(doc.download_url, doc.doc_type.toLowerCase() + '_doc', 'view'); }}
+                      className="p-1.5 rounded-lg hover:bg-brand-50 text-gray-400 hover:text-brand-600 transition-colors"
+                    >
+                      <Eye size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      title="Download file"
+                      onClick={e => { e.stopPropagation(); fetchAndOpenDoc(doc.download_url, doc.doc_type.toLowerCase() + '_doc', 'save'); }}
+                      className="p-1.5 rounded-lg hover:bg-surface-100 text-gray-400 hover:text-surface-700 transition-colors"
+                    >
+                      <Download size={13} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {isExpanded && (
+                <div className="px-3 pb-3 border-t border-surface-100 pt-2 space-y-2">
+                  {/* All keys */}
+                  <div>
+                    <p className="text-[10px] font-semibold text-surface-400 uppercase tracking-widest mb-1.5">All Reference Keys</p>
+                    {doc.all_keys.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {doc.all_keys.map(k => (
+                          <div key={k.key_id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-surface-200 bg-surface-50 text-xs">
+                            <span className="font-semibold text-surface-500">{KEY_TYPE_LABELS[k.key_type] ?? k.key_type}:</span>
+                            <span className="font-mono font-bold text-surface-700">{k.key_value_raw}</span>
+                            <span className={clsx('text-[10px] font-semibold',
+                              k.confidence >= 0.9 ? 'text-green-600' : k.confidence >= 0.7 ? 'text-brand-500' : 'text-red-500'
+                            )}>
+                              {k.source === 'manual' ? '✓' : k.source === 'regex' ? '⚡' : '🤖'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-gray-400 italic">No keys — add them manually on the AR Documents page</p>
+                    )}
+                  </div>
+                  {/* context_note from the linking step */}
+                  {(doc as any).context_note && (
+                    <div className="mt-1">
+                      <p className="text-[10px] text-gray-400 italic">{(doc as any).context_note}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex gap-2">
+        <a href="/ar-documents"
+           className="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-brand-200 hover:border-brand-400 hover:bg-brand-50 text-brand-600 text-xs font-semibold rounded-xl px-4 py-3 transition-all">
+          <Upload size={13} /> Upload more documents for {customerId.split('@')[0]}
+        </a>
+        <button
+          type="button"
+          onClick={() => setShowAnchorPicker(true)}
+          title="Change anchor document — replaces all linked docs with the graph of the selected document"
+          className="flex items-center gap-1.5 border border-surface-200 hover:border-brand-300 hover:bg-brand-50 text-surface-600 hover:text-brand-700 text-xs font-semibold rounded-xl px-3 py-2.5 transition-all shrink-0"
+        >
+          <RefreshCw size={12} /> Change Anchor
+        </button>
+      </div>
+
+      {showAnchorPicker && (
+        <AnchorPickerModal
+          disputeId={disputeId}
+          customerId={customerId}
+          onClose={() => setShowAnchorPicker(false)}
+          onUpdated={newDocs => { setDocs(newDocs); setShowAnchorPicker(false); }}
+        />
+      )}
+    </div>
+  );
+};
 
 // ─── Dispute Documents Panel ──────────────────────────────────────────────────
 const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {

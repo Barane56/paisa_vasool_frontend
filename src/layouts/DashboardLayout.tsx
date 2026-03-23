@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Menu, ChevronLeft } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, ChevronLeft, Link2 } from 'lucide-react';
 import { ROUTES } from '@/config/constants';
 import { useAppDispatch, useUser } from '@/hooks';
 import { logoutUser } from '@/features/auth';
@@ -24,7 +24,8 @@ const SB_MUTED   = '#9898aa';   // surface-400
 const SB_AVATAR  = '#9333ea';   // brand-600
 
 const NAV_ITEMS = [
-  { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Cases' }
+  { to: ROUTES.DASHBOARD,    icon: LayoutDashboard, label: 'Cases'        },
+  { to: ROUTES.AR_DOCUMENTS, icon: Link2,            label: 'AR Documents' },
 ];
 
 const Sidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) => {

@@ -374,12 +374,14 @@ export const draftEmailService = {
 
 export interface FADisputeCreate {
   customer_id:       string;
+  customer_email?:   string | null;
   dispute_type_id?:  number | null;
   custom_type_name?: string | null;
   custom_type_desc?: string | null;
   priority:          'LOW' | 'MEDIUM' | 'HIGH';
   description:       string;
   invoice_id?:       number | null;
+  ar_document_id?:   number | null;
   notes?:            string | null;
 }
 
@@ -417,6 +419,52 @@ export const faDisputeService = {
   create: async (data: FADisputeCreate): Promise<Dispute> => {
     const { data: res } = await axiosInstance.post<Dispute>(`${DISPUTES_BASE}/create`, data);
     return res;
+  },
+};
+
+// ─── Fork Recommendations ─────────────────────────────────────────────────────
+
+export interface ForkRecommendation {
+  recommendation_id:        number;
+  dispute_id:               number;
+  confidence:               number;
+  reasoning:                string | null;
+  suggested_invoice_number: string | null;
+  suggested_type_hint:      string | null;
+  suggested_description:    string | null;
+  suggested_priority:       string;
+  status:                   'PENDING' | 'ACCEPTED' | 'DISMISSED';
+  created_at:               string;
+}
+
+export interface ForkRecommendationActionPayload {
+  action:           'ACCEPT' | 'DISMISS';
+  dispute_type_id?: number | null;
+  custom_type_name?: string | null;
+  custom_type_desc?: string | null;
+  description?:     string | null;
+  priority?:        string;
+  customer_email?:  string | null;
+  ar_document_id?:  number | null;
+}
+
+export const forkRecommendationService = {
+  list: async (disputeId: number): Promise<ForkRecommendation[]> => {
+    const { data } = await axiosInstance.get<ForkRecommendation[]>(
+      `${DISPUTES_BASE}/${disputeId}/fork-recommendations`
+    );
+    return data;
+  },
+  action: async (
+    disputeId: number,
+    recommendationId: number,
+    payload: ForkRecommendationActionPayload,
+  ): Promise<{ status: string; new_dispute_id?: number; dispute_token?: string }> => {
+    const { data } = await axiosInstance.post(
+      `${DISPUTES_BASE}/${disputeId}/fork-recommendations/${recommendationId}/action`,
+      payload,
+    );
+    return data;
   },
 };
 

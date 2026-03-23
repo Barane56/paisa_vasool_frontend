@@ -11,6 +11,7 @@ const LoginPage              = lazy(() => import('@/features/auth/components/Log
 const SignupPage             = lazy(() => import('@/features/auth/components/SignupPage'));
 const DashboardPage          = lazy(() => import('@/features/disputes/components/DashboardPage'));
 const DocumentsPage          = lazy(() => import('@/features/documents/components/DocumentsPage'));
+const ARDocumentsPage        = lazy(() => import('@/features/documents/components/ARDocumentsPage'));
 const AddFinanceAssociatePage = lazy(() => import('@/features/admin/components/AddFinanceAssociatePage'));
 const AdminIncidentsPage     = lazy(() => import('@/features/admin/components/AdminIncidentsPage'));
 const MailboxesPage          = lazy(() => import('@/features/admin/components/MailboxesPage'));
@@ -58,7 +59,8 @@ const AppRoutes = () => (
         <Route element={<FARoute />}>
           <Route element={<DashboardLayout />}>
             <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
-            <Route path={ROUTES.DOCUMENTS} element={<DocumentsPage />} />
+            <Route path={ROUTES.DOCUMENTS}     element={<DocumentsPage />} />
+            <Route path={ROUTES.AR_DOCUMENTS}  element={<ARDocumentsPage />} />
           </Route>
         </Route>
 
