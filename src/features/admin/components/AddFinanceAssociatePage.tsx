@@ -99,7 +99,7 @@ const AddFinanceAssociatePage = () => {
         <div>
           <div className="card p-6">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center shrink-0">
                 <UserPlus size={18} className="text-white" />
               </div>
               <div>

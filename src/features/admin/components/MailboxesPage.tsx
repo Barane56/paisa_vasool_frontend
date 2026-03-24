@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 // ─── Status badge ─────────────────────────────────────────────────────────────
 const MailboxStatus = ({ mailbox }: { mailbox: Mailbox }) => {
   if (!mailbox.is_active) return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-100 text-surface-600"><XCircle size={11} /> Inactive</span>;
-  if (mailbox.is_paused)  return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700"><Pause size={11} /> Paused</span>;
+  if (mailbox.is_paused)  return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700"><Pause size={11} /> Paused</span>;
   return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700"><Play size={11} /> Active</span>;
 };
 
@@ -59,7 +59,7 @@ const AddMailboxModal = ({ onClose, onAdded }: { onClose: () => void; onAdded: (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-modal w-full max-w-xl animate-scale-in flex flex-col max-h-[90vh]">
           <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-surface-100">
-            <div className="flex items-center gap-2.5"><div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center"><MailOpen size={15} className="text-amber-600" /></div><h2 className="font-display font-bold text-surface-900">Add Mailbox</h2></div>
+            <div className="flex items-center gap-2.5"><div className="w-8 h-8 rounded-xl bg-brand-100 flex items-center justify-center"><MailOpen size={15} className="text-brand-600" /></div><h2 className="font-display font-bold text-surface-900">Add Mailbox</h2></div>
             <button onClick={onClose} className="p-2 rounded-xl hover:bg-surface-100 text-gray-400 hover:text-surface-700 transition-colors"><X size={18} /></button>
           </div>
 
@@ -69,7 +69,7 @@ const AddMailboxModal = ({ onClose, onAdded }: { onClose: () => void; onAdded: (
               <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Email Provider</label>
               <div className="grid grid-cols-5 gap-2">
                 {PROVIDERS.map((p, i) => (
-                  <button key={p.label} onClick={() => selectProvider(i)} className={clsx('py-2 px-1 rounded-xl text-xs font-semibold border transition-all', i === provider ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-surface-200 text-gray-600 hover:border-surface-300 hover:bg-surface-50')}>{p.label}</button>
+                  <button key={p.label} onClick={() => selectProvider(i)} className={clsx('py-2 px-1 rounded-xl text-xs font-semibold border transition-all', i === provider ? 'border-brand-400 bg-brand-50 text-brand-700' : 'border-surface-200 text-gray-600 hover:border-surface-300 hover:bg-surface-50')}>{p.label}</button>
                 ))}
               </div>
             </div>
@@ -104,7 +104,7 @@ const AddMailboxModal = ({ onClose, onAdded }: { onClose: () => void; onAdded: (
                   <input className="input-base text-sm py-2" type="number" value={form.imap_port} onChange={e => f('imap_port', parseInt(e.target.value))} />
                 </div>
                 <div className="col-span-3 flex items-center gap-2">
-                  <input type="checkbox" id="use_ssl" checked={form.use_ssl} onChange={e => f('use_ssl', e.target.checked)} className="w-4 h-4 accent-amber-500" />
+                  <input type="checkbox" id="use_ssl" checked={form.use_ssl} onChange={e => f('use_ssl', e.target.checked)} className="w-4 h-4 accent-brand-500 accent-purple-500" />
                   <label htmlFor="use_ssl" className="text-sm text-surface-700 font-medium">Use SSL/TLS</label>
                 </div>
               </div>
@@ -123,20 +123,20 @@ const AddMailboxModal = ({ onClose, onAdded }: { onClose: () => void; onAdded: (
                   <input className="input-base text-sm py-2" type="number" value={form.smtp_port} onChange={e => f('smtp_port', parseInt(e.target.value))} />
                 </div>
                 <div className="col-span-3 flex items-center gap-2">
-                  <input type="checkbox" id="smtp_tls" checked={form.smtp_use_tls} onChange={e => f('smtp_use_tls', e.target.checked)} className="w-4 h-4 accent-amber-500" />
+                  <input type="checkbox" id="smtp_tls" checked={form.smtp_use_tls} onChange={e => f('smtp_use_tls', e.target.checked)} className="w-4 h-4 accent-brand-500 accent-purple-500" />
                   <label htmlFor="smtp_tls" className="text-sm text-surface-700 font-medium">Use STARTTLS</label>
                 </div>
               </div>
             </div>
 
-            <p className="text-xs text-gray-400 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
-              💡 For Gmail, create an <strong className="text-amber-700">App Password</strong> at myaccount.google.com → Security → 2FA → App passwords. Never use your regular Google password.
+            <p className="text-xs text-gray-400 bg-brand-50 border border-brand-100 rounded-xl px-4 py-3">
+              💡 For Gmail, create an <strong className="text-brand-700">App Password</strong> at myaccount.google.com → Security → 2FA → App passwords. Never use your regular Google password.
             </p>
           </div>
 
           <div className="px-6 pb-5 pt-4 border-t border-surface-100 flex gap-3">
             <button onClick={onClose} className="btn-secondary flex-1">Cancel</button>
-            <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 bg-amber-500 hover:bg-amber-600 active:bg-amber-700">
+            <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 bg-brand-500 hover:bg-brand-600 active:bg-brand-700">
               {saving ? <><Loader2 size={14} className="animate-spin" /> Saving…</> : 'Add Mailbox'}
             </button>
           </div>
@@ -185,12 +185,12 @@ const MailboxCard = ({ mailbox, onRefresh }: { mailbox: Mailbox; onRefresh: () =
   return (
     <div className={clsx('card p-0 overflow-hidden transition-all', mailbox.is_paused && 'opacity-80')}>
       {/* Top accent */}
-      <div className={clsx('h-1', !mailbox.is_active ? 'bg-surface-200' : mailbox.is_paused ? 'bg-amber-400' : 'bg-green-500')} />
+      <div className={clsx('h-1', !mailbox.is_active ? 'bg-surface-200' : mailbox.is_paused ? 'bg-brand-400' : 'bg-green-500')} />
 
       <div className="p-5">
         <div className="flex items-start gap-4 mb-4">
-          <div className={clsx('w-11 h-11 rounded-xl flex items-center justify-center shrink-0', !mailbox.is_active ? 'bg-surface-100' : mailbox.is_paused ? 'bg-amber-100' : 'bg-green-100')}>
-            <MailOpen size={18} className={!mailbox.is_active ? 'text-surface-400' : mailbox.is_paused ? 'text-amber-600' : 'text-green-600'} />
+          <div className={clsx('w-11 h-11 rounded-xl flex items-center justify-center shrink-0', !mailbox.is_active ? 'bg-surface-100' : mailbox.is_paused ? 'bg-brand-100' : 'bg-green-100')}>
+            <MailOpen size={18} className={!mailbox.is_active ? 'text-surface-400' : mailbox.is_paused ? 'text-brand-600' : 'text-green-600'} />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-0.5">
@@ -244,7 +244,7 @@ const MailboxCard = ({ mailbox, onRefresh }: { mailbox: Mailbox; onRefresh: () =
           <button onClick={handleTest} disabled={testing} className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 border border-surface-200 hover:border-surface-300 hover:bg-surface-50 px-3 py-2 rounded-xl transition-all disabled:opacity-50">
             {testing ? <Loader2 size={12} className="animate-spin" /> : <Wifi size={12} />} Test
           </button>
-          <button onClick={handleTogglePause} disabled={toggling || !mailbox.is_active} className={clsx('flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-all disabled:opacity-50', mailbox.is_paused ? 'border-green-200 text-green-700 hover:bg-green-50' : 'border-amber-200 text-amber-700 hover:bg-amber-50')}>
+          <button onClick={handleTogglePause} disabled={toggling || !mailbox.is_active} className={clsx('flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-all disabled:opacity-50', mailbox.is_paused ? 'border-green-200 text-green-700 hover:bg-green-50' : 'border-brand-200 text-brand-700 hover:bg-brand-50')}>
             {toggling ? <Loader2 size={12} className="animate-spin" /> : mailbox.is_paused ? <Play size={12} /> : <Pause size={12} />}
             {mailbox.is_paused ? 'Resume' : 'Pause'}
           </button>
@@ -283,7 +283,7 @@ const MailboxesPage = () => {
         action={
           <div className="flex items-center gap-2">
             <button onClick={load} className="p-2 rounded-xl hover:bg-surface-100 text-gray-500 transition-colors" title="Refresh"><RefreshCw size={15} className={loading ? 'animate-spin' : ''} /></button>
-            <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all shadow-sm">
+            <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all shadow-sm">
               <Plus size={15} /> Add Mailbox
             </button>
           </div>
@@ -293,9 +293,9 @@ const MailboxesPage = () => {
       {/* Summary */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
-          { label: 'Total',   value: mailboxes.length, color: 'bg-amber-500',  icon: MailOpen     },
+          { label: 'Total',   value: mailboxes.length, color: 'bg-brand-500',  icon: MailOpen     },
           { label: 'Active',  value: active,           color: 'bg-green-500',  icon: CheckCircle2 },
-          { label: 'Paused',  value: paused,           color: 'bg-amber-400',  icon: Pause        },
+          { label: 'Paused',  value: paused,           color: 'bg-brand-400',  icon: Pause        },
         ].map(({ label, value, color, icon: Icon }) => (
           <div key={label} className="card p-5 flex items-center gap-4">
             <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center shrink-0`}><Icon size={18} className="text-white" /></div>
@@ -306,22 +306,22 @@ const MailboxesPage = () => {
 
       {loading ? (
         <div className="flex items-center justify-center py-20 gap-3">
-          <Loader2 size={22} className="animate-spin text-amber-500" />
+          <Loader2 size={22} className="animate-spin text-brand-500" />
           <span className="text-sm text-gray-500">Loading mailboxes…</span>
         </div>
       ) : mailboxes.length === 0 ? (
         <div className="card p-16 flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center mb-4"><MailOpen size={28} className="text-amber-500" /></div>
+          <div className="w-16 h-16 rounded-2xl bg-brand-100 flex items-center justify-center mb-4"><MailOpen size={28} className="text-brand-500" /></div>
           <h3 className="font-display font-bold text-surface-900 mb-1">No mailboxes configured</h3>
           <p className="text-sm text-gray-500 max-w-xs mb-5">Add a mailbox to start polling for customer emails and enable outbound replies from disputes.</p>
-          <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-all"><Plus size={15} /> Add Your First Mailbox</button>
+          <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-all"><Plus size={15} /> Add Your First Mailbox</button>
         </div>
       ) : (
         <>
           {paused > 0 && (
-            <div className="mb-4 flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-              <AlertTriangle size={15} className="text-amber-500 shrink-0" />
-              <p className="text-sm text-amber-800"><strong>{paused} mailbox{paused !== 1 ? 'es are' : ' is'} paused</strong> — email polling is suspended for those.</p>
+            <div className="mb-4 flex items-center gap-3 bg-brand-50 border border-brand-200 rounded-xl px-4 py-3">
+              <AlertTriangle size={15} className="text-brand-500 shrink-0" />
+              <p className="text-sm text-brand-800"><strong>{paused} mailbox{paused !== 1 ? 'es are' : ' is'} paused</strong> — email polling is suspended for those.</p>
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">

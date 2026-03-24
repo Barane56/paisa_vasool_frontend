@@ -13,6 +13,7 @@ export const ROUTES = {
   DOCUMENTS: '/documents',
   DISPUTES: '/disputes',
   INBOX: '/inbox',
+  AR_DOCUMENTS: '/ar-documents',
   ADMIN_DASHBOARD: '/admin/dashboard',
   ADMIN_ADD_FA: '/admin/add-associate',
   ADMIN_INCIDENTS: '/admin/incidents',
