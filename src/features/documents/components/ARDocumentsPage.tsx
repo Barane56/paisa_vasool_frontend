@@ -163,7 +163,12 @@ const RelatedCard = ({ doc }: { doc: ARDocRelated }) => {
         <div className="px-4 pb-3 border-t border-surface-100 pt-2.5">
           <p className="text-[10px] font-semibold text-surface-400 uppercase tracking-widest mb-2">All keys</p>
           <div className="flex flex-wrap gap-1.5">
-            {doc.all_keys.map(k => <KeyChip key={k.key_id} k={k} />)}
+            {doc.all_keys.map(k => (
+              <span key={k.key_id}
+                className="text-[10px] font-mono bg-surface-100 text-surface-600 px-1.5 py-0.5 rounded border border-surface-200">
+                <span className="opacity-60">{k.key_type.replace(/_/g,' ')}: </span>{k.key_value_raw}
+              </span>
+            ))}
           </div>
         </div>
       )}

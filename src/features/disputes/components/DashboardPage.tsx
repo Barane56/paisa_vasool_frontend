@@ -721,23 +721,6 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                     </div>
                   </section>
 
-                  {/* AI response (if exists) */}
-                  {dispute.latest_analysis?.ai_response && (
-                    <section>
-                      <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                        <Brain size={11} /> Suggested Response
-                        {dispute.latest_analysis.auto_response_generated && (
-                          <span className="ml-auto flex items-center gap-1 text-green-600 text-[10px] font-semibold normal-case tracking-normal">
-                            <CheckCheck size={11} /> Auto-sent
-                          </span>
-                        )}
-                      </h3>
-                      <div className="bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">
-                        <p className="text-sm text-surface-800 leading-relaxed whitespace-pre-wrap">{dispute.latest_analysis.ai_response}</p>
-                      </div>
-                    </section>
-                  )}
-
                   {/* Update status */}
                   <section className="border-t border-surface-100 pt-5">
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Update Status</h3>
@@ -786,7 +769,11 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                         Manage <ArrowUpRight size={11} />
                       </a>
                     </div>
-                    <ARDocsInlinePanel disputeId={dispute.dispute_id} customerId={dispute.customer_id ?? ''} />
+                    <ARDocsInlinePanel
+                      key={`ar-docs-${dispute.dispute_id}`}
+                      disputeId={dispute.dispute_id}
+                      customerId={dispute.customer_id ?? ''}
+                    />
                   </section>
 
                   {/* Supporting files section */}
@@ -1394,12 +1381,6 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
                         )}>
                           {docLabel(doc)}
                         </p>
-                        {doc.all_keys.length > 1 && (
-                          <p className="text-[10px] text-gray-400 mt-0.5 truncate">
-                            {doc.all_keys.slice(1, 3).map(k => k.key_value_raw).join(' · ')}
-                            {doc.all_keys.length > 3 && ` +${doc.all_keys.length - 3} more`}
-                          </p>
-                        )}
                       </div>
 
                       {/* Date */}
@@ -1541,7 +1522,7 @@ const AnchorPickerModal = ({
   disputeId:  number;
   customerId: string;
   onClose:    () => void;
-  onUpdated:  (newDocs: ARDocRelated[]) => void;
+  onUpdated:  () => void;
 }) => {
   const [customerDocs, setCustomerDocs]   = useState<ARDocRelated[]>([]);
   const [loadingDocs,  setLoadingDocs]    = useState(true);
@@ -1585,7 +1566,7 @@ const AnchorPickerModal = ({
       setSaving(true);
       const updated = await arDocumentService.updateAnchor(disputeId, selectedDocId, customerId);
       toast.success('Anchor document updated — linked docs refreshed');
-      onUpdated(updated);
+      onUpdated();
     } catch {
       toast.error('Failed to update anchor document');
     } finally {
@@ -1656,12 +1637,6 @@ const AnchorPickerModal = ({
                       )}>
                         {docLabel(doc)}
                       </p>
-                      {doc.all_keys.length > 1 && (
-                        <p className="text-[10px] text-gray-400 truncate mt-0.5">
-                          {doc.all_keys.slice(1, 3).map(k => k.key_value_raw).join(' · ')}
-                          {doc.all_keys.length > 3 && ` +${doc.all_keys.length - 3} more`}
-                        </p>
-                      )}
                     </div>
                     {doc.doc_date && (
                       <span className="text-[10px] text-gray-400 shrink-0 mt-0.5">{doc.doc_date.slice(0, 10)}</span>
@@ -1695,7 +1670,6 @@ const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; custo
   const [docs,          setDocs]          = useState<ARDocRelated[]>([]);
   const [loading,       setLoading]       = useState(false);
   const [error,         setError]         = useState(false);
-  const [expanded,      setExpanded]      = useState<Record<number, boolean>>({});
   const [showAnchorPicker, setShowAnchorPicker] = useState(false);
 
   const reload = () => {
@@ -1765,60 +1739,41 @@ const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; custo
       {/* Doc cards */}
       <div className="space-y-2">
         {docs.map(doc => {
-          const isExpanded = expanded[doc.doc_id] ?? false;
-        const DOC_NATURAL_KEY: Record<string, string> = {
+          const DOC_NATURAL_KEY: Record<string, string> = {
             PO: 'po_number', INVOICE: 'inv_number', GRN: 'grn_number',
             PAYMENT: 'payment_ref', CONTRACT: 'contract_number', CREDIT_NOTE: 'credit_note_number',
           };
-          const preferred   = DOC_NATURAL_KEY[doc.doc_type];
-          const primaryKey  = (preferred ? doc.all_keys?.find(k => k.key_type === preferred) : null)
-                              ?? doc.all_keys?.[0];
+          const preferred  = DOC_NATURAL_KEY[doc.doc_type];
+          const primaryKey = (preferred ? doc.all_keys?.find(k => k.key_type === preferred) : null)
+                             ?? doc.all_keys?.[0];
           return (
-            <div key={doc.doc_id} className="bg-white border border-surface-200 rounded-xl overflow-hidden">
+            <div key={doc.doc_id} className="bg-white border border-surface-200 rounded-xl">
               <div className="flex items-center gap-3 px-3 py-2.5">
-                {/* Expand toggle — takes up most of the row */}
-                <button
-                  type="button"
-                  className="flex-1 flex items-center gap-3 text-left min-w-0"
-                  onClick={() => setExpanded(e => ({ ...e, [doc.doc_id]: !isExpanded }))}
-                >
-                  <span className={clsx(
-                    'text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0',
-                    DOC_TYPE_COLORS_INLINE[doc.doc_type] ?? 'bg-surface-100 text-surface-600 border-surface-200'
-                  )}>
-                    {doc.doc_type}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    {primaryKey ? (
-                      <p className="text-xs font-semibold text-surface-700 truncate">
-                        <span className="text-surface-400 font-normal">{KEY_TYPE_LABELS[primaryKey.key_type] ?? primaryKey.key_type}: </span>
-                        {primaryKey.key_value_raw}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-gray-400 italic">No keys extracted</p>
-                    )}
-                    {doc.all_keys.length > 1 && (
-                      <p className="text-[10px] text-gray-400 truncate">
-                        {doc.all_keys.slice(1, 3).map(k => k.key_value_raw).join(' · ')}
-                        {doc.all_keys.length > 3 && ` +${doc.all_keys.length - 3} more`}
-                      </p>
-                    )}
-                  </div>
-                  {doc.doc_date && (
-                    <span className="text-[10px] text-surface-400 shrink-0">{doc.doc_date.slice(0, 10)}</span>
+                <span className={clsx(
+                  'text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0',
+                  DOC_TYPE_COLORS_INLINE[doc.doc_type] ?? 'bg-surface-100 text-surface-600 border-surface-200'
+                )}>
+                  {doc.doc_type}
+                </span>
+                <div className="flex-1 min-w-0">
+                  {primaryKey ? (
+                    <p className="text-xs font-semibold text-surface-700 truncate">
+                      {primaryKey.key_value_raw}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-400 italic">No reference extracted</p>
                   )}
-                  {isExpanded
-                    ? <ChevronUp size={13} className="text-surface-400 shrink-0" />
-                    : <ChevronDown size={13} className="text-surface-400 shrink-0" />
-                  }
-                </button>
+                </div>
+                {doc.doc_date && (
+                  <span className="text-[10px] text-surface-400 shrink-0">{doc.doc_date.slice(0, 10)}</span>
+                )}
                 {/* View / Download — only shown when file exists on disk */}
                 {doc.has_file && (
                   <div className="flex items-center gap-0.5 shrink-0 border-l border-surface-100 pl-2 ml-1">
                     <button
                       type="button"
                       title="View file"
-                      onClick={e => { e.stopPropagation(); fetchAndOpenDoc(doc.download_url, doc.doc_type.toLowerCase() + '_doc', 'view'); }}
+                      onClick={() => fetchAndOpenDoc(doc.download_url, doc.doc_type.toLowerCase() + '_doc', 'view')}
                       className="p-1.5 rounded-lg hover:bg-brand-50 text-gray-400 hover:text-brand-600 transition-colors"
                     >
                       <Eye size={13} />
@@ -1826,7 +1781,7 @@ const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; custo
                     <button
                       type="button"
                       title="Download file"
-                      onClick={e => { e.stopPropagation(); fetchAndOpenDoc(doc.download_url, doc.doc_type.toLowerCase() + '_doc', 'save'); }}
+                      onClick={() => fetchAndOpenDoc(doc.download_url, doc.doc_type.toLowerCase() + '_doc', 'save')}
                       className="p-1.5 rounded-lg hover:bg-surface-100 text-gray-400 hover:text-surface-700 transition-colors"
                     >
                       <Download size={13} />
@@ -1834,38 +1789,6 @@ const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; custo
                   </div>
                 )}
               </div>
-
-              {isExpanded && (
-                <div className="px-3 pb-3 border-t border-surface-100 pt-2 space-y-2">
-                  {/* All keys */}
-                  <div>
-                    <p className="text-[10px] font-semibold text-surface-400 uppercase tracking-widest mb-1.5">All Reference Keys</p>
-                    {doc.all_keys.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {doc.all_keys.map(k => (
-                          <div key={k.key_id} className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-surface-200 bg-surface-50 text-xs">
-                            <span className="font-semibold text-surface-500">{KEY_TYPE_LABELS[k.key_type] ?? k.key_type}:</span>
-                            <span className="font-mono font-bold text-surface-700">{k.key_value_raw}</span>
-                            <span className={clsx('text-[10px] font-semibold',
-                              k.confidence >= 0.9 ? 'text-green-600' : k.confidence >= 0.7 ? 'text-brand-500' : 'text-red-500'
-                            )}>
-                              {k.source === 'manual' ? '✓' : k.source === 'regex' ? '⚡' : '🤖'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-[11px] text-gray-400 italic">No keys — add them manually on the AR Documents page</p>
-                    )}
-                  </div>
-                  {/* context_note from the linking step */}
-                  {(doc as any).context_note && (
-                    <div className="mt-1">
-                      <p className="text-[10px] text-gray-400 italic">{(doc as any).context_note}</p>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           );
         })}
@@ -1891,7 +1814,7 @@ const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; custo
           disputeId={disputeId}
           customerId={customerId}
           onClose={() => setShowAnchorPicker(false)}
-          onUpdated={newDocs => { setDocs(newDocs); setShowAnchorPicker(false); }}
+          onUpdated={() => { setShowAnchorPicker(false); reload(); }}
         />
       )}
     </div>

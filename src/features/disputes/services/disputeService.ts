@@ -407,13 +407,6 @@ export interface DisputeDocumentListResponse {
   items:      DisputeDocument[];
 }
 
-export interface DisputeType {
-  dispute_type_id: number;
-  reason_name:     string;
-  description:     string | null;
-  is_active:       boolean;
-}
-
 export const faDisputeService = {
   /** Create a dispute manually — no email required */
   create: async (data: FADisputeCreate): Promise<Dispute> => {
