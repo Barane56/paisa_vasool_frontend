@@ -9,8 +9,8 @@ const getEnvVar = (key: string, fallback?: string): string => {
 };
 
 export const env = {
-  API_BASE_URL: getEnvVar('VITE_API_BASE_URL', 'http://localhost:8000'),
-  APP_ENV: getEnvVar('VITE_APP_ENV', 'development'),
+  API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+  APP_ENV: import.meta.env.VITE_API_ENV,
   isDev: import.meta.env.DEV,
   isProd: import.meta.env.PROD,
 } as const;

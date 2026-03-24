@@ -14,6 +14,9 @@ const processQueue = (error: AxiosError | null) => {
   failedQueue = [];
 };
 
+console.log("ENV:", import.meta.env);
+console.log("API:", import.meta.env.VITE_API_BASE_URL);
+
 const axiosInstance = axios.create({
   baseURL: env.API_BASE_URL,
   withCredentials: true,
