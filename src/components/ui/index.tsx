@@ -90,7 +90,7 @@ export const Badge = ({ children, variant = 'default', className }: BadgeProps) 
     variant === 'warning' && 'bg-amber-50 text-amber-700',
     variant === 'danger'  && 'bg-red-50 text-red-700',
     variant === 'info'    && 'bg-blue-50 text-blue-700',
-    variant === 'purple'  && 'bg-purple-50 text-purple-700',
+    variant === 'purple'  && 'bg-blue-50 text-blue-700',
     className
   )}>
     {children}

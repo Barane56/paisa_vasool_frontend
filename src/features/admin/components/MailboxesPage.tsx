@@ -104,7 +104,7 @@ const AddMailboxModal = ({ onClose, onAdded }: { onClose: () => void; onAdded: (
                   <input className="input-base text-sm py-2" type="number" value={form.imap_port} onChange={e => f('imap_port', parseInt(e.target.value))} />
                 </div>
                 <div className="col-span-3 flex items-center gap-2">
-                  <input type="checkbox" id="use_ssl" checked={form.use_ssl} onChange={e => f('use_ssl', e.target.checked)} className="w-4 h-4 accent-brand-500 accent-purple-500" />
+                  <input type="checkbox" id="use_ssl" checked={form.use_ssl} onChange={e => f('use_ssl', e.target.checked)} className="w-4 h-4 accent-brand-500 accent-brand-500" />
                   <label htmlFor="use_ssl" className="text-sm text-surface-700 font-medium">Use SSL/TLS</label>
                 </div>
               </div>
@@ -123,7 +123,7 @@ const AddMailboxModal = ({ onClose, onAdded }: { onClose: () => void; onAdded: (
                   <input className="input-base text-sm py-2" type="number" value={form.smtp_port} onChange={e => f('smtp_port', parseInt(e.target.value))} />
                 </div>
                 <div className="col-span-3 flex items-center gap-2">
-                  <input type="checkbox" id="smtp_tls" checked={form.smtp_use_tls} onChange={e => f('smtp_use_tls', e.target.checked)} className="w-4 h-4 accent-brand-500 accent-purple-500" />
+                  <input type="checkbox" id="smtp_tls" checked={form.smtp_use_tls} onChange={e => f('smtp_use_tls', e.target.checked)} className="w-4 h-4 accent-brand-500 accent-brand-500" />
                   <label htmlFor="smtp_tls" className="text-sm text-surface-700 font-medium">Use STARTTLS</label>
                 </div>
               </div>

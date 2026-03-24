@@ -319,9 +319,9 @@ const IncidentDrawer = ({
                   <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                     <Brain size={11} /> AI Analysis
                   </h3>
-                  <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 space-y-2">
-                    <p className="text-sm font-bold text-purple-900">{dispute.latest_analysis.predicted_category}</p>
-                    <p className="text-sm text-purple-800 leading-relaxed">{dispute.latest_analysis.ai_summary}</p>
+                  <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 space-y-2">
+                    <p className="text-sm font-bold text-blue-900">{dispute.latest_analysis.predicted_category}</p>
+                    <p className="text-sm text-blue-800 leading-relaxed">{dispute.latest_analysis.ai_summary}</p>
                   </div>
                 </section>
               )}

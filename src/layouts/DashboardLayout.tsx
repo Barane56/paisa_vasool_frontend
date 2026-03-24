@@ -17,11 +17,11 @@ const SB_BG      = '#F4F4F6';   // surface-100
 const SB_BORDER  = '#E8E8ED';   // surface-200
 const SB_TEXT    = '#6b6b80';   // surface-500
 const SB_HOVER   = '#e8e8ed';   // surface-200
-const SB_ACTIVE_BG   = '#f3e8ff';   // brand-100
-const SB_ACTIVE_TEXT = '#7e22ce';   // brand-700
-const SB_ACTIVE_BAR  = '#9333ea';   // brand-600
+const SB_ACTIVE_BG   = '#dbeafe';   // brand-100
+const SB_ACTIVE_TEXT = '#1d4ed8';   // brand-700
+const SB_ACTIVE_BAR  = '#2563eb';   // brand-600
 const SB_MUTED   = '#9898aa';   // surface-400
-const SB_AVATAR  = '#9333ea';   // brand-600
+const SB_AVATAR  = '#2563eb';   // brand-600
 
 const NAV_ITEMS = [
   { to: ROUTES.DASHBOARD,    icon: LayoutDashboard, label: 'Cases'        },

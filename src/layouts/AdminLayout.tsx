@@ -11,11 +11,11 @@ const SB_BG      = '#ECECF0';   // a touch darker than FA's surface-100
 const SB_BORDER  = '#D8D8E3';
 const SB_TEXT    = '#6b6b80';
 const SB_HOVER   = '#D8D8E3';
-const SB_ACTIVE_BG   = '#f3e8ff';   // brand-100 — same purple active as FA
-const SB_ACTIVE_TEXT = '#7e22ce';   // brand-700
-const SB_ACTIVE_BAR  = '#9333ea';   // brand-600
+const SB_ACTIVE_BG   = '#dbeafe';   // brand-100 — blue active
+const SB_ACTIVE_TEXT = '#1d4ed8';   // brand-700
+const SB_ACTIVE_BAR  = '#2563eb';   // brand-600
 const SB_MUTED   = '#9898aa';
-const SB_AVATAR  = '#7e22ce';   // brand-700 — slightly deeper purple for admin
+const SB_AVATAR  = '#1d4ed8';   // brand-700 — blue for admin
 
 const NAV_ITEMS = [
   { to: ROUTES.ADMIN_ADD_FA,    icon: UserPlus,      label: 'Add Associate' },

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   Search, Filter, CheckCircle2, Clock, FileText,
-  X, ChevronRight, Paperclip, Brain, MessageSquare, User2,
+  X, ChevronRight, ChevronLeft, Paperclip, Brain, MessageSquare, User2,
   RefreshCw, Loader2, AlertTriangle, HelpCircle, ExternalLink,
   Download, Zap, ShieldAlert, BarChart3, MessageCircle, Inbox,
   CheckCheck, CircleDot, ArrowUpRight, SlidersHorizontal, Hash,
@@ -46,6 +46,7 @@ const STATUS_LABEL: Record<string, string> = {
   CLOSED:       'Closed',
 };
 
+const PAGE_SIZE = 20;
 const STATUS_FILTERS = ['all', 'OPEN', 'UNDER_REVIEW', 'RESOLVED', 'CLOSED'] as const;
 const PRIORITY_FILTERS = ['all', 'HIGH', 'MEDIUM', 'LOW'] as const;
 
@@ -65,7 +66,7 @@ const episodeColor = (actor: string) =>
   actor === 'CUSTOMER'
     ? { bg: 'bg-blue-50', icon: 'text-blue-500', border: 'border-blue-100', text: 'text-blue-700' }
     : actor === 'AI'
-    ? { bg: 'bg-purple-50', icon: 'text-purple-500', border: 'border-purple-100', text: 'text-purple-700' }
+    ? { bg: 'bg-blue-50', icon: 'text-blue-500', border: 'border-blue-100', text: 'text-blue-700' }
     : { bg: 'bg-amber-50', icon: 'text-amber-500', border: 'border-amber-100', text: 'text-amber-700' };
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
@@ -90,17 +91,17 @@ const StatCard = ({
 // ─── AI Response Block ────────────────────────────────────────────────────────
 
 const AIResponseBlock = ({ analysis }: { analysis: AIAnalysis }) => (
-  <div className="rounded-2xl border border-purple-100 bg-gradient-to-br from-purple-50 to-white overflow-hidden">
+  <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white overflow-hidden">
     {/* Header */}
-    <div className="px-4 py-3 border-b border-purple-100 flex items-center justify-between gap-3">
+    <div className="px-4 py-3 border-b border-blue-100 flex items-center justify-between gap-3">
       <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-lg bg-purple-100 flex items-center justify-center">
-          <Brain size={12} className="text-purple-600" />
+        <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center">
+          <Brain size={12} className="text-blue-600" />
         </div>
-        <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">AI Analysis</span>
+        <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">AI Analysis</span>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <span className="text-[11px] text-purple-500">{(analysis.confidence_score * 100).toFixed(0)}% confidence</span>
+        <span className="text-[11px] text-blue-500">{(analysis.confidence_score * 100).toFixed(0)}% confidence</span>
         {analysis.auto_response_generated && (
           <span className="inline-flex items-center gap-1 text-[11px] text-green-700 bg-green-50 border border-green-100 rounded-full px-2 py-0.5">
             <CheckCheck size={10} /> Auto-sent
@@ -118,12 +119,12 @@ const AIResponseBlock = ({ analysis }: { analysis: AIAnalysis }) => (
       {/* Category + summary */}
       <div>
         <p className="text-[11px] text-surface-400 uppercase tracking-widest font-medium mb-1">Category</p>
-        <p className="text-sm font-semibold text-purple-800">{analysis.predicted_category}</p>
+        <p className="text-sm font-semibold text-blue-800">{analysis.predicted_category}</p>
       </div>
 
       <div>
         <p className="text-[11px] text-surface-400 uppercase tracking-widest font-medium mb-1.5">Summary</p>
-        <p className="text-sm text-surface-700 leading-relaxed bg-white/70 rounded-xl px-3 py-2.5 border border-purple-100">
+        <p className="text-sm text-surface-700 leading-relaxed bg-white/70 rounded-xl px-3 py-2.5 border border-blue-100">
           {analysis.ai_summary}
         </p>
       </div>
@@ -134,8 +135,8 @@ const AIResponseBlock = ({ analysis }: { analysis: AIAnalysis }) => (
           <p className="text-[11px] text-surface-400 uppercase tracking-widest font-medium mb-1.5 flex items-center gap-1.5">
             <MessageCircle size={11} /> Response Sent to Customer
           </p>
-          <div className="bg-white border border-purple-100 rounded-xl px-3 py-2.5 relative">
-            <div className="absolute left-0 top-3 bottom-3 w-[3px] bg-purple-300 rounded-r-full ml-0" />
+          <div className="bg-white border border-blue-100 rounded-xl px-3 py-2.5 relative">
+            <div className="absolute left-0 top-3 bottom-3 w-[3px] bg-blue-300 rounded-r-full ml-0" />
             <p className="text-sm text-surface-800 leading-relaxed pl-3">
               {analysis.ai_response}
             </p>
@@ -476,14 +477,14 @@ const DisputeDrawer = ({
                   <p className="text-[11px] text-surface-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-1.5">
                     <Brain size={11} /> AI Summary
                   </p>
-                  <div className="bg-purple-50 border border-purple-100 rounded-xl p-3.5 flex items-start gap-3">
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-3.5 flex items-start gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-purple-800 leading-relaxed">
+                      <p className="text-xs text-blue-800 leading-relaxed">
                         {dispute.latest_analysis.ai_summary}
                       </p>
                       <button
                         onClick={() => setTab('response')}
-                        className="mt-2 text-[11px] text-purple-600 font-semibold hover:text-purple-800 flex items-center gap-1 transition-colors"
+                        className="mt-2 text-[11px] text-blue-600 font-semibold hover:text-blue-800 flex items-center gap-1 transition-colors"
                       >
                         View full AI response <ChevronRight size={11} />
                       </button>
@@ -689,11 +690,13 @@ const DisputesPage = () => {
   const [statusFilter,     setStatusFilter]     = useState<string>('all');
   const [priorityFilter,   setPriorityFilter]   = useState<string>('all');
   const [showFilters,      setShowFilters]       = useState(false);
+  const [currentPage,      setCurrentPage]       = useState(1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search — fires server call 400ms after user stops typing
   const handleSearchChange = (val: string) => {
     setSearch(val);
+    setCurrentPage(1);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => setDebouncedSearch(val), 400);
   };
@@ -738,8 +741,11 @@ const DisputesPage = () => {
     autoSent:   disputes.filter((d) => d.latest_analysis?.auto_response_generated).length,
   }), [disputes]);
 
-  // Server already filtered — kept as alias for rendering
-  const filtered = disputes;
+  // Server already filtered — slice locally for pagination
+  const filtered      = disputes;
+  const totalPages    = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage      = Math.min(currentPage, totalPages);
+  const paginated     = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const activeFilterCount = [statusFilter, priorityFilter].filter((f) => f !== 'all').length;
 
@@ -765,7 +771,7 @@ const DisputesPage = () => {
         <StatCard icon={ShieldAlert}  label="Open"         value={stats.open}     accent="bg-red-500"   sub="Needs attention" />
         <StatCard icon={Clock}        label="Under Review" value={stats.inReview} accent="bg-amber-500" />
         <StatCard icon={CheckCircle2} label="Resolved"     value={stats.resolved} accent="bg-green-500" />
-        <StatCard icon={Zap}          label="Auto-Responded" value={stats.autoSent} accent="bg-purple-500" sub="AI handled" />
+        <StatCard icon={Zap}          label="Auto-Responded" value={stats.autoSent} accent="bg-blue-500" sub="AI handled" />
       </div>
 
       {/* Error */}
@@ -826,7 +832,7 @@ const DisputesPage = () => {
               {STATUS_FILTERS.map((s) => (
                 <button
                   key={s}
-                  onClick={() => setStatusFilter(s)}
+                  onClick={() => { setStatusFilter(s); setCurrentPage(1); }}
                   className={clsx(
                     'px-2.5 py-1 rounded-lg text-xs font-medium transition-colors',
                     statusFilter === s
@@ -847,7 +853,7 @@ const DisputesPage = () => {
               {PRIORITY_FILTERS.map((p) => (
                 <button
                   key={p}
-                  onClick={() => setPriorityFilter(p)}
+                  onClick={() => { setPriorityFilter(p); setCurrentPage(1); }}
                   className={clsx(
                     'px-2.5 py-1 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5',
                     priorityFilter === p
@@ -864,7 +870,7 @@ const DisputesPage = () => {
 
           {activeFilterCount > 0 && (
             <button
-              onClick={() => { setStatusFilter('all'); setPriorityFilter('all'); }}
+              onClick={() => { setStatusFilter('all'); setPriorityFilter('all'); setCurrentPage(1); }}
               className="ml-auto flex items-center gap-1 text-xs text-surface-400 hover:text-red-500 transition-colors"
             >
               <X size={12} /> Clear
@@ -907,8 +913,8 @@ const DisputesPage = () => {
                     </div>
                   </td>
                 </tr>
-              ) : filtered.length > 0 ? (
-                filtered.map((d) => (
+              ) : paginated.length > 0 ? (
+                paginated.map((d) => (
                   <DisputeRow
                     key={d.dispute_id}
                     dispute={d}
@@ -930,14 +936,62 @@ const DisputesPage = () => {
           </table>
         </div>
 
-        {/* Table footer */}
+        {/* Pagination footer */}
         {!loading && filtered.length > 0 && (
-          <div className="px-5 py-3 border-t border-surface-100 bg-surface-50/50 flex items-center justify-between">
-            <p className="text-xs text-surface-400">
-              Showing {filtered.length} of {total} disputes
+          <div className="px-5 py-3 border-t border-surface-100 bg-surface-50/50 flex items-center justify-between gap-4">
+            {/* Range label */}
+            <p className="text-xs text-surface-400 shrink-0">
+              {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)}{" "}
+              of {filtered.length}
             </p>
-            <p className="text-xs text-surface-400">
-              Click any row to view full details, AI response & timeline
+
+            {/* Page controls */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="p-1.5 rounded-lg border border-surface-200 text-surface-500 hover:bg-surface-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={14} />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+                .reduce<(number | "…")[]>((acc, p, idx, arr) => {
+                  if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("…");
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((item, i) =>
+                  item === "…" ? (
+                    <span key={`el-${i}`} className="px-1 text-xs text-surface-400">…</span>
+                  ) : (
+                    <button
+                      key={item}
+                      onClick={() => setCurrentPage(item as number)}
+                      className={`min-w-[28px] h-7 rounded-lg text-xs font-medium transition-colors border ${
+                        safePage === item
+                          ? 'bg-brand-600 text-white border-brand-600'
+                          : 'border-surface-200 text-surface-600 hover:bg-surface-100'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  )
+                )}
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="p-1.5 rounded-lg border border-surface-200 text-surface-500 hover:bg-surface-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+
+            {/* Page label */}
+            <p className="text-xs text-surface-400 shrink-0 hidden sm:block">
+              Page {safePage} of {totalPages}
             </p>
           </div>
         )}

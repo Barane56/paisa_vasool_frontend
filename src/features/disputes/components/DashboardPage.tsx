@@ -1582,9 +1582,9 @@ const AnchorPickerModal = ({
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-surface-100 bg-gradient-to-r from-surface-50 to-white">
             <div>
-              <h2 className="font-display font-bold text-surface-800">Change Anchor Document</h2>
+              <h2 className="font-display font-bold text-surface-800">Set Anchor Document</h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                Select a new anchor — all linked docs will be replaced with its graph
+                Select an anchor document — all linked docs will be built from its graph
               </p>
             </div>
             <button onClick={onClose} className="p-2 rounded-xl hover:bg-surface-100 text-gray-400">
@@ -1656,7 +1656,7 @@ const AnchorPickerModal = ({
               className="btn-primary btn-sm flex items-center gap-2 disabled:opacity-50"
             >
               {saving ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
-              {saving ? 'Updating…' : 'Update Anchor'}
+              {saving ? 'Updating…' : 'Set Anchor'}
             </button>
           </div>
         </div>
@@ -1701,16 +1701,34 @@ const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; custo
 
   if (docs.length === 0) {
     return (
-      <div className="flex items-start gap-2 text-xs text-gray-500 bg-surface-50 border border-surface-200 rounded-xl px-3 py-3">
-        <FileText size={13} className="shrink-0 mt-0.5 text-gray-400" />
-        <span>
-          No AR documents linked to this case yet.
-          Documents are attached automatically when an email is processed,
-          or you can{' '}
-          <a href="/ar-documents" className="text-brand-600 font-semibold hover:underline">
-            upload and link documents manually
-          </a>.
-        </span>
+      <div className="space-y-3">
+        <div className="flex items-start gap-2 text-xs text-gray-500 bg-surface-50 border border-surface-200 rounded-xl px-3 py-3">
+          <FileText size={13} className="shrink-0 mt-0.5 text-gray-400" />
+          <span>
+            No AR documents linked to this case yet.
+            Documents are attached automatically when an email is processed,
+            or you can{' '}
+            <a href="/ar-documents" className="text-brand-600 font-semibold hover:underline">
+              upload and link documents manually
+            </a>.
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowAnchorPicker(true)}
+          title="Set anchor document — all linked docs will be built from its graph"
+          className="w-full flex items-center justify-center gap-1.5 border border-brand-200 hover:border-brand-400 hover:bg-brand-50 text-brand-600 hover:text-brand-700 text-xs font-semibold rounded-xl px-4 py-2.5 transition-all"
+        >
+          <RefreshCw size={12} /> Set Anchor
+        </button>
+        {showAnchorPicker && (
+          <AnchorPickerModal
+            disputeId={disputeId}
+            customerId={customerId}
+            onClose={() => setShowAnchorPicker(false)}
+            onUpdated={() => { setShowAnchorPicker(false); reload(); }}
+          />
+        )}
       </div>
     );
   }
