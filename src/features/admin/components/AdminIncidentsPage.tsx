@@ -22,10 +22,10 @@ import clsx from 'clsx';
 import toast from 'react-hot-toast';
 
 const STATUS_CONFIG: Record<string, { label: string; badge: 'danger' | 'warning' | 'success' | 'default'; dot: string }> = {
-  OPEN:         { label: 'Open',         badge: 'danger',  dot: 'bg-red-500' },
-  UNDER_REVIEW: { label: 'Under Review', badge: 'warning', dot: 'bg-brand-400' },
-  RESOLVED:     { label: 'Resolved',     badge: 'success', dot: 'bg-green-500' },
-  CLOSED:       { label: 'Closed',       badge: 'default', dot: 'bg-surface-300' },
+  OPEN:         { label: 'Open',         badge: 'danger',  dot: 'bg-status-error'   },
+  UNDER_REVIEW: { label: 'Under Review', badge: 'warning', dot: 'bg-status-warning' },
+  RESOLVED:     { label: 'Resolved',     badge: 'success', dot: 'bg-status-success' },
+  CLOSED:       { label: 'Closed',       badge: 'default', dot: 'bg-surface-300'   },
 };
 
 const PRIORITY_CONFIG: Record<string, { label: string; badge: 'danger' | 'warning' | 'default' }> = {
@@ -57,10 +57,10 @@ const StatCard = ({ icon: Icon, label, value, accent, sub }: {
 // ─── Timeline helpers (exact replica of FA timeline) ─────────────────────────
 
 const actorConfig: Record<string, { color: string; ring: string; bubble: string; text: string }> = {
-  CUSTOMER:  { color: 'bg-surface-500', ring: 'ring-surface-200', bubble: 'bg-white border border-surface-200',   text: 'text-surface-700' },
-  AI:        { color: 'bg-brand-600',   ring: 'ring-brand-200',   bubble: 'bg-brand-50 border border-brand-100',  text: 'text-brand-600'   },
-  ASSOCIATE: { color: 'bg-brand-600',   ring: 'ring-brand-200',   bubble: 'bg-brand-50 border border-brand-100',  text: 'text-brand-600'   },
-  SYSTEM:    { color: 'bg-slate-400',   ring: 'ring-slate-200',   bubble: 'bg-slate-100 border border-slate-200', text: 'text-slate-600'   },
+  CUSTOMER:  { color: 'bg-surface-500', ring: 'ring-surface-200', bubble: 'bg-white border border-surface-200',    text: 'text-surface-700' },
+  AI:        { color: 'bg-amber-600', ring: 'ring-amber-200', bubble: 'bg-amber-50 border border-amber-100', text: 'text-amber-700' },
+  ASSOCIATE: { color: 'bg-finance-700', ring: 'ring-finance-200', bubble: 'bg-finance-50 border border-finance-100', text: 'text-finance-700' },
+  SYSTEM:    { color: 'bg-surface-600', ring: 'ring-surface-200', bubble: 'bg-surface-100 border border-surface-200', text: 'text-surface-700' },
 };
 const getActorCfg = (actor: string) => actorConfig[actor as keyof typeof actorConfig] ?? actorConfig.ASSOCIATE;
 
@@ -135,10 +135,12 @@ const AdminTimelineMessage = ({ ep, dispute, isLast }: { ep: TimelineEpisode; di
             </span>
           )}
         </div>
-        <div className={`${cfg.bubble} rounded-2xl rounded-tl-sm px-4 py-3`}>
-          <p className="text-sm text-surface-800 leading-relaxed whitespace-pre-wrap break-words">{ep.content_text}</p>
+        <div className={`${cfg.bubble} rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm border border-surface-100`}>
+          <div className="text-sm text-surface-800 leading-relaxed whitespace-pre-wrap break-words font-sans">
+            {ep.content_text?.trim()}
+          </div>
           {hasAttachments && (
-            <div className={`mt-3 pt-3 border-t border-current/10 flex flex-wrap gap-2 ${cfg.text}`}>
+            <div className={`mt-3 pt-3 border-t border-dashed border-current/20 flex flex-wrap gap-2 ${cfg.text}`}>
               {ep.attachments.map(att => (
                 <AttachmentChip key={att.attachment_id} att={att} />
               ))}
@@ -243,9 +245,9 @@ const IncidentDrawer = ({
                   #{dispute.dispute_id}
                 </code>
                 <span className={`inline-flex items-center gap-1.5 badge ${
-                  s.badge === 'danger'  ? 'bg-red-50 text-red-700'    :
+                  s.badge === 'danger'  ? 'bg-brand-50 text-brand-800'    :
                   s.badge === 'warning' ? 'bg-brand-50 text-brand-700' :
-                  s.badge === 'success' ? 'bg-green-50 text-green-700' :
+                  s.badge === 'success' ? 'bg-brand-50 text-brand-700' :
                   'bg-surface-100 text-surface-800'
                 }`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
@@ -292,7 +294,7 @@ const IncidentDrawer = ({
             <>
               <section>
                 <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-2">Description</h3>
-                <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">
+                <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5 first-letter:uppercase">
                   {dispute.description || <em className="text-gray-600">No description available</em>}
                 </p>
               </section>
@@ -319,39 +321,14 @@ const IncidentDrawer = ({
                   <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-3 flex items-center gap-1.5">
                     <Brain size={11} /> AI Analysis
                   </h3>
-                  <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 space-y-2">
-                    <p className="text-sm font-bold text-purple-900">{dispute.latest_analysis.predicted_category}</p>
-                    <p className="text-sm text-purple-800 leading-relaxed">{dispute.latest_analysis.ai_summary}</p>
+                  <div className="bg-brand-50 border border-brand-100 rounded-2xl p-4 space-y-2">
+                    <p className="text-sm font-bold text-brand-900">{dispute.latest_analysis.predicted_category}</p>
+                    <p className="text-sm text-brand-800 leading-relaxed">{dispute.latest_analysis.ai_summary}</p>
                   </div>
                 </section>
               )}
 
-              <section className="border-t border-surface-100 pt-5">
-                <h3 className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-3">Update Status</h3>
-                <div className="flex flex-wrap gap-2">
-                  {(['UNDER_REVIEW', 'RESOLVED', 'CLOSED'] as const).map(nextStatus => {
-                    if (dispute.status === nextStatus) return null;
-                    const isActive = updating === nextStatus;
-                    return (
-                      <button
-                        key={nextStatus}
-                        onClick={() => handleStatus(nextStatus)}
-                        disabled={updating !== null}
-                        className={clsx(
-                          'btn-sm inline-flex items-center gap-1.5 transition-all',
-                          nextStatus === 'RESOLVED' ? 'btn-primary' : 'btn-secondary',
-                          'disabled:opacity-50 disabled:cursor-not-allowed'
-                        )}
-                      >
-                        {isActive && <Loader2 size={11} className="animate-spin" />}
-                        {nextStatus === 'UNDER_REVIEW' && 'Mark Under Review'}
-                        {nextStatus === 'RESOLVED'     && 'Mark Resolved'}
-                        {nextStatus === 'CLOSED'       && 'Close Incident'}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
+
             </>
           )}
 
@@ -397,16 +374,20 @@ const IncidentRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => vo
       </td>
       <td className="px-5 py-3.5">
         <span className={clsx('badge flex items-center gap-1.5 w-fit', {
-          'bg-red-50 text-red-700':     s.badge === 'danger',
-          'bg-brand-50 text-brand-700': s.badge === 'warning',
+          'bg-red-50 text-red-700': s.badge === 'danger',
           'bg-green-50 text-green-700': s.badge === 'success',
+          'bg-amber-50 text-amber-700': s.badge === 'warning',
           'bg-surface-100 text-surface-800': s.badge === 'default',
         })}>
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
           {s.label}
         </span>
       </td>
-      <td className="px-5 py-3.5"><Badge variant={p.badge}>{p.label}</Badge></td>
+      <td className="px-5 py-3.5">
+        <Badge variant={p.badge === 'danger' ? 'danger' : p.badge === 'warning' ? 'warning' : 'default'}>
+          {p.label}
+        </Badge>
+      </td>
       <td className="px-5 py-3.5 text-sm text-gray-900 whitespace-nowrap">{formatDate(dispute.created_at)}</td>
       <td className="px-4 py-3.5">
         <ChevronRight size={16} className="text-gray-400 group-hover:text-brand-500 transition-colors" />
@@ -427,6 +408,8 @@ const AdminCasesPage = () => {
   const [statusFilter,   setStatusFilter]   = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [selected,       setSelected]       = useState<Dispute | null>(null);
+  const [currentPage,    setCurrentPage]    = useState(1);
+  const pageSize = 10;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search — fires server call 400ms after user stops typing
@@ -483,6 +466,10 @@ const AdminCasesPage = () => {
 
   // filtered = disputes (server already filtered; kept for count display consistency)
   const filtered = disputes;
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const paginatedDisputes = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => { setCurrentPage(1); }, [statusFilter, priorityFilter, debouncedSearch]);
 
   return (
     <div className="p-6 max-w-screen-xl mx-auto">
@@ -499,9 +486,9 @@ const AdminCasesPage = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard icon={FileText}     label="Total"     value={stats.total}    accent="bg-brand-500" />
-        <StatCard icon={AlertCircle}  label="Open"      value={stats.open}     accent="bg-red-500"   sub="Needs attention" />
-        <StatCard icon={Clock}        label="In Review" value={stats.review}   accent="bg-brand-400" />
-        <StatCard icon={CheckCircle2} label="Resolved"  value={stats.resolved} accent="bg-green-500" />
+        <StatCard icon={AlertCircle}  label="Open"      value={stats.open}     accent="bg-status-error"   sub="Needs attention" />
+        <StatCard icon={Clock}        label="In Review" value={stats.review}   accent="bg-status-warning" />
+        <StatCard icon={CheckCircle2} label="Resolved"  value={stats.resolved} accent="bg-status-success" />
       </div>
 
       <div className="card px-5 py-3.5 mb-6 flex items-center gap-3 bg-gradient-to-r from-brand-600 to-brand-700 border-0">
@@ -510,10 +497,10 @@ const AdminCasesPage = () => {
       </div>
 
       {error && (
-        <div className="mb-4 flex items-center gap-3 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-          <AlertTriangle size={15} className="text-red-400 shrink-0" />
-          <p className="text-sm text-red-700">{error}</p>
-          <button onClick={() => loadDisputes()} className="ml-auto text-xs font-semibold text-red-600 hover:text-red-800 underline">Retry</button>
+        <div className="mb-4 flex items-center gap-3 bg-brand-50 border border-brand-100 rounded-xl px-4 py-3">
+          <AlertTriangle size={15} className="text-brand-400 shrink-0" />
+          <p className="text-sm text-brand-800">{error}</p>
+          <button onClick={() => loadDisputes()} className="ml-auto text-xs font-semibold text-brand-700 hover:text-brand-800 underline">Retry</button>
         </div>
       )}
 
@@ -560,8 +547,8 @@ const AdminCasesPage = () => {
                   <span className="text-sm text-gray-600">Loading cases…</span>
                 </div>
               </td></tr>
-            ) : filtered.length > 0 ? (
-              filtered.map(d => <IncidentRow key={d.dispute_id} dispute={d} onClick={() => setSelected(d)} />)
+            ) : paginatedDisputes.length > 0 ? (
+              paginatedDisputes.map(d => <IncidentRow key={d.dispute_id} dispute={d} onClick={() => setSelected(d)} />)
             ) : (
               <tr><td colSpan={6}>
                 <EmptyState title="No cases found" description="Try adjusting your filters." />
@@ -570,6 +557,45 @@ const AdminCasesPage = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {filtered.length > pageSize && (
+        <div className="mt-4 flex items-center justify-between bg-white px-4 py-3 border border-surface-200 rounded-xl">
+          <div className="text-xs text-gray-500">
+            Showing <span className="font-semibold">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-semibold">{Math.min(currentPage * pageSize, filtered.length)}</span> of <span className="font-semibold">{filtered.length}</span> results
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-surface-200 hover:bg-surface-50 disabled:opacity-50 transition-colors"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={clsx(
+                    'w-8 h-8 flex items-center justify-center text-xs font-semibold rounded-lg transition-all',
+                    currentPage === i + 1 ? 'bg-brand-600 text-white shadow-sm' : 'hover:bg-surface-50 text-gray-600'
+                  )}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-surface-200 hover:bg-surface-50 disabled:opacity-50 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {selected && (
         <IncidentDrawer dispute={selected} onClose={() => setSelected(null)} onStatusUpdate={updateLocalDispute} />

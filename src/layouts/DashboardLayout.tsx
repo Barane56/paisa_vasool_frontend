@@ -12,16 +12,16 @@ import { createContext, useContext } from 'react';
 export const OpenDisputeContext = createContext<((id: number) => void) | null>(null);
 export const useOpenDispute = () => useContext(OpenDisputeContext);
 
-// Light gray sidebar — clean, neutral, professional
-const SB_BG      = '#F4F4F6';   // surface-100
-const SB_BORDER  = '#E8E8ED';   // surface-200
-const SB_TEXT    = '#6b6b80';   // surface-500
-const SB_HOVER   = '#e8e8ed';   // surface-200
-const SB_ACTIVE_BG   = '#f3e8ff';   // brand-100
-const SB_ACTIVE_TEXT = '#7e22ce';   // brand-700
-const SB_ACTIVE_BAR  = '#9333ea';   // brand-600
-const SB_MUTED   = '#9898aa';   // surface-400
-const SB_AVATAR  = '#9333ea';   // brand-600
+// Professional blue sidebar — clean, brand-focused, modern
+const SB_BG      = '#f8fafc';   // Slate-50 matching Admin
+const SB_BORDER  = '#e2e8f0';   // Slate-200
+const SB_TEXT    = '#475569';   // Slate-600
+const SB_HOVER   = '#f1f5f9';   // Slate-100
+const SB_ACTIVE_BG   = '#4f46e5';   // brand-600
+const SB_ACTIVE_TEXT = '#ffffff';
+const SB_ACTIVE_BAR  = '#4338ca';   // brand-700
+const SB_MUTED   = '#94a3b8';   // Slate-400
+const SB_AVATAR  = '#4f46e5';   // brand-600
 
 const NAV_ITEMS = [
   { to: ROUTES.DASHBOARD,    icon: LayoutDashboard, label: 'Cases'        },
@@ -39,8 +39,8 @@ const Sidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       className={clsx('flex flex-col shrink-0 relative transition-all duration-300 border-r', collapsed ? 'w-16' : 'w-60')}
       style={{ background: SB_BG, borderColor: SB_BORDER }}
     >
-      {/* Purple top accent */}
-      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-brand-600 via-brand-400 to-brand-600" />
+      {/* Blue top accent - simple solid color */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-brand-600" />
 
       {/* Logo */}
       <div className={clsx('flex items-center gap-3 transition-all duration-300 border-b', collapsed ? 'px-3 py-4 justify-center' : 'px-4 py-4')} style={{ borderColor: SB_BORDER }}>
@@ -49,7 +49,7 @@ const Sidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         </div>
         {!collapsed && (<div className="flex-1 min-w-0">
           <span className="font-display font-bold text-sm tracking-tight text-surface-800 whitespace-nowrap block">PaisaVasool</span>
-          <span className="text-[10px] font-semibold tracking-widest uppercase text-brand-500">AR Suite</span>
+          <span className="text-[10px] font-semibold tracking-widest uppercase text-brand-600">AR Suite</span>
         </div>)}
         {!collapsed && (
           <button onClick={onToggle} className="p-1.5 rounded-lg transition-colors hover:bg-surface-200 text-surface-400 hover:text-surface-600">
@@ -59,7 +59,7 @@ const Sidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         {collapsed && (
           <button onClick={onToggle}
             className="absolute -right-3 top-5 w-6 h-6 rounded-full flex items-center justify-center shadow-sm transition-all bg-white border text-surface-400 hover:bg-brand-600 hover:border-brand-600 hover:text-white"
-            style={{ borderColor: SB_BORDER }}>
+            style={{ borderColor: SB_BORDER}}>
             <ChevronLeft className="w-3 h-3 rotate-180" />
           </button>
         )}
@@ -99,12 +99,12 @@ const Sidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs text-surface-800 font-semibold truncate">{user.name}</p>
-              <p className="text-[10px] truncate text-brand-500">{user.email}</p>
+              <p className="text-[10px] truncate text-brand-600">{user.email}</p>
             </div>
           </div>
         )}
         <button onClick={handleLogout}
-          className={clsx('w-full flex items-center gap-3 rounded-xl transition-all duration-150 hover:bg-red-50 hover:text-red-500', collapsed ? 'px-3 py-3 justify-center' : 'px-3 py-2.5')}
+          className={clsx('w-full flex items-center gap-3 rounded-xl transition-all duration-150 hover:bg-brand-50 hover:text-brand-500', collapsed ? 'px-3 py-3 justify-center' : 'px-3 py-2.5')}
           style={{ color: SB_MUTED }}>
           <LogOut size={16} className="shrink-0" />
           {!collapsed && <span className="text-sm font-medium">Sign Out</span>}
@@ -135,15 +135,6 @@ const DashboardLayout = () => {
             <button className="md:hidden p-2 rounded-lg hover:bg-surface-100 text-surface-500" onClick={() => setMobileOpen(true)}><Menu size={18} /></button>
             <div className="flex-1" />
             <NotificationBell notifications={notifications} onOpen={handleOpenDispute} onMarkRead={markRead} onMarkAllRead={markAllRead} isPolling={isPolling} />
-            <div className="flex items-center gap-2.5 pl-3 border-l border-surface-200">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm" style={{ background: SB_AVATAR }}>
-                <span className="text-white text-xs font-bold font-display">{user?.name?.charAt(0).toUpperCase()}</span>
-              </div>
-              {user && (<div className="hidden sm:block">
-                <p className="text-sm font-semibold text-surface-800 leading-none">{user.name}</p>
-                <p className="text-xs mt-0.5 font-medium text-brand-600">Finance Associate</p>
-              </div>)}
-            </div>
           </header>
           <div className="flex-1 overflow-y-auto"><Outlet context={{ openDisputeId }} /></div>
         </main>

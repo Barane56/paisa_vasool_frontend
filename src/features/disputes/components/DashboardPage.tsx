@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useOutletContext } from 'react-router-dom';
 import {
   Search, Filter, Link2, Clock, CheckCircle2, AlertCircle, FileText,
@@ -25,17 +26,18 @@ import {
   InvoiceData, PaymentDetailData, TimelineEpisode, TimelineAttachment,
 } from '../services/disputeService';
 import { arDocumentService, ARDocRelated, DOC_TYPE_LABELS, KEY_TYPE_LABELS } from '../services/arDocumentService';
+import { AnchorDocumentSelector } from './AnchorDocumentSelector';
 import { mailboxService, OutboundEmail } from '@/services/mailboxService';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 
 // ─── Status / Priority helpers ────────────────────────────────────────────────
 const STATUS_CONFIG: Record<string, { label: string; badge: 'danger'|'warning'|'success'|'default'; dot: string }> = {
-  OPEN:         { label: 'Open',         badge: 'danger',  dot: 'bg-red-500'      },
-  UNVERIFIED:   { label: 'Unverified',   badge: 'warning', dot: 'bg-brand-300'   },
-  UNDER_REVIEW: { label: 'Under Review', badge: 'warning', dot: 'bg-brand-400'    },
-  RESOLVED:     { label: 'Resolved',     badge: 'success', dot: 'bg-green-500'    },
-  CLOSED:       { label: 'Closed',       badge: 'default', dot: 'bg-surface-300'  },
+  OPEN:         { label: 'Open',         badge: 'danger',  dot: 'bg-status-error'   },
+  UNVERIFIED:   { label: 'Unverified',   badge: 'warning', dot: 'bg-status-warning' },
+  UNDER_REVIEW: { label: 'Under Review', badge: 'warning', dot: 'bg-status-warning' },
+  RESOLVED:     { label: 'Resolved',     badge: 'success', dot: 'bg-status-success' },
+  CLOSED:       { label: 'Closed',       badge: 'default', dot: 'bg-surface-300'   },
 };
 const PRIORITY_CONFIG: Record<string, { label: string; badge: 'danger'|'warning'|'default' }> = {
   HIGH:   { label: 'High',   badge: 'danger'  },
@@ -111,7 +113,7 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
 // ─── Payment row ──────────────────────────────────────────────────────────────
 const PaymentRow = ({ payment, index }: { payment: PaymentDetailData; index: number }) => {
   const d = payment.payment_details ?? {};
-  const statusColor = d.status === 'CLEARED' ? 'bg-green-100 text-green-700' : d.status === 'PENDING' ? 'bg-brand-100 text-brand-700' : d.status === 'FAILED' ? 'bg-red-100 text-red-700' : 'bg-surface-100 text-surface-800';
+  const statusColor = d.status === 'CLEARED' ? 'bg-brand-100 text-brand-700' : d.status === 'PENDING' ? 'bg-brand-100 text-brand-700' : d.status === 'FAILED' ? 'bg-brand-100 text-brand-700' : 'bg-surface-100 text-surface-800';
   return (
     <div className={clsx('border-b border-surface-100 last:border-b-0', index % 2 === 1 ? 'bg-surface-50' : 'bg-white')}>
       <div className="px-5 py-3.5 flex items-start gap-4">
@@ -127,7 +129,7 @@ const PaymentRow = ({ payment, index }: { payment: PaymentDetailData; index: num
           <div className="mt-1.5 flex items-center gap-4 flex-wrap text-xs text-gray-500">
             {d.payment_date && <span className="flex items-center gap-1"><Calendar size={11} />{formatDate(d.payment_date as string)}</span>}
             {d.payment_mode && <span className="flex items-center gap-1"><Zap size={11} />{d.payment_mode as string}</span>}
-            {d.amount_paid != null && <span className="flex items-center gap-1 font-bold text-green-700 text-sm"><DollarSign size={11} />{formatCurrency(d.amount_paid as number)}</span>}
+            {d.amount_paid != null && <span className="flex items-center gap-1 font-bold text-brand-700 text-sm"><DollarSign size={11} />{formatCurrency(d.amount_paid as number)}</span>}
           </div>
           {(d.note || d.failure_reason) && (<div className="mt-1.5 flex items-start gap-1.5 text-xs text-brand-800 bg-brand-50 rounded-lg px-2.5 py-1.5"><AlertTriangle size={11} className="shrink-0 mt-0.5 text-brand-500" />{(d.failure_reason ?? d.note) as string}</div>)}
         </div>
@@ -140,12 +142,12 @@ const PaymentListCard = ({ payments }: { payments: PaymentDetailData[] }) => {
   const totalPaid = payments.reduce((sum, p) => { const amt = p.payment_details?.amount_paid; if (typeof amt === 'number' && p.payment_details?.status === 'CLEARED') return sum + amt; return sum; }, 0);
   return (
     <div className="rounded-2xl border border-surface-200 overflow-hidden">
-      <div className="bg-green-50 px-5 py-4 flex items-center justify-between gap-4">
+      <div className="bg-brand-50 px-5 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-green-200 flex items-center justify-center shrink-0"><CreditCard size={16} className="text-green-700" /></div>
-          <div className="min-w-0"><p className="text-xs text-green-600 font-semibold uppercase tracking-wider">Payments</p><p className="font-display font-bold text-surface-800 text-sm">{payments.length} record{payments.length !== 1 ? 's' : ''}</p></div>
+          <div className="w-9 h-9 rounded-xl bg-brand-200 flex items-center justify-center shrink-0"><CreditCard size={16} className="text-brand-700" /></div>
+          <div className="min-w-0"><p className="text-xs text-brand-700 font-semibold uppercase tracking-wider">Payments</p><p className="font-display font-bold text-surface-800 text-sm">{payments.length} record{payments.length !== 1 ? 's' : ''}</p></div>
         </div>
-        {totalPaid > 0 && <div className="shrink-0 text-right"><p className="text-xs text-gray-500">Cleared</p><p className="font-display font-bold text-green-700 text-lg">{formatCurrency(totalPaid)}</p></div>}
+        {totalPaid > 0 && <div className="shrink-0 text-right"><p className="text-xs text-gray-500">Cleared</p><p className="font-display font-bold text-brand-700 text-lg">{formatCurrency(totalPaid)}</p></div>}
       </div>
       <div className="divide-y divide-surface-100">{payments.map((p, i) => <PaymentRow key={p.payment_detail_id} payment={p} index={i} />)}</div>
     </div>
@@ -154,10 +156,10 @@ const PaymentListCard = ({ payments }: { payments: PaymentDetailData[] }) => {
 
 // ─── Timeline message ─────────────────────────────────────────────────────────
 const actorConfig = {
-  CUSTOMER:  { color: 'bg-blue-500',   ring: 'ring-blue-200',   bubble: 'bg-slate-50 border border-slate-200',    text: 'text-blue-600'   },
+  CUSTOMER:  { color: 'bg-brand-500',   ring: 'ring-brand-200',   bubble: 'bg-brand-50 border border-brand-100',    text: 'text-brand-600'   },
   AI:        { color: 'bg-brand-600', ring: 'ring-brand-200', bubble: 'bg-brand-50 border border-brand-100',  text: 'text-brand-600' },
   ASSOCIATE: { color: 'bg-brand-600', ring: 'ring-brand-200', bubble: 'bg-brand-50 border border-brand-100',  text: 'text-brand-600' },
-  SYSTEM:    { color: 'bg-slate-400',  ring: 'ring-slate-200',  bubble: 'bg-slate-100 border border-slate-200',   text: 'text-slate-600'  },
+  SYSTEM:    { color: 'bg-brand-400',  ring: 'ring-brand-200',  bubble: 'bg-brand-100 border border-brand-200',   text: 'text-brand-600'  },
 };
 const getActorCfg = (actor: string) => actorConfig[actor as keyof typeof actorConfig] ?? actorConfig.ASSOCIATE;
 
@@ -231,6 +233,14 @@ const TimelineMessage = ({ ep, dispute, isLast }: { ep: TimelineEpisode; dispute
   const cfg = getActorCfg(ep.actor);
   const label = getActorLabel(ep, dispute);
   const hasAttachments = ep.attachments && ep.attachments.length > 0;
+
+  // Simple formatter for email-like content
+  const formatContent = (text: string) => {
+    if (!text) return text;
+    // Replace multiple newlines with a single newline and wrap in a clean container
+    return text.trim();
+  };
+
   return (
     <div className="flex gap-3 group">
       <div className="flex flex-col items-center shrink-0">
@@ -248,10 +258,12 @@ const TimelineMessage = ({ ep, dispute, isLast }: { ep: TimelineEpisode; dispute
             </span>
           )}
         </div>
-        <div className={`${cfg.bubble} rounded-2xl rounded-tl-sm px-4 py-3`}>
-          <p className="text-sm text-surface-800 leading-relaxed whitespace-pre-wrap break-words">{ep.content_text}</p>
+        <div className={`${cfg.bubble} rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm border border-surface-100`}>
+          <div className="text-sm text-surface-800 leading-relaxed whitespace-pre-wrap break-words font-sans">
+            {formatContent(ep.content_text)}
+          </div>
           {hasAttachments && (
-            <div className={`mt-3 pt-3 border-t border-current/10 flex flex-wrap gap-2 ${cfg.text}`}>
+            <div className={`mt-3 pt-3 border-t border-dashed border-current/20 flex flex-wrap gap-2 ${cfg.text}`}>
               {ep.attachments.map(att => (
                 <AttachmentChip key={att.attachment_id} att={att} />
               ))}
@@ -435,13 +447,13 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
             </button>
           </div>
           {draftError && (
-            <div className="mt-3 flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+            <div className="mt-3 flex items-start gap-2 text-xs text-brand-700 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2">
               <AlertTriangle size={12} className="shrink-0 mt-0.5" />
               {draftError}
             </div>
           )}
           {isDraftFromAI && !draftLoading && (
-            <div className="mt-3 flex items-center gap-1.5 text-xs text-green-700 bg-green-50 border border-green-100 rounded-xl px-3 py-2">
+            <div className="mt-3 flex items-center gap-1.5 text-xs text-brand-700 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2">
               <CheckCheck size={12} className="shrink-0" />
               Draft generated — review and edit below before sending.
             </div>
@@ -485,7 +497,7 @@ const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSen
                 <div key={i} className="flex items-center gap-1.5 bg-surface-100 rounded-lg px-2.5 py-1.5 text-xs text-surface-700">
                   <Paperclip size={11} className="text-gray-500" />
                   <span className="max-w-[120px] truncate">{f.name}</span>
-                  <button onClick={() => removeFile(i)} className="text-gray-400 hover:text-red-500 transition-colors ml-1"><X size={11} /></button>
+                  <button onClick={() => removeFile(i)} className="text-gray-400 hover:text-brand-500 transition-colors ml-1"><X size={11} /></button>
                 </div>
               ))}
             </div>
@@ -628,10 +640,16 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2.5 mb-2 flex-wrap">
                   <code className="text-xs font-mono bg-surface-100 text-surface-700 px-2.5 py-1 rounded-lg">#{dispute.dispute_id}</code>
-                  <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold', s.badge === 'danger' ? 'bg-red-50 text-red-700' : s.badge === 'warning' ? 'bg-brand-50 text-brand-700' : s.badge === 'success' ? 'bg-green-50 text-green-700' : 'bg-surface-100 text-surface-700')}>
+                  <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold',
+                    s.badge === 'danger' ? 'bg-red-50 text-red-700' :
+                    s.badge === 'warning' ? 'bg-amber-50 text-amber-700' :
+                    s.badge === 'success' ? 'bg-green-50 text-green-700' :
+                    'bg-surface-100 text-surface-700')}>
                     <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />{s.label}
                   </span>
-                  <Badge variant={p.badge}>{p.label} Priority</Badge>
+                  <Badge variant={p.badge === 'danger' ? 'danger' : p.badge === 'warning' ? 'warning' : 'default'}>
+                    {p.label} Priority
+                  </Badge>
                 </div>
                 <h2 className="font-display font-bold text-surface-800 text-xl leading-snug">{dispute.dispute_type?.reason_name ?? 'Unknown Dispute'}</h2>
                 <p className="text-sm text-gray-500 mt-1.5 flex items-center gap-2">
@@ -670,16 +688,21 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                   <section>
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Case Description</h3>
                     {dispute.description && dispute.description.trim() ? (
-                      <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5 whitespace-pre-wrap">{dispute.description.trim()}</p>
+                      <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5 whitespace-pre-wrap">
+  {dispute.description.trim().charAt(0).toUpperCase() + dispute.description.trim().slice(1)}
+</p>
+
                     ) : dispute.latest_analysis?.ai_summary ? (
                       <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">{dispute.latest_analysis.ai_summary}</p>
                     ) : (
                       <p className="text-sm bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5"><em className="text-gray-400">No description available</em></p>
                     )}
                     {dispute.description && dispute.description.trim() && dispute.latest_analysis?.ai_summary && (
-                      <div className="mt-2 px-4 py-2.5 bg-brand-50 border border-brand-100 rounded-xl">
-                        <p className="text-xs font-bold text-brand-500 uppercase tracking-wider mb-1">AI Summary</p>
-                        <p className="text-xs text-brand-800">{dispute.latest_analysis.ai_summary}</p>
+                      <div className="mt-2 px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-xl">
+                        <p className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                          <Brain size={12} /> AI Insight
+                        </p>
+                        <p className="text-xs text-amber-900 leading-relaxed font-medium">{dispute.latest_analysis.ai_summary}</p>
                       </div>
                     )}
                   </section>
@@ -800,7 +823,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                   <div>
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Customer</p>
                     <div className="flex items-center gap-2.5 bg-white border border-surface-200 rounded-xl px-3.5 py-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0"><User2 size={14} className="text-blue-600" /></div>
+                      <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center shrink-0"><User2 size={14} className="text-brand-700" /></div>
                       <div className="min-w-0"><p className="text-sm font-bold text-surface-800 truncate">{dispute.customer_id}</p><p className="text-xs text-gray-400">Customer ID</p></div>
                     </div>
                   </div>
@@ -858,10 +881,10 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
   const p = pc(dispute.priority);
   const hasNew = dispute.has_new_customer_message ?? false;
   return (
-    <tr className={clsx('group cursor-pointer transition-colors duration-100', hasNew ? 'bg-blue-50/40 hover:bg-blue-50' : 'hover:bg-brand-50/60')} onClick={onClick}>
+    <tr className={clsx('group cursor-pointer transition-colors duration-100', hasNew ? 'bg-brand-50/40 hover:bg-brand-50' : 'hover:bg-brand-50/60')} onClick={onClick}>
       <td className="px-5 py-3.5">
         <div className="flex items-center gap-2">
-          {hasNew && <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0 animate-pulse" title="New customer message" />}
+          {hasNew && <span className="w-2 h-2 rounded-full bg-brand-500 shrink-0 animate-pulse" title="New customer message" />}
           <code className="text-xs font-mono text-gray-700 bg-surface-100 px-2 py-0.5 rounded-lg">#{dispute.dispute_id}</code>
         </div>
       </td>
@@ -869,7 +892,7 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
         <div className="flex items-center gap-2 flex-wrap">
           <p className="text-sm font-semibold text-surface-800 truncate">{dispute.dispute_type?.reason_name ?? 'Unknown'}</p>
           {hasNew && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full shrink-0">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-brand-700 bg-brand-100 px-2 py-0.5 rounded-full shrink-0">
               <MessageSquare size={9} /> New message
             </span>
           )}
@@ -877,11 +900,20 @@ const DisputeRow = ({ dispute, onClick }: { dispute: Dispute; onClick: () => voi
         <p className="text-xs text-gray-500 truncate mt-0.5">{dispute.customer_id}</p>
       </td>
       <td className="px-5 py-3.5">
-        <span className={clsx('badge flex items-center gap-1.5 w-fit', { 'bg-red-50 text-red-700': s.badge === 'danger', 'bg-brand-50 text-brand-700': s.badge === 'warning', 'bg-green-50 text-green-700': s.badge === 'success', 'bg-surface-100 text-surface-800': s.badge === 'default' })}>
+        <span className={clsx('badge flex items-center gap-1.5 w-fit', {
+          'bg-red-50 text-red-700': s.badge === 'danger',
+          'bg-green-50 text-green-700': s.badge === 'success',
+          'bg-amber-50 text-amber-700': s.badge === 'warning',
+          'bg-surface-100 text-surface-800': s.badge === 'default'
+        })}>
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />{s.label}
         </span>
       </td>
-      <td className="px-5 py-3.5"><Badge variant={p.badge}>{p.label}</Badge></td>
+      <td className="px-5 py-3.5 text-sm font-semibold">
+        <Badge variant={p.badge === 'danger' ? 'danger' : p.badge === 'warning' ? 'warning' : 'default'}>
+          {p.label}
+        </Badge>
+      </td>
       <td className="px-5 py-3.5 text-sm text-gray-600 whitespace-nowrap">{formatDate(dispute.created_at)}</td>
       <td className="px-4 py-3.5"><ChevronRight size={16} className="text-gray-400 group-hover:text-brand-400 transition-colors" /></td>
     </tr>
@@ -917,25 +949,25 @@ const ForkRecommendationCard = ({
 
   return (
     <>
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 space-y-3">
+      <div className="rounded-2xl border border-brand-200 bg-brand-50 px-4 py-4 space-y-3">
         {/* Header */}
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-            <Zap size={15} className="text-amber-600" />
+          <div className="w-8 h-8 rounded-xl bg-brand-100 flex items-center justify-center shrink-0">
+            <Zap size={15} className="text-brand-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-amber-900">AI suggests splitting this case</p>
-            <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+            <p className="text-sm font-bold text-brand-900">AI suggests splitting this case</p>
+            <p className="text-xs text-brand-700 mt-0.5 leading-relaxed">
               {rec.reasoning || 'A new topic was detected in the email thread that may require separate handling.'}
             </p>
           </div>
-          <span className="text-[10px] font-bold text-amber-600 bg-amber-100 border border-amber-200 rounded-full px-2 py-0.5 shrink-0">
+          <span className="text-[10px] font-bold text-brand-600 bg-brand-100 border border-brand-200 rounded-full px-2 py-0.5 shrink-0">
             {Math.round(rec.confidence * 100)}% confidence
           </span>
         </div>
 
         {/* Suggested details */}
-        <div className="bg-white border border-amber-100 rounded-xl px-3 py-2.5 space-y-1">
+        <div className="bg-white border border-brand-100 rounded-xl px-3 py-2.5 space-y-1">
           {rec.suggested_type_hint && (
             <p className="text-xs text-surface-600">
               <span className="font-semibold text-surface-500">Type:</span> {rec.suggested_type_hint}
@@ -957,14 +989,14 @@ const ForkRecommendationCard = ({
         <div className="flex items-center gap-2 pt-0.5">
           <button
             onClick={() => setShowAccept(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold transition-colors"
           >
             <Plus size={12} /> Create New Case
           </button>
           <button
             onClick={handleDismiss}
             disabled={dismissing}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-200 hover:border-amber-300 bg-white text-amber-700 text-xs font-semibold transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-200 hover:border-brand-300 bg-white text-brand-700 text-xs font-semibold transition-colors disabled:opacity-50"
           >
             {dismissing ? <Loader2 size={11} className="animate-spin" /> : <X size={11} />}
             Not relevant
@@ -1063,7 +1095,7 @@ const AcceptForkModal = ({
       <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-modal w-full max-w-md animate-scale-in overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-surface-100 bg-gradient-to-r from-amber-50 to-white">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-surface-100 bg-gradient-to-r from-brand-50 to-white">
             <div>
               <h2 className="font-display font-bold text-surface-800">Create Forked Case</h2>
               <p className="text-xs text-gray-500 mt-0.5">Pre-filled from AI recommendation</p>
@@ -1074,9 +1106,9 @@ const AcceptForkModal = ({
           <div className="px-6 py-5 space-y-4 max-h-[65vh] overflow-y-auto">
             {/* Reference info */}
             {rec.suggested_invoice_number && (
-              <div className="flex items-center gap-2 text-xs bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
-                <Hash size={11} className="text-amber-500 shrink-0" />
-                <span className="text-amber-700">Reference: <span className="font-mono font-bold">{rec.suggested_invoice_number}</span></span>
+              <div className="flex items-center gap-2 text-xs bg-brand-50 border border-brand-100 rounded-xl px-3 py-2">
+                <Hash size={11} className="text-brand-500 shrink-0" />
+                <span className="text-brand-700">Reference: <span className="font-mono font-bold">{rec.suggested_invoice_number}</span></span>
               </div>
             )}
 
@@ -1102,7 +1134,10 @@ const AcceptForkModal = ({
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Priority</label>
               <div className="flex gap-2">
                 {(['LOW','MEDIUM','HIGH'] as const).map(p => (
-                  <button key={p} onClick={() => setPriority(p)} className={clsx('flex-1 py-2 rounded-xl text-xs font-bold border transition-all', priority === p ? p === 'HIGH' ? 'bg-red-500 text-white border-red-500' : p === 'MEDIUM' ? 'bg-brand-400 text-white border-brand-400' : 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-500 border-surface-200')}>{p}</button>
+                  <button key={p} onClick={() => setPriority(p)} className={clsx('flex-1 py-2 rounded-xl text-xs font-bold border transition-all', priority === p
+                    ? p === 'HIGH' ? 'bg-red-500 text-white border-red-500 shadow-sm' : p === 'MEDIUM' ? 'bg-amber-500 text-white border-amber-500 shadow-sm' : 'bg-surface-500 text-white border-surface-500 shadow-sm'
+                    : 'bg-white text-gray-500 border-surface-200 hover:border-surface-300'
+                  )}>{p}</button>
                 ))}
               </div>
             </div>
@@ -1116,7 +1151,7 @@ const AcceptForkModal = ({
 
           <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-100 bg-surface-50">
             <button onClick={onClose} className="btn-secondary btn-sm">Cancel</button>
-            <button onClick={handleSubmit} disabled={submitting} className="btn-sm flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl px-4 py-2 font-semibold text-xs transition-colors disabled:opacity-50">
+            <button onClick={handleSubmit} disabled={submitting} className="btn-sm flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl px-4 py-2 font-semibold text-xs transition-colors disabled:opacity-50">
               {submitting ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
               {submitting ? 'Creating…' : 'Create Case'}
             </button>
@@ -1287,12 +1322,12 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
   };
 
   const DOC_TYPE_COLORS_MODAL: Record<string, string> = {
-    PO:          'bg-violet-100 text-violet-700',
-    INVOICE:     'bg-brand-100 text-brand-700',
-    GRN:         'bg-green-100 text-green-700',
-    PAYMENT:     'bg-teal-100 text-teal-700',
+    PO:          'bg-amber-100 text-amber-700',
+    INVOICE:     'bg-blue-100 text-blue-700',
+    GRN:         'bg-purple-100 text-purple-700',
+    PAYMENT:     'bg-green-100 text-green-700',
     CONTRACT:    'bg-slate-100 text-slate-700',
-    CREDIT_NOTE: 'bg-pink-100 text-pink-700',
+    CREDIT_NOTE: 'bg-red-100 text-red-700',
   };
 
   return (
@@ -1301,7 +1336,7 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-modal w-full max-w-lg animate-scale-in overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-7 py-5 border-b border-surface-100 bg-gradient-to-r from-brand-50 to-white">
+          <div className="flex items-center justify-between px-7 py-5 border-b border-surface-100 bg-white">
             <div>
               <h2 className="font-display font-bold text-surface-800 text-lg">Create New Case</h2>
               <p className="text-xs text-gray-500 mt-0.5">Manually open a case without an inbound email</p>
@@ -1332,64 +1367,16 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
 
               {!customerId.trim() || !customerId.includes('@') ? (
                 <p className="text-xs text-gray-400 italic py-1">Enter customer email above to load their documents</p>
-              ) : arDocsLoading ? (
-                <div className="flex items-center gap-2 text-xs text-gray-400 py-2">
-                  <Loader2 size={12} className="animate-spin" /> Loading documents…
-                </div>
-              ) : arDocs.length === 0 ? (
-                <div className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
-                  <AlertTriangle size={12} className="shrink-0 mt-0.5" />
-                  <span>
-                    No AR documents on file for this customer.{' '}
-                    <a href="/ar-documents" className="font-semibold hover:underline">Upload one first</a>
-                    {' '}so the case has document context.
-                  </span>
-                </div>
               ) : (
-                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-0.5">
-                  {arDocs.map(doc => (
-                    <button
-                      key={doc.doc_id}
-                      type="button"
-                      onClick={() => setSelectedArDocId(doc.doc_id)}
-                      className={clsx(
-                        'w-full flex items-start gap-3 px-3 py-2.5 rounded-xl border text-left transition-all',
-                        selectedArDocId === doc.doc_id
-                          ? 'border-brand-400 bg-brand-50'
-                          : 'border-surface-200 bg-white hover:border-surface-300 hover:bg-surface-50'
-                      )}
-                    >
-                      {/* Radio circle */}
-                      <div className={clsx(
-                        'w-3.5 h-3.5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center',
-                        selectedArDocId === doc.doc_id ? 'border-brand-500' : 'border-gray-300'
-                      )}>
-                        {selectedArDocId === doc.doc_id && <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />}
-                      </div>
-
-                      {/* Type badge */}
-                      <span className={clsx(
-                        'inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold shrink-0',
-                        DOC_TYPE_COLORS_MODAL[doc.doc_type] ?? 'bg-surface-100 text-surface-600'
-                      )}>{doc.doc_type}</span>
-
-                      {/* Key info */}
-                      <div className="flex-1 min-w-0">
-                        <p className={clsx(
-                          'text-xs font-semibold truncate',
-                          selectedArDocId === doc.doc_id ? 'text-brand-700' : 'text-surface-700'
-                        )}>
-                          {docLabel(doc)}
-                        </p>
-                      </div>
-
-                      {/* Date */}
-                      {doc.doc_date && (
-                        <span className="text-[10px] text-gray-400 shrink-0 mt-0.5">{doc.doc_date.slice(0, 10)}</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
+                <AnchorDocumentSelector
+                  documents={arDocs}
+                  selectedDocId={selectedArDocId}
+                  onSelect={setSelectedArDocId}
+                  isLoading={arDocsLoading}
+                  hasError={arDocs.length === 0}
+                  errorMessage="No AR documents on file for this customer. Upload one first so the case has document context."
+                  isLoadingText="Loading documents…"
+                />
               )}
 
               {/* Confirmation pill when doc selected */}
@@ -1439,7 +1426,7 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
               <div className="flex gap-2">
                 {(['LOW','MEDIUM','HIGH'] as const).map(p => (
                   <button key={p} onClick={() => setPriority(p)} className={clsx('flex-1 py-2 rounded-xl text-xs font-bold border transition-all', priority === p
-                    ? p === 'HIGH' ? 'bg-red-500 text-white border-red-500' : p === 'MEDIUM' ? 'bg-brand-400 text-white border-brand-400' : 'bg-green-500 text-white border-green-500'
+                    ? p === 'HIGH' ? 'bg-red-500 text-white border-red-500 shadow-sm' : p === 'MEDIUM' ? 'bg-amber-500 text-white border-amber-500 shadow-sm' : 'bg-surface-500 text-white border-surface-500 shadow-sm'
                     : 'bg-white text-gray-500 border-surface-200 hover:border-surface-300'
                   )}>{p}</button>
                 ))}
@@ -1503,15 +1490,13 @@ async function fetchAndOpenDoc(url: string, fileName: string, mode: 'view' | 'sa
 // ─── AR Docs Inline Panel ────────────────────────────────────────────────────
 
 const DOC_TYPE_COLORS_INLINE: Record<string, string> = {
-  PO:          'bg-violet-100 text-violet-700',
-  INVOICE:     'bg-brand-100 text-brand-700',
-  GRN:         'bg-green-100 text-green-700',
-  PAYMENT:     'bg-teal-100 text-teal-700',
-  CONTRACT:    'bg-slate-100 text-slate-700',
-  CREDIT_NOTE: 'bg-pink-100 text-pink-700',
+  PO:          'bg-amber-100 text-amber-700 border-amber-200',
+  INVOICE:     'bg-blue-100 text-blue-700 border-blue-200',
+  GRN:         'bg-purple-100 text-purple-700 border-purple-200',
+  PAYMENT:     'bg-green-100 text-green-700 border-green-200',
+  CONTRACT:    'bg-slate-100 text-slate-700 border-slate-200',
+  CREDIT_NOTE: 'bg-red-100 text-red-700 border-red-200',
 };
-
-// ─── Anchor Picker Modal ──────────────────────────────────────────────────────
 
 const AnchorPickerModal = ({
   disputeId,
@@ -1543,28 +1528,11 @@ const AnchorPickerModal = ({
       .finally(() => setLoadingDocs(false));
   }, [customerId]);
 
-  const DOC_NATURAL_KEY: Record<string, string> = {
-    PO: 'po_number', INVOICE: 'inv_number', GRN: 'grn_number',
-    PAYMENT: 'payment_ref', CONTRACT: 'contract_number', CREDIT_NOTE: 'credit_note_number',
-  };
-  const docLabel = (doc: ARDocRelated) => {
-    if (!doc.all_keys?.length) return `${DOC_TYPE_LABELS[doc.doc_type] ?? doc.doc_type} — no keys`;
-    const preferred = DOC_NATURAL_KEY[doc.doc_type];
-    const key = (preferred ? doc.all_keys.find(k => k.key_type === preferred) : null) ?? doc.all_keys[0];
-    return key.key_value_raw;
-  };
-
-  const DOC_COLORS: Record<string, string> = {
-    PO: 'bg-violet-100 text-violet-700', INVOICE: 'bg-brand-100 text-brand-700',
-    GRN: 'bg-green-100 text-green-700',  PAYMENT: 'bg-teal-100 text-teal-700',
-    CONTRACT: 'bg-slate-100 text-slate-700', CREDIT_NOTE: 'bg-pink-100 text-pink-700',
-  };
-
   const handleConfirm = async () => {
     if (!selectedDocId) return;
     try {
       setSaving(true);
-      const updated = await arDocumentService.updateAnchor(disputeId, selectedDocId, customerId);
+      await arDocumentService.updateAnchor(disputeId, selectedDocId, customerId);
       toast.success('Anchor document updated — linked docs refreshed');
       onUpdated();
     } catch {
@@ -1574,17 +1542,19 @@ const AnchorPickerModal = ({
     }
   };
 
-  return (
+  // Use a portal so the modal renders at document.body level and escapes
+  // any parent stacking context (transforms, overflow:hidden on the case modal)
+  return createPortal(
     <>
-      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-modal w-full max-w-md animate-scale-in overflow-hidden">
+      <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 z-[201] flex items-center justify-center p-4 pointer-events-none">
+        <div className="bg-white rounded-2xl shadow-modal w-full max-w-md animate-scale-in overflow-hidden pointer-events-auto">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-surface-100 bg-gradient-to-r from-surface-50 to-white">
             <div>
-              <h2 className="font-display font-bold text-surface-800">Change Anchor Document</h2>
+              <h2 className="font-display font-bold text-surface-800">Set Anchor Document</h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                Select a new anchor — all linked docs will be replaced with its graph
+                Select an anchor document — linked docs are built from its graph
               </p>
             </div>
             <button onClick={onClose} className="p-2 rounded-xl hover:bg-surface-100 text-gray-400">
@@ -1592,59 +1562,15 @@ const AnchorPickerModal = ({
             </button>
           </div>
 
-          {/* Body */}
+          {/* Body — uses AnchorDocumentSelector to match case-creation style */}
           <div className="px-6 py-5">
-            {loadingDocs ? (
-              <div className="flex items-center gap-2 text-xs text-gray-400 py-4">
-                <Loader2 size={13} className="animate-spin" /> Loading documents…
-              </div>
-            ) : customerDocs.length === 0 ? (
-              <div className="flex items-start gap-2 text-xs text-gray-500 bg-surface-50 border border-surface-200 rounded-xl px-3 py-3">
-                <FileText size={13} className="shrink-0 mt-0.5 text-gray-400" />
-                <span>No AR documents found for this customer. <a href="/ar-documents" className="text-brand-600 font-semibold hover:underline">Upload one</a> first.</span>
-              </div>
-            ) : (
-              <div className="space-y-1.5 max-h-72 overflow-y-auto pr-0.5">
-                {customerDocs.map(doc => (
-                  <button
-                    key={doc.doc_id}
-                    type="button"
-                    onClick={() => setSelectedDocId(doc.doc_id)}
-                    className={clsx(
-                      'w-full flex items-start gap-3 px-3 py-2.5 rounded-xl border text-left transition-all',
-                      selectedDocId === doc.doc_id
-                        ? 'border-brand-400 bg-brand-50'
-                        : 'border-surface-200 bg-white hover:border-surface-300 hover:bg-surface-50'
-                    )}
-                  >
-                    {/* Radio */}
-                    <div className={clsx(
-                      'w-3.5 h-3.5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center',
-                      selectedDocId === doc.doc_id ? 'border-brand-500' : 'border-gray-300'
-                    )}>
-                      {selectedDocId === doc.doc_id && <div className="w-1.5 h-1.5 rounded-full bg-brand-500" />}
-                    </div>
-                    {/* Type badge */}
-                    <span className={clsx(
-                      'inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold shrink-0',
-                      DOC_COLORS[doc.doc_type] ?? 'bg-surface-100 text-surface-600'
-                    )}>{doc.doc_type}</span>
-                    {/* Key info */}
-                    <div className="flex-1 min-w-0">
-                      <p className={clsx(
-                        'text-xs font-semibold truncate',
-                        selectedDocId === doc.doc_id ? 'text-brand-700' : 'text-surface-700'
-                      )}>
-                        {docLabel(doc)}
-                      </p>
-                    </div>
-                    {doc.doc_date && (
-                      <span className="text-[10px] text-gray-400 shrink-0 mt-0.5">{doc.doc_date.slice(0, 10)}</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
+            <AnchorDocumentSelector
+              documents={customerDocs}
+              selectedDocId={selectedDocId}
+              onSelect={setSelectedDocId}
+              isLoading={loadingDocs}
+              errorMessage="No AR documents found for this customer."
+            />
           </div>
 
           {/* Footer */}
@@ -1656,12 +1582,13 @@ const AnchorPickerModal = ({
               className="btn-primary btn-sm flex items-center gap-2 disabled:opacity-50"
             >
               {saving ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
-              {saving ? 'Updating…' : 'Update Anchor'}
+              {saving ? 'Updating…' : 'Set Anchor'}
             </button>
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   );
 };
 
@@ -1693,7 +1620,7 @@ const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; custo
 
   if (error) {
     return (
-      <div className="flex items-center gap-2 text-xs text-red-500 bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">
+      <div className="flex items-center gap-2 text-xs text-brand-500 bg-brand-50 border border-brand-100 rounded-xl px-3 py-2.5">
         <AlertCircle size={12} className="shrink-0" /> Failed to load AR documents
       </div>
     );
@@ -1701,16 +1628,34 @@ const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; custo
 
   if (docs.length === 0) {
     return (
-      <div className="flex items-start gap-2 text-xs text-gray-500 bg-surface-50 border border-surface-200 rounded-xl px-3 py-3">
-        <FileText size={13} className="shrink-0 mt-0.5 text-gray-400" />
-        <span>
-          No AR documents linked to this case yet.
-          Documents are attached automatically when an email is processed,
-          or you can{' '}
-          <a href="/ar-documents" className="text-brand-600 font-semibold hover:underline">
-            upload and link documents manually
-          </a>.
-        </span>
+      <div className="space-y-3">
+        <div className="flex items-start gap-2 text-xs text-gray-500 bg-surface-50 border border-surface-200 rounded-xl px-3 py-3">
+          <FileText size={13} className="shrink-0 mt-0.5 text-gray-400" />
+          <span>
+            No AR documents linked to this case yet.
+            Documents are attached automatically when an email is processed,
+            or you can{' '}
+            <a href="/ar-documents" className="text-brand-600 font-semibold hover:underline">
+              upload and link documents manually
+            </a>.
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowAnchorPicker(true)}
+          title="Set anchor document — all linked docs will be built from its graph"
+          className="w-full flex items-center justify-center gap-1.5 border border-brand-200 hover:border-brand-400 hover:bg-brand-50 text-brand-600 hover:text-brand-700 text-xs font-semibold rounded-xl px-4 py-2.5 transition-all"
+        >
+          <RefreshCw size={12} /> Set Anchor
+        </button>
+        {showAnchorPicker && (
+          <AnchorPickerModal
+            disputeId={disputeId}
+            customerId={customerId}
+            onClose={() => setShowAnchorPicker(false)}
+            onUpdated={() => { setShowAnchorPicker(false); reload(); }}
+          />
+        )}
       </div>
     );
   }
@@ -1910,10 +1855,10 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
   return (
     <div className="px-8 py-6 space-y-6">
       {/* Upload area */}
-      <div className="rounded-2xl border-2 border-dashed border-brand-200 bg-brand-50/40 p-6">
+      <div className="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/40 p-6">
         <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center shrink-0">
-            <Upload size={18} className="text-brand-600" />
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+            <Upload size={18} className="text-emerald-600" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-surface-800 mb-0.5">Upload Supporting Document</p>
@@ -1973,8 +1918,8 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button
-                    onClick={() => fetchAndOpenDoc(doc.download_url, doc.file_name, 'view')}
-                    className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-2.5 py-1.5 rounded-lg transition-all"
+                    onClick={() => handleDocOpen(doc, false)}
+                    className="flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-all"
                     title="View file"
                   >
                     <Eye size={12} /> View
@@ -1988,7 +1933,7 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
                   </button>
                   <button
                     onClick={() => handleDelete(doc.document_id, doc.file_name)}
-                    className="flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition-all"
+                    className="flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition-all"
                     title="Delete document"
                   >
                     <Trash2 size={12} />
@@ -2017,6 +1962,8 @@ const DashboardPage = () => {
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [selected, setSelected]             = useState<Dispute | null>(null);
   const [showCreate, setShowCreate]           = useState(false);
+  const [currentPage, setCurrentPage]         = useState(1);
+  const pageSize = 10;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Open dispute when notification bell is clicked ─────────────────────────
@@ -2063,6 +2010,11 @@ const DashboardPage = () => {
   }, [statusFilter, priorityFilter, debouncedSearch]);
 
   useEffect(() => { loadDisputes(); }, [loadDisputes]);
+  useEffect(() => { setCurrentPage(1); }, [statusFilter, priorityFilter, debouncedSearch]);
+
+  const filteredDisputes = disputes; // Already filtered by server
+  const totalPages = Math.ceil(filteredDisputes.length / pageSize);
+  const paginatedDisputes = filteredDisputes.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   // ── Update single dispute in local state — no full reload on status change ─
   const updateLocalDispute = useCallback((disputeId: number, patch: Partial<Dispute>) => {
@@ -2087,7 +2039,7 @@ const DashboardPage = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowCreate(true)}
-              className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all" style={{ background: '#9333ea' }} onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background='#7e22ce'} onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background='#9333ea'}
+              className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all bg-brand-600 hover:bg-brand-700 shadow-lg shadow-brand-200/40"
             >
               <Plus size={15} /> New Case
             </button>
@@ -2096,10 +2048,10 @@ const DashboardPage = () => {
         }
       />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={FileText}     label="Total"     value={stats.total}    accent="bg-brand-600" />
-        <StatCard icon={AlertCircle}  label="Open"      value={stats.open}     accent="bg-red-500"    sub="Needs attention" />
-        <StatCard icon={Clock}        label="In Review"  value={stats.review}   accent="bg-brand-500" />
-        <StatCard icon={CheckCircle2} label="Resolved"  value={stats.resolved} accent="bg-green-500" />
+        <StatCard icon={FileText}     label="Total"     value={stats.total}    accent="bg-brand-500" />
+        <StatCard icon={AlertCircle}  label="Open"      value={stats.open}     accent="bg-status-error"    sub="Needs attention" />
+        <StatCard icon={Clock}        label="In Review"  value={stats.review}   accent="bg-status-warning" />
+        <StatCard icon={CheckCircle2} label="Resolved"  value={stats.resolved} accent="bg-status-success" />
       </div>
 
       <div className="card px-5 py-3.5 mb-6 flex items-center gap-3 bg-gradient-to-r from-brand-600 to-brand-700 border-0">
@@ -2110,10 +2062,10 @@ const DashboardPage = () => {
       </div>
 
       {error && (
-        <div className="mb-4 flex items-center gap-3 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-          <AlertTriangle size={15} className="text-red-400 shrink-0" />
-          <p className="text-sm text-red-700">{error}</p>
-          <button onClick={() => loadDisputes()} className="ml-auto text-xs font-semibold text-red-600 hover:text-red-800 underline">Retry</button>
+        <div className="mb-4 flex items-center gap-3 bg-brand-50 border border-brand-100 rounded-xl px-4 py-3">
+          <AlertTriangle size={15} className="text-brand-400 shrink-0" />
+          <p className="text-sm text-brand-800">{error}</p>
+          <button onClick={() => loadDisputes()} className="ml-auto text-xs font-semibold text-brand-700 hover:text-brand-800 underline">Retry</button>
         </div>
       )}
 
@@ -2133,7 +2085,7 @@ const DashboardPage = () => {
           <option value="all">All Priorities</option>
           {Object.entries(PRIORITY_CONFIG).map(([v, c]) => <option key={v} value={v}>{c.label}</option>)}
         </select>
-        <span className="text-xs text-gray-400 ml-auto">{disputes.length} of {total}</span>
+        <span className="text-xs text-gray-400 ml-auto">{filteredDisputes.length} of {total}</span>
       </div>
 
       <div className="card overflow-hidden">
@@ -2148,8 +2100,8 @@ const DashboardPage = () => {
           <tbody className="divide-y divide-surface-100">
             {loading ? (
               <tr><td colSpan={6}><div className="flex items-center justify-center gap-3 py-20"><Loader2 size={22} className="animate-spin text-brand-400" /><span className="text-sm text-gray-500">Loading incidents…</span></div></td></tr>
-            ) : disputes.length > 0 ? (
-              disputes.map(d => (
+            ) : paginatedDisputes.length > 0 ? (
+              paginatedDisputes.map(d => (
                 <DisputeRow
                   key={d.dispute_id}
                   dispute={d}
@@ -2167,6 +2119,45 @@ const DashboardPage = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {filteredDisputes.length > pageSize && (
+        <div className="mt-4 flex items-center justify-between bg-white px-4 py-3 border border-surface-200 rounded-xl">
+          <div className="text-xs text-gray-500">
+            Showing <span className="font-semibold">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-semibold">{Math.min(currentPage * pageSize, filteredDisputes.length)}</span> of <span className="font-semibold">{filteredDisputes.length}</span> results
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-surface-200 hover:bg-surface-50 disabled:opacity-50 transition-colors"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={clsx(
+                    'w-8 h-8 flex items-center justify-center text-xs font-semibold rounded-lg transition-all',
+                    currentPage === i + 1 ? 'bg-brand-600 text-white shadow-sm' : 'hover:bg-surface-50 text-gray-600'
+                  )}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-surface-200 hover:bg-surface-50 disabled:opacity-50 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {selected && <DisputeModal dispute={selected} onClose={() => setSelected(null)} onStatusUpdate={updateLocalDispute} />}
       {showCreate && <CreateDisputeModal onClose={() => setShowCreate(false)} onCreated={(d) => { loadDisputes(); }} />}

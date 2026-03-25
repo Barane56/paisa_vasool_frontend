@@ -15,16 +15,16 @@ import {
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 const DOC_TYPE_COLORS: Record<ARDocType, string> = {
-  PO:          'bg-violet-100 text-violet-700 border-violet-200',
-  INVOICE:     'bg-brand-100 text-brand-700 border-brand-200',
-  GRN:         'bg-green-100 text-green-700 border-green-200',
-  PAYMENT:     'bg-teal-100 text-teal-700 border-teal-200',
+  PO:          'bg-amber-100 text-amber-700 border-amber-200',
+  INVOICE:     'bg-blue-100 text-blue-700 border-blue-200',
+  GRN:         'bg-purple-100 text-purple-700 border-purple-200',
+  PAYMENT:     'bg-green-100 text-green-700 border-green-200',
   CONTRACT:    'bg-slate-100 text-slate-700 border-slate-200',
-  CREDIT_NOTE: 'bg-pink-100 text-pink-700 border-pink-200',
+  CREDIT_NOTE: 'bg-red-100 text-red-700 border-red-200',
 };
 
 const CONFIDENCE_COLOR = (c: number) =>
-  c >= 0.9 ? 'text-green-600' : c >= 0.7 ? 'text-brand-500' : 'text-red-500';
+  c >= 0.9 ? 'text-brand-700' : c >= 0.7 ? 'text-brand-600' : 'text-surface-600';
 
 const KEY_TYPE_OPTIONS = [
   'po_number', 'inv_number', 'grn_number',
@@ -104,7 +104,7 @@ const KeyChip = ({ k, docId, onUpdated }: {
         {saving
           ? <Loader2 size={11} className="animate-spin text-brand-400 shrink-0" />
           : <>
-              <button onClick={save}   className="text-green-500 hover:text-green-700 shrink-0 p-0.5"><Check size={11} /></button>
+              <button onClick={save}   className="text-brand-500 hover:text-brand-700 shrink-0 p-0.5"><Check size={11} /></button>
               <button onClick={cancel} className="text-surface-400 hover:text-surface-600 shrink-0 p-0.5"><X size={11} /></button>
             </>
         }
@@ -146,7 +146,7 @@ const RelatedCard = ({ doc }: { doc: ARDocRelated }) => {
         <div className="flex-1 flex flex-wrap gap-1 min-w-0">
           {doc.shared_keys.map(sk => (
             <span key={sk.key_type + sk.key_value_norm}
-              className="text-[10px] font-mono bg-brand-50 text-brand-700 px-1.5 py-0.5 rounded">
+              className="text-[10px] font-mono bg-surface-100 text-surface-700 px-1.5 py-0.5 rounded border border-surface-200">
               {sk.key_value_raw}
             </span>
           ))}
@@ -249,8 +249,8 @@ const ResultPanel = ({ result, onReset }: { result: ARDocUploadResult; onReset: 
             <span className={clsx('text-[10px] font-bold px-2 py-0.5 rounded-full border', color)}>
               {DOC_TYPE_LABELS[doc.doc_type as ARDocType] ?? doc.doc_type}
             </span>
-            <CheckCircle2 size={13} className="text-green-500" />
-            <span className="text-xs text-green-600 font-semibold">Uploaded</span>
+            <CheckCircle2 size={13} className="text-brand-500" />
+            <span className="text-xs text-brand-700 font-semibold">Uploaded</span>
           </div>
           <p className="text-xs text-surface-400 mt-0.5">
             {doc.doc_date && <span className="flex items-center gap-1 inline-flex"><Calendar size={10} /> {doc.doc_date} · </span>}
@@ -317,12 +317,12 @@ const ResultPanel = ({ result, onReset }: { result: ARDocUploadResult; onReset: 
       <div className={clsx(
         'rounded-xl border px-4 py-3 flex items-start gap-3',
         graph_summary.related_docs_found > 0
-          ? 'bg-brand-50 border-brand-100'
+          ? 'bg-emerald-50 border-emerald-100'
           : 'bg-surface-50 border-surface-200'
       )}>
-        <GitBranch size={15} className={graph_summary.related_docs_found > 0 ? 'text-brand-500 shrink-0 mt-0.5' : 'text-surface-300 shrink-0 mt-0.5'} />
+        <GitBranch size={15} className={graph_summary.related_docs_found > 0 ? 'text-emerald-500 shrink-0 mt-0.5' : 'text-surface-300 shrink-0 mt-0.5'} />
         <div>
-          <p className={clsx('text-xs font-bold', graph_summary.related_docs_found > 0 ? 'text-brand-700' : 'text-surface-500')}>
+          <p className={clsx('text-xs font-bold', graph_summary.related_docs_found > 0 ? 'text-emerald-700' : 'text-surface-500')}>
             {graph_summary.related_docs_found > 0
               ? `Linked to ${graph_summary.related_docs_found} document${graph_summary.related_docs_found !== 1 ? 's' : ''}`
               : 'No related documents yet'}
@@ -407,7 +407,7 @@ const ARDocumentsPage = () => {
             {/* Customer email — the customer_scope for graph linking */}
             <div>
               <label className="text-[11px] font-semibold text-surface-500 uppercase tracking-wider mb-1.5 block">
-                Customer Email <span className="text-red-400">*</span>
+                Customer Email <span className="text-brand-400">*</span>
               </label>
               <input
                 type="email"
