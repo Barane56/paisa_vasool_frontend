@@ -72,7 +72,7 @@ const LoginPage = () => {
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               autoComplete="current-password"
-              className={`input-base pr-11 ${errors.password ? 'border-red-400 focus:ring-red-400' : ''}`}
+              className={`input-base pr-11 ${errors.password ? 'border-brand-400 focus:ring-brand-400' : ''}`}
               {...register('password', {
                 required: 'Password is required',
                 minLength: { value: 8, message: 'Password must be at least 8 characters' },
@@ -86,7 +86,7 @@ const LoginPage = () => {
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
+          {errors.password && <p className="text-xs text-brand-500">{errors.password.message}</p>}
         </div>
 
         <Button

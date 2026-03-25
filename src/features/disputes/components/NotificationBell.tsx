@@ -26,9 +26,9 @@ function timeAgo(iso: string): string {
 }
 
 const PRIORITY_DOT: Record<string, string> = {
-  HIGH:   'bg-red-500',
-  MEDIUM: 'bg-amber-400',
-  LOW:    'bg-green-500',
+  HIGH:   'bg-brand-600',
+  MEDIUM: 'bg-brand-400',
+  LOW:    'bg-brand-300',
 };
 
 interface NotificationBellProps {
@@ -91,7 +91,7 @@ export const NotificationBell = ({
 
         {/* Unread badge */}
         {count > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1 shadow-sm animate-in zoom-in-75 duration-200">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-brand-600 text-white text-[10px] font-bold rounded-full px-1 shadow-sm animate-in zoom-in-75 duration-200">
             {count > 9 ? '9+' : count}
           </span>
         )}
@@ -141,8 +141,8 @@ export const NotificationBell = ({
           <div className="max-h-[420px] overflow-y-auto divide-y divide-surface-100">
             {count === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mb-3">
-                  <CheckCheck size={20} className="text-green-600" />
+                <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center mb-3">
+                  <CheckCheck size={20} className="text-brand-600" />
                 </div>
                 <p className="text-sm font-semibold text-surface-800">You're all caught up!</p>
                 <p className="text-xs text-gray-400 mt-1">
@@ -162,8 +162,8 @@ export const NotificationBell = ({
                 >
                   {/* Priority dot + icon */}
                   <div className="relative shrink-0 mt-0.5">
-                    <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
-                      <MessageSquare size={16} className="text-blue-500" />
+                    <div className="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center">
+                      <MessageSquare size={16} className="text-brand-600" />
                     </div>
                     <span
                       className={clsx(

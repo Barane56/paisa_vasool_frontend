@@ -57,17 +57,17 @@ const priorityVariant = (p: string): 'danger' | 'warning' | 'info' | 'default' =
   ({ HIGH: 'danger', MEDIUM: 'warning', LOW: 'info' } as const)[p as 'HIGH'] ?? 'default';
 
 const priorityDot = (p: string) =>
-  ({ HIGH: 'bg-red-500', MEDIUM: 'bg-amber-400', LOW: 'bg-blue-400' } as const)[p] ?? 'bg-surface-300';
+  ({ HIGH: 'bg-brand-600', MEDIUM: 'bg-brand-400', LOW: 'bg-brand-300' } as const)[p] ?? 'bg-surface-300';
 
 const episodeIcon = (actor: string) =>
   actor === 'CUSTOMER' ? MessageSquare : actor === 'AI' ? Brain : User2;
 
 const episodeColor = (actor: string) =>
   actor === 'CUSTOMER'
-    ? { bg: 'bg-blue-50', icon: 'text-blue-500', border: 'border-blue-100', text: 'text-blue-700' }
+    ? { bg: 'bg-brand-50', icon: 'text-brand-600', border: 'border-brand-100', text: 'text-brand-700' }
     : actor === 'AI'
-    ? { bg: 'bg-blue-50', icon: 'text-blue-500', border: 'border-blue-100', text: 'text-blue-700' }
-    : { bg: 'bg-amber-50', icon: 'text-amber-500', border: 'border-amber-100', text: 'text-amber-700' };
+    ? { bg: 'bg-brand-50', icon: 'text-brand-600', border: 'border-brand-100', text: 'text-brand-700' }
+    : { bg: 'bg-surface-50', icon: 'text-surface-500', border: 'border-surface-100', text: 'text-surface-700' };
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
 
@@ -91,24 +91,24 @@ const StatCard = ({
 // ─── AI Response Block ────────────────────────────────────────────────────────
 
 const AIResponseBlock = ({ analysis }: { analysis: AIAnalysis }) => (
-  <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white overflow-hidden">
+  <div className="rounded-2xl border border-brand-100 bg-gradient-to-br from-brand-50 to-white overflow-hidden">
     {/* Header */}
-    <div className="px-4 py-3 border-b border-blue-100 flex items-center justify-between gap-3">
+    <div className="px-4 py-3 border-b border-brand-100 flex items-center justify-between gap-3">
       <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center">
-          <Brain size={12} className="text-blue-600" />
+        <div className="w-6 h-6 rounded-lg bg-brand-100 flex items-center justify-center">
+          <Brain size={12} className="text-brand-700" />
         </div>
-        <span className="text-xs font-semibold text-blue-700 uppercase tracking-wide">AI Analysis</span>
+        <span className="text-xs font-semibold text-brand-700 uppercase tracking-wide">AI Analysis</span>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <span className="text-[11px] text-blue-500">{(analysis.confidence_score * 100).toFixed(0)}% confidence</span>
+        <span className="text-[11px] text-brand-700">{(analysis.confidence_score * 100).toFixed(0)}% confidence</span>
         {analysis.auto_response_generated && (
-          <span className="inline-flex items-center gap-1 text-[11px] text-green-700 bg-green-50 border border-green-100 rounded-full px-2 py-0.5">
+          <span className="inline-flex items-center gap-1 text-[11px] text-brand-700 bg-brand-50 border border-brand-100 rounded-full px-2 py-0.5">
             <CheckCheck size={10} /> Auto-sent
           </span>
         )}
         {analysis.memory_context_used && (
-          <span className="inline-flex items-center gap-1 text-[11px] text-blue-700 bg-blue-50 border border-blue-100 rounded-full px-2 py-0.5">
+          <span className="inline-flex items-center gap-1 text-[11px] text-brand-700 bg-brand-50 border border-brand-100 rounded-full px-2 py-0.5">
             <Zap size={10} /> Memory used
           </span>
         )}
@@ -119,12 +119,12 @@ const AIResponseBlock = ({ analysis }: { analysis: AIAnalysis }) => (
       {/* Category + summary */}
       <div>
         <p className="text-[11px] text-surface-400 uppercase tracking-widest font-medium mb-1">Category</p>
-        <p className="text-sm font-semibold text-blue-800">{analysis.predicted_category}</p>
+        <p className="text-sm font-semibold text-brand-800">{analysis.predicted_category}</p>
       </div>
 
       <div>
         <p className="text-[11px] text-surface-400 uppercase tracking-widest font-medium mb-1.5">Summary</p>
-        <p className="text-sm text-surface-700 leading-relaxed bg-white/70 rounded-xl px-3 py-2.5 border border-blue-100">
+        <p className="text-sm text-surface-700 leading-relaxed bg-white/70 rounded-xl px-3 py-2.5 border border-brand-100">
           {analysis.ai_summary}
         </p>
       </div>
@@ -135,8 +135,8 @@ const AIResponseBlock = ({ analysis }: { analysis: AIAnalysis }) => (
           <p className="text-[11px] text-surface-400 uppercase tracking-widest font-medium mb-1.5 flex items-center gap-1.5">
             <MessageCircle size={11} /> Response Sent to Customer
           </p>
-          <div className="bg-white border border-blue-100 rounded-xl px-3 py-2.5 relative">
-            <div className="absolute left-0 top-3 bottom-3 w-[3px] bg-blue-300 rounded-r-full ml-0" />
+          <div className="bg-white border border-brand-100 rounded-xl px-3 py-2.5 relative">
+            <div className="absolute left-0 top-3 bottom-3 w-[3px] bg-brand-300 rounded-r-full ml-0" />
             <p className="text-sm text-surface-800 leading-relaxed pl-3">
               {analysis.ai_response}
             </p>
@@ -161,7 +161,7 @@ const AIResponseBlock = ({ analysis }: { analysis: AIAnalysis }) => (
 const OpenQuestionsBlock = ({ questions }: { questions: OpenQuestion[] }) => {
   if (!questions.length) return (
     <div className="flex items-center gap-3 bg-surface-50 rounded-xl px-4 py-3 border border-surface-100">
-      <CheckCircle2 size={15} className="text-green-400 shrink-0" />
+      <CheckCircle2 size={15} className="text-brand-700 shrink-0" />
       <p className="text-sm text-surface-500">No open questions for this dispute.</p>
     </div>
   );
@@ -173,21 +173,21 @@ const OpenQuestionsBlock = ({ questions }: { questions: OpenQuestion[] }) => {
           key={q.question_id}
           className={clsx(
             'rounded-xl border px-4 py-3 flex items-start gap-3',
-            q.status === 'PENDING'  && 'bg-amber-50 border-amber-100',
-            q.status === 'ANSWERED' && 'bg-green-50 border-green-100',
+            q.status === 'PENDING'  && 'bg-brand-50 border-brand-100',
+            q.status === 'ANSWERED' && 'bg-brand-50 border-brand-100',
             q.status === 'EXPIRED'  && 'bg-surface-50 border-surface-100',
           )}
         >
           <div className="mt-0.5 shrink-0">
-            {q.status === 'PENDING'  && <HelpCircle size={14} className="text-amber-500" />}
-            {q.status === 'ANSWERED' && <CheckCircle2 size={14} className="text-green-500" />}
+            {q.status === 'PENDING'  && <HelpCircle size={14} className="text-brand-600" />}
+            {q.status === 'ANSWERED' && <CheckCircle2 size={14} className="text-brand-700" />}
             {q.status === 'EXPIRED'  && <Clock size={14} className="text-surface-400" />}
           </div>
           <div className="flex-1 min-w-0">
             <p className={clsx(
               'text-sm leading-relaxed',
-              q.status === 'PENDING'  && 'text-amber-800',
-              q.status === 'ANSWERED' && 'text-green-800',
+              q.status === 'PENDING'  && 'text-brand-800',
+              q.status === 'ANSWERED' && 'text-brand-800',
               q.status === 'EXPIRED'  && 'text-surface-500',
             )}>
               {q.question_text}
@@ -195,15 +195,15 @@ const OpenQuestionsBlock = ({ questions }: { questions: OpenQuestion[] }) => {
             <div className="flex items-center gap-3 mt-1">
               <span className={clsx(
                 'text-[11px] font-medium',
-                q.status === 'PENDING'  && 'text-amber-600',
-                q.status === 'ANSWERED' && 'text-green-600',
+                q.status === 'PENDING'  && 'text-brand-600',
+                q.status === 'ANSWERED' && 'text-brand-700',
                 q.status === 'EXPIRED'  && 'text-surface-400',
               )}>
                 {q.status}
               </span>
               <span className="text-[11px] text-surface-400">Asked {formatDate(q.asked_at)}</span>
               {q.answered_at && (
-                <span className="text-[11px] text-green-600">Answered {formatDate(q.answered_at)}</span>
+                <span className="text-[11px] text-brand-700">Answered {formatDate(q.answered_at)}</span>
               )}
             </div>
           </div>
@@ -383,7 +383,7 @@ const DisputeDrawer = ({
                 </Badge>
                 <Badge variant={priorityVariant(dispute.priority)}>{dispute.priority}</Badge>
                 {dispute.latest_analysis?.auto_response_generated && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-green-700 bg-green-50 border border-green-100 rounded-full px-2 py-0.5">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-brand-700 bg-brand-50 border border-brand-100 rounded-full px-2 py-0.5">
                     <CheckCheck size={9} /> Auto-responded
                   </span>
                 )}
@@ -426,7 +426,7 @@ const DisputeDrawer = ({
                 <Icon size={12} />
                 {t.label}
                 {t.id === 'response' && pendingQs > 0 && (
-                  <span className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">
+                  <span className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full bg-brand-100 text-brand-700 text-[10px] font-bold">
                     {pendingQs}
                   </span>
                 )}
@@ -477,14 +477,14 @@ const DisputeDrawer = ({
                   <p className="text-[11px] text-surface-400 uppercase tracking-widest font-semibold mb-2 flex items-center gap-1.5">
                     <Brain size={11} /> AI Summary
                   </p>
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-3.5 flex items-start gap-3">
+                  <div className="bg-brand-50 border border-brand-100 rounded-xl p-3.5 flex items-start gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-blue-800 leading-relaxed">
+                      <p className="text-xs text-brand-800 leading-relaxed">
                         {dispute.latest_analysis.ai_summary}
                       </p>
                       <button
                         onClick={() => setTab('response')}
-                        className="mt-2 text-[11px] text-blue-600 font-semibold hover:text-blue-800 flex items-center gap-1 transition-colors"
+                        className="mt-2 text-[11px] text-brand-700 font-semibold hover:text-brand-800 flex items-center gap-1 transition-colors"
                       >
                         View full AI response <ChevronRight size={11} />
                       </button>
@@ -495,15 +495,15 @@ const DisputeDrawer = ({
 
               {/* Pending questions banner */}
               {!!dispute.open_questions_count && (
-                <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
-                  <HelpCircle size={15} className="text-amber-500 shrink-0" />
-                  <p className="text-sm text-amber-800">
+                <div className="flex items-center gap-3 bg-brand-50 border border-brand-100 rounded-xl px-4 py-3">
+                  <HelpCircle size={15} className="text-brand-600 shrink-0" />
+                  <p className="text-sm text-brand-800">
                     <span className="font-semibold">{dispute.open_questions_count} pending question{dispute.open_questions_count > 1 ? 's' : ''}</span>{' '}
                     awaiting customer response.
                   </p>
                   <button
                     onClick={() => setTab('response')}
-                    className="ml-auto text-xs text-amber-600 font-semibold hover:underline shrink-0"
+                    className="ml-auto text-xs text-brand-600 font-semibold hover:underline shrink-0"
                   >
                     View
                   </button>
@@ -640,11 +640,11 @@ const DisputeRow = ({
     {/* AI Response */}
     <td className="px-5 py-3.5 whitespace-nowrap">
       {dispute.latest_analysis?.auto_response_generated ? (
-        <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 border border-green-100 rounded-full px-2 py-0.5 font-medium">
+        <span className="inline-flex items-center gap-1 text-xs text-brand-700 bg-brand-50 border border-brand-100 rounded-full px-2 py-0.5 font-medium">
           <CheckCheck size={10} /> Sent
         </span>
       ) : dispute.latest_analysis ? (
-        <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-2 py-0.5 font-medium">
+        <span className="inline-flex items-center gap-1 text-xs text-brand-700 bg-brand-50 border border-brand-100 rounded-full px-2 py-0.5 font-medium">
           <Clock size={10} /> Pending FA
         </span>
       ) : (
@@ -655,7 +655,7 @@ const DisputeRow = ({
     {/* Pending Qs */}
     <td className="px-5 py-3.5 whitespace-nowrap">
       {!!dispute.open_questions_count && dispute.open_questions_count > 0 ? (
-        <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-2 py-0.5 font-medium">
+        <span className="inline-flex items-center gap-1 text-xs text-brand-700 bg-brand-50 border border-brand-100 rounded-full px-2 py-0.5 font-medium">
           <HelpCircle size={10} /> {dispute.open_questions_count}
         </span>
       ) : (
@@ -768,18 +768,18 @@ const DisputesPage = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
         <StatCard icon={Inbox}        label="Total"        value={stats.total}    accent="bg-brand-500" />
-        <StatCard icon={ShieldAlert}  label="Open"         value={stats.open}     accent="bg-red-500"   sub="Needs attention" />
-        <StatCard icon={Clock}        label="Under Review" value={stats.inReview} accent="bg-amber-500" />
-        <StatCard icon={CheckCircle2} label="Resolved"     value={stats.resolved} accent="bg-green-500" />
-        <StatCard icon={Zap}          label="Auto-Responded" value={stats.autoSent} accent="bg-blue-500" sub="AI handled" />
+        <StatCard icon={ShieldAlert}  label="Open"         value={stats.open}     accent="bg-brand-600"   sub="Needs attention" />
+        <StatCard icon={Clock}        label="Under Review" value={stats.inReview} accent="bg-brand-500" />
+        <StatCard icon={CheckCircle2} label="Resolved"     value={stats.resolved} accent="bg-brand-600" />
+        <StatCard icon={Zap}          label="Auto-Responded" value={stats.autoSent} accent="bg-brand-700" sub="AI handled" />
       </div>
 
       {/* Error */}
       {error && (
-        <div className="mb-4 flex items-center gap-3 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-          <AlertTriangle size={15} className="text-red-400 shrink-0" />
-          <p className="text-sm text-red-600">{error}</p>
-          <button onClick={loadDisputes} className="ml-auto text-xs text-red-500 font-medium hover:underline">
+        <div className="mb-4 flex items-center gap-3 bg-brand-50 border border-brand-100 rounded-xl px-4 py-3">
+          <AlertTriangle size={15} className="text-brand-400 shrink-0" />
+          <p className="text-sm text-brand-700">{error}</p>
+          <button onClick={loadDisputes} className="ml-auto text-xs text-brand-600 font-medium hover:underline">
             Retry
           </button>
         </div>
@@ -871,7 +871,7 @@ const DisputesPage = () => {
           {activeFilterCount > 0 && (
             <button
               onClick={() => { setStatusFilter('all'); setPriorityFilter('all'); setCurrentPage(1); }}
-              className="ml-auto flex items-center gap-1 text-xs text-surface-400 hover:text-red-500 transition-colors"
+              className="ml-auto flex items-center gap-1 text-xs text-surface-400 hover:text-brand-500 transition-colors"
             >
               <X size={12} /> Clear
             </button>
