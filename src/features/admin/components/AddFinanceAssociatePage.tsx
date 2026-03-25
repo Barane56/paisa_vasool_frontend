@@ -38,7 +38,7 @@ const FACard = ({ fa }: { fa: FAUser }) => (
         <Calendar size={11} /> Joined {formatDate(fa.created_at)}
       </p>
     </div>
-    <span className="shrink-0 text-xs font-medium text-green-700 bg-green-50 border border-green-100 rounded-full px-2 py-0.5">
+    <span className="shrink-0 text-[10px] font-bold text-green-700 bg-green-50 border border-green-100 rounded-full px-2 py-0.5 uppercase tracking-wider">
       Active
     </span>
   </div>
@@ -151,8 +151,8 @@ const AddFinanceAssociatePage = () => {
               <div className="flex items-center gap-2 bg-brand-50 border border-brand-100 rounded-xl px-4 py-3">
                 <User2 size={14} className="text-brand-600 shrink-0" />
                 <div>
-                  <p className="text-xs font-semibold text-brand-700">Finance Associate role</p>
-                  <p className="text-xs text-brand-500">Access to incidents dashboard and documents</p>
+                  <p className="text-xs font-bold text-brand-700">Finance Associate role</p>
+                  <p className="text-xs text-brand-600">Access to incidents dashboard and documents</p>
                 </div>
               </div>
 

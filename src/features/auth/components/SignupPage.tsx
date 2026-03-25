@@ -25,8 +25,8 @@ const PasswordStrength = ({ password }: { password: string }) => {
     <div className="flex gap-3 mt-2">
       {checks.map((c) => (
         <div key={c.label} className="flex items-center gap-1">
-          <Check size={11} className={c.pass ? 'text-green-500' : 'text-surface-300'} />
-          <span className={`text-[11px] ${c.pass ? 'text-green-600' : 'text-surface-400'}`}>{c.label}</span>
+          <Check size={11} className={c.pass ? 'text-brand-500' : 'text-surface-300'} />
+          <span className={`text-[11px] ${c.pass ? 'text-brand-700' : 'text-surface-400'}`}>{c.label}</span>
         </div>
       ))}
     </div>
@@ -104,7 +104,7 @@ const SignupPage = () => {
               type={showPassword ? 'text' : 'password'}
               placeholder="Min. 8 characters"
               autoComplete="new-password"
-              className={`input-base pr-11 ${errors.password ? 'border-red-400 focus:ring-red-400' : ''}`}
+              className={`input-base pr-11 ${errors.password ? 'border-brand-400 focus:ring-brand-400' : ''}`}
               {...register('password', {
                 required: 'Password is required',
                 minLength: { value: 8, message: 'Minimum 8 characters' },
@@ -119,7 +119,7 @@ const SignupPage = () => {
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
+          {errors.password && <p className="text-xs text-brand-500">{errors.password.message}</p>}
           {password && <PasswordStrength password={password} />}
         </div>
 
@@ -131,7 +131,7 @@ const SignupPage = () => {
               type={showConfirm ? 'text' : 'password'}
               placeholder="Repeat your password"
               autoComplete="new-password"
-              className={`input-base pr-11 ${errors.confirm_password ? 'border-red-400 focus:ring-red-400' : ''}`}
+              className={`input-base pr-11 ${errors.confirm_password ? 'border-brand-400 focus:ring-brand-400' : ''}`}
               {...register('confirm_password', {
                 required: 'Please confirm your password',
                 validate: (val) => val === password || 'Passwords do not match',
@@ -146,7 +146,7 @@ const SignupPage = () => {
             </button>
           </div>
           {errors.confirm_password && (
-            <p className="text-xs text-red-500">{errors.confirm_password.message}</p>
+            <p className="text-xs text-brand-500">{errors.confirm_password.message}</p>
           )}
         </div>
 

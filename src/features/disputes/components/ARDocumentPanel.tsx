@@ -10,21 +10,22 @@ import {
   ARDocType, ARDocUploadResult, ARDocRelated, ARDocKey,
   DOC_TYPE_LABELS, KEY_TYPE_LABELS,
 } from '../services/arDocumentService';
+import { GroupedDocumentsDisplay } from './GroupedDocumentsDisplay';
 import type { Dispute } from '../services/disputeService';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const DOC_TYPE_COLORS: Record<ARDocType, string> = {
-  PO:          'bg-violet-100 text-violet-700 border-violet-200',
-  INVOICE:     'bg-brand-100 text-brand-700 border-brand-200',
-  GRN:         'bg-green-100 text-green-700 border-green-200',
-  PAYMENT:     'bg-teal-100 text-teal-700 border-teal-200',
+  PO:          'bg-amber-100 text-amber-700 border-amber-200',
+  INVOICE:     'bg-blue-100 text-blue-700 border-blue-200',
+  GRN:         'bg-purple-100 text-purple-700 border-purple-200',
+  PAYMENT:     'bg-green-100 text-green-700 border-green-200',
   CONTRACT:    'bg-slate-100 text-slate-700 border-slate-200',
-  CREDIT_NOTE: 'bg-pink-100 text-pink-700 border-pink-200',
+  CREDIT_NOTE: 'bg-red-100 text-red-700 border-red-200',
 };
 
 const CONFIDENCE_COLOR = (c: number) =>
-  c >= 0.9 ? 'text-green-600' : c >= 0.7 ? 'text-brand-500' : 'text-red-500';
+  c >= 0.9 ? 'text-brand-700' : c >= 0.7 ? 'text-brand-600' : 'text-surface-600';
 
 const KEY_TYPE_OPTIONS = [
   'po_number', 'inv_number', 'grn_number',
@@ -235,14 +236,13 @@ const UploadedDocView = ({
       {/* Related documents */}
       {result.related_documents.length > 0 && (
         <div>
-          <p className="text-xs font-bold text-surface-700 uppercase tracking-wider mb-2">
+          <p className="text-xs font-bold text-surface-700 uppercase tracking-wider mb-3">
             Related Documents
           </p>
-          <div className="space-y-2">
-            {result.related_documents.map(r => (
-              <RelatedDocCard key={r.doc_id} doc={r} />
-            ))}
-          </div>
+          <GroupedDocumentsDisplay 
+            documents={result.related_documents}
+            readonly={true}
+          />
         </div>
       )}
     </div>
@@ -345,8 +345,8 @@ export const ARDocumentPanel = ({ dispute }: { dispute: Dispute }) => {
           </>
         ) : (
           <>
-            <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center">
-              <Upload size={18} className="text-brand-600" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+              <Upload size={18} className="text-emerald-600" />
             </div>
             <div className="text-center">
               <p className="text-sm font-semibold text-surface-700">
@@ -362,7 +362,7 @@ export const ARDocumentPanel = ({ dispute }: { dispute: Dispute }) => {
       {result && (
         <div className="border-t border-surface-200 pt-4">
           <div className="flex items-center gap-2 mb-3">
-            <CheckCircle2 size={14} className="text-green-600" />
+              <CheckCircle2 size={14} className="text-brand-700" />
             <span className="text-xs font-bold text-surface-700">
               {DOC_TYPE_LABELS[result.document.doc_type]} uploaded successfully
             </span>

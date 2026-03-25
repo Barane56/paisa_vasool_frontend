@@ -26,7 +26,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>((
       variant === 'primary'   && 'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800',
       variant === 'secondary' && 'bg-surface-100 text-surface-800 hover:bg-surface-200 active:bg-surface-300',
       variant === 'ghost'     && 'text-surface-700 hover:bg-surface-100',
-      variant === 'danger'    && 'bg-red-500 text-white hover:bg-red-600',
+      variant === 'danger'    && 'bg-surface-600 text-white hover:bg-surface-700',
       className
     )}
     {...props}
@@ -63,12 +63,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>((
         id={inputId}
         className={clsx(
           'input-base',
-          error && 'border-red-400 focus:ring-red-400',
+          error && 'border-brand-400 focus:ring-brand-400',
           className
         )}
         {...props}
       />
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-brand-500">{error}</p>}
       {hint && !error && <p className="text-xs text-surface-400">{hint}</p>}
     </div>
   );
@@ -78,7 +78,7 @@ Input.displayName = 'Input';
 // ─── Badge ────────────────────────────────────────────────────────────────────
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'purple';
+  variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'primary';
   className?: string;
 }
 
@@ -86,11 +86,11 @@ export const Badge = ({ children, variant = 'default', className }: BadgeProps) 
   <span className={clsx(
     'badge',
     variant === 'default' && 'bg-surface-100 text-surface-600',
-    variant === 'success' && 'bg-green-50 text-green-700',
-    variant === 'warning' && 'bg-amber-50 text-amber-700',
-    variant === 'danger'  && 'bg-red-50 text-red-700',
-    variant === 'info'    && 'bg-blue-50 text-blue-700',
-    variant === 'purple'  && 'bg-purple-50 text-purple-700',
+    variant === 'success' && 'bg-green-50 text-green-700 border-green-100',
+    variant === 'warning' && 'bg-amber-50 text-amber-700 border-amber-100',
+    variant === 'danger'  && 'bg-red-50 text-red-700 border-red-100',
+    variant === 'info'    && 'bg-blue-50 text-blue-700 border-blue-100',
+    variant === 'primary' && 'bg-brand-50 text-brand-700 border-brand-100',
     className
   )}>
     {children}

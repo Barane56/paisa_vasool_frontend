@@ -6,16 +6,16 @@ import { useAppDispatch, useUser } from '@/hooks';
 import { logoutUser } from '@/features/auth';
 import clsx from 'clsx';
 
-// Admin sidebar — slightly darker gray than FA to visually distinguish
-const SB_BG      = '#ECECF0';   // a touch darker than FA's surface-100
-const SB_BORDER  = '#D8D8E3';
-const SB_TEXT    = '#6b6b80';
-const SB_HOVER   = '#D8D8E3';
-const SB_ACTIVE_BG   = '#f3e8ff';   // brand-100 — same purple active as FA
-const SB_ACTIVE_TEXT = '#7e22ce';   // brand-700
-const SB_ACTIVE_BAR  = '#9333ea';   // brand-600
-const SB_MUTED   = '#9898aa';
-const SB_AVATAR  = '#7e22ce';   // brand-700 — slightly deeper purple for admin
+// Admin sidebar — modern ledger green identity with bold contextual accent.
+const SB_BG      = '#f8fafc';   // Slate-50 for a cleaner look
+const SB_BORDER  = '#e2e8f0';   // Slate-200
+const SB_TEXT    = '#475569';   // Slate-600
+const SB_HOVER   = '#f1f5f9';   // Slate-100
+const SB_ACTIVE_BG   = '#4f46e5';   // brand-600
+const SB_ACTIVE_TEXT = '#ffffff';
+const SB_ACTIVE_BAR  = '#4338ca';   // brand-700
+const SB_MUTED   = '#94a3b8';   // Slate-400
+const SB_AVATAR  = '#4f46e5';   // brand-600
 
 const NAV_ITEMS = [
   { to: ROUTES.ADMIN_ADD_FA,    icon: UserPlus,      label: 'Add Associate' },
@@ -34,8 +34,8 @@ const Sidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       className={clsx('flex flex-col shrink-0 relative transition-all duration-300 border-r', collapsed ? 'w-16' : 'w-60')}
       style={{ background: SB_BG, borderColor: SB_BORDER }}
     >
-      {/* Purple top accent */}
-      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-brand-700 via-brand-500 to-brand-700" />
+      {/* Top accent line for active context */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-status-info" />
 
       {/* Logo */}
       <div className={clsx('flex items-center gap-3 transition-all duration-300 border-b', collapsed ? 'px-3 py-4 justify-center' : 'px-4 py-4')} style={{ borderColor: SB_BORDER }}>
@@ -99,7 +99,7 @@ const Sidebar = ({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
           </div>
         )}
         <button onClick={handleLogout}
-          className={clsx('w-full flex items-center gap-3 rounded-xl transition-all duration-150 hover:bg-red-50 hover:text-red-500', collapsed ? 'px-3 py-3 justify-center' : 'px-3 py-2.5')}
+          className={clsx('w-full flex items-center gap-3 rounded-xl transition-all duration-150 hover:bg-brand-50 hover:text-brand-500', collapsed ? 'px-3 py-3 justify-center' : 'px-3 py-2.5')}
           style={{ color: SB_MUTED }}>
           <LogOut size={16} className="shrink-0" />
           {!collapsed && <span className="text-sm font-medium">Sign Out</span>}
@@ -121,15 +121,6 @@ const AdminLayout = () => {
         <header className="bg-white border-b border-surface-200 flex items-center px-6 py-3 gap-4 shrink-0">
           <button className="md:hidden p-2 rounded-lg hover:bg-surface-100 text-surface-500" onClick={() => setMobileOpen(true)}><Menu size={18} /></button>
           <div className="flex-1" />
-          <div className="flex items-center gap-2.5 pl-3 border-l border-surface-200">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm" style={{ background: SB_AVATAR }}>
-              <span className="text-white text-xs font-bold font-display">{user?.name?.charAt(0).toUpperCase()}</span>
-            </div>
-            {user && (<div className="hidden sm:block">
-              <p className="text-sm font-semibold text-surface-800 leading-none">{user.name}</p>
-              <p className="text-xs mt-0.5 font-medium text-brand-600">Administrator</p>
-            </div>)}
-          </div>
         </header>
         <div className="flex-1 overflow-y-auto"><Outlet /></div>
       </main>
