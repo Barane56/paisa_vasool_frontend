@@ -1,17 +1,17 @@
 # =============================================================================
 # Stage 1 — dependency installer
 # =============================================================================
-FROM node:22-alpine AS deps
+FROM oven/bun:1-alpine AS deps
 
 WORKDIR /app
 
-COPY package.json ./
-RUN npm install --platform=linux --arch=x64
+COPY package.json bun.lockb* ./
+RUN bun install
 
 # =============================================================================
 # Stage 2 — builder
 # =============================================================================
-FROM node:22-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ ARG VITE_APP_ENV=production
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_APP_ENV=$VITE_APP_ENV
 
-RUN npm run build
+RUN bun run build
 
 # =============================================================================
 # Stage 3 — runtime (nginx)
