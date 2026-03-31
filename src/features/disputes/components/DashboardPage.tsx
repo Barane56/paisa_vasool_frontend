@@ -32,19 +32,19 @@ import clsx from 'clsx';
 import toast from 'react-hot-toast';
 
 // ─── Status / Priority helpers ────────────────────────────────────────────────
-const STATUS_CONFIG: Record<string, { label: string; badge: 'danger'|'warning'|'success'|'default'; dot: string }> = {
-  OPEN:         { label: 'Open',         badge: 'danger',  dot: 'bg-status-error'   },
-  UNVERIFIED:   { label: 'Unverified',   badge: 'warning', dot: 'bg-status-warning' },
+const STATUS_CONFIG: Record<string, { label: string; badge: 'danger' | 'warning' | 'success' | 'default'; dot: string }> = {
+  OPEN: { label: 'Open', badge: 'danger', dot: 'bg-status-error' },
+  UNVERIFIED: { label: 'Unverified', badge: 'warning', dot: 'bg-status-warning' },
   UNDER_REVIEW: { label: 'Under Review', badge: 'warning', dot: 'bg-status-warning' },
-  RESOLVED:     { label: 'Resolved',     badge: 'success', dot: 'bg-status-success' },
-  CLOSED:       { label: 'Closed',       badge: 'default', dot: 'bg-surface-300'   },
+  RESOLVED: { label: 'Resolved', badge: 'success', dot: 'bg-status-success' },
+  CLOSED: { label: 'Closed', badge: 'default', dot: 'bg-surface-300' },
 };
-const PRIORITY_CONFIG: Record<string, { label: string; badge: 'danger'|'warning'|'default' }> = {
-  HIGH:   { label: 'High',   badge: 'danger'  },
+const PRIORITY_CONFIG: Record<string, { label: string; badge: 'danger' | 'warning' | 'default' }> = {
+  HIGH: { label: 'High', badge: 'danger' },
   MEDIUM: { label: 'Medium', badge: 'warning' },
-  LOW:    { label: 'Low',    badge: 'default' },
+  LOW: { label: 'Low', badge: 'default' },
 };
-const sc = (s: string) => STATUS_CONFIG[s]   ?? { label: s, badge: 'default' as const, dot: 'bg-surface-200' };
+const sc = (s: string) => STATUS_CONFIG[s] ?? { label: s, badge: 'default' as const, dot: 'bg-surface-200' };
 const pc = (p: string) => PRIORITY_CONFIG[p] ?? { label: p, badge: 'default' as const };
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
@@ -85,10 +85,10 @@ const InvoiceCard = ({ invoice }: { invoice: InvoiceData }) => {
       <div className="px-5 py-4 grid grid-cols-2 gap-x-6 gap-y-3 border-b border-surface-100">
         {d.vendor_name && (<div className="col-span-2 flex items-center gap-2"><Building2 size={13} className="text-gray-500 shrink-0" /><span className="text-sm text-surface-800 font-medium">{d.vendor_name}</span>{d.customer_name && (<><ChevronRight size={13} className="text-gray-400" /><span className="text-sm text-surface-800 font-medium">{d.customer_name}</span></>)}</div>)}
         {[
-          { icon: Calendar,   label: 'Invoice Date', val: d.invoice_date  ? formatDate(d.invoice_date as string)  : null },
-          { icon: Calendar,   label: 'Due Date',     val: d.due_date      ? formatDate(d.due_date as string)      : null },
-          { icon: Hash,       label: 'Terms',        val: d.payment_terms as string ?? null },
-          { icon: DollarSign, label: 'Currency',     val: cur },
+          { icon: Calendar, label: 'Invoice Date', val: d.invoice_date ? formatDate(d.invoice_date as string) : null },
+          { icon: Calendar, label: 'Due Date', val: d.due_date ? formatDate(d.due_date as string) : null },
+          { icon: Hash, label: 'Terms', val: d.payment_terms as string ?? null },
+          { icon: DollarSign, label: 'Currency', val: cur },
         ].filter(r => r.val).map(({ icon: Ic, label, val }) => (
           <div key={label} className="flex items-start gap-2"><Ic size={13} className="text-gray-500 mt-0.5 shrink-0" /><div><p className="text-xs text-gray-500 font-medium">{label}</p><p className="text-sm font-semibold text-surface-800">{val}</p></div></div>
         ))}
@@ -156,10 +156,10 @@ const PaymentListCard = ({ payments }: { payments: PaymentDetailData[] }) => {
 
 // ─── Timeline message ─────────────────────────────────────────────────────────
 const actorConfig = {
-  CUSTOMER:  { color: 'bg-brand-500',   ring: 'ring-brand-200',   bubble: 'bg-brand-50 border border-brand-100',    text: 'text-brand-600'   },
-  AI:        { color: 'bg-brand-600', ring: 'ring-brand-200', bubble: 'bg-brand-50 border border-brand-100',  text: 'text-brand-600' },
-  ASSOCIATE: { color: 'bg-brand-600', ring: 'ring-brand-200', bubble: 'bg-brand-50 border border-brand-100',  text: 'text-brand-600' },
-  SYSTEM:    { color: 'bg-brand-400',  ring: 'ring-brand-200',  bubble: 'bg-brand-100 border border-brand-200',   text: 'text-brand-600'  },
+  CUSTOMER: { color: 'bg-brand-500', ring: 'ring-brand-200', bubble: 'bg-brand-50 border border-brand-100', text: 'text-brand-600' },
+  AI: { color: 'bg-brand-600', ring: 'ring-brand-200', bubble: 'bg-brand-50 border border-brand-100', text: 'text-brand-600' },
+  ASSOCIATE: { color: 'bg-brand-600', ring: 'ring-brand-200', bubble: 'bg-brand-50 border border-brand-100', text: 'text-brand-600' },
+  SYSTEM: { color: 'bg-brand-400', ring: 'ring-brand-200', bubble: 'bg-brand-100 border border-brand-200', text: 'text-brand-600' },
 };
 const getActorCfg = (actor: string) => actorConfig[actor as keyof typeof actorConfig] ?? actorConfig.ASSOCIATE;
 
@@ -175,8 +175,8 @@ const getActorLabel = (ep: TimelineEpisode, dispute: Dispute): string => {
 };
 
 const ActorIcon = ({ actor }: { actor: string }) => {
-  if (actor === 'CUSTOMER')  return <MessageSquare size={12} className="text-white" />;
-  if (actor === 'AI')        return <Brain size={12} className="text-white" />;
+  if (actor === 'CUSTOMER') return <MessageSquare size={12} className="text-white" />;
+  if (actor === 'AI') return <Brain size={12} className="text-white" />;
   if (actor === 'ASSOCIATE') return <User2 size={12} className="text-white" />;
   return <Zap size={12} className="text-white" />;
 };
@@ -185,8 +185,8 @@ const ActorIcon = ({ actor }: { actor: string }) => {
 const AttachmentChip = ({ att }: { att: TimelineAttachment }) => {
   const [loading, setLoading] = useState(false);
   const isImage = att.file_type?.startsWith('image/');
-  const isPdf   = att.file_type === 'application/pdf' || att.file_name.endsWith('.pdf');
-  const icon    = isImage ? '🖼' : isPdf ? '📄' : '📎';
+  const isPdf = att.file_type === 'application/pdf' || att.file_name.endsWith('.pdf');
+  const icon = isImage ? '🖼' : isPdf ? '📄' : '📎';
 
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -288,7 +288,7 @@ const DocRow = ({ icon: Icon, iconBg, label, sublabel, meta, url, urlLabel, load
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-0.5">{label}</p>
         {loading ? (<div className="flex items-center gap-2 mt-1"><Loader2 size={14} className="animate-spin text-gray-500" /><span className="text-sm text-gray-500">Fetching details…</span></div>)
           : missing ? (<p className="text-sm text-gray-400 italic">{missingText}</p>)
-          : (<><p className="font-display font-bold text-surface-800">{sublabel}</p>{meta && meta.length > 0 && (<div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">{meta.map(({ icon: Ic, text }, i) => (<div key={i} className="flex items-center gap-1.5"><Ic size={12} className="text-gray-500 shrink-0" /><span className="text-xs text-surface-800">{text}</span></div>))}</div>)}</>)}
+            : (<><p className="font-display font-bold text-surface-800">{sublabel}</p>{meta && meta.length > 0 && (<div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">{meta.map(({ icon: Ic, text }, i) => (<div key={i} className="flex items-center gap-1.5"><Ic size={12} className="text-gray-500 shrink-0" /><span className="text-xs text-surface-800">{text}</span></div>))}</div>)}</>)}
       </div>
       {!loading && !missing && url && (<a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-3 py-2 rounded-xl transition-all shrink-0">{urlLabel} <ArrowUpRight size={12} /></a>)}
     </div>
@@ -303,14 +303,14 @@ const DocRow = ({ icon: Icon, iconBg, label, sublabel, meta, url, urlLabel, load
 // ─── Send Email Panel ─────────────────────────────────────────────────────────
 const SendEmailPanel = ({ dispute, onEmailSent }: { dispute: Dispute; onEmailSent: () => void }) => {
   const defaultSubject = `Re: Case #${dispute.dispute_id} – ${dispute.dispute_type?.reason_name ?? 'Case'}`;
-  const [to, setTo]           = useState(dispute.customer_id ?? '');
-  const [subject, setSubj]    = useState(defaultSubject);
-  const [body, setBody]       = useState('');
-  const [files, setFiles]     = useState<File[]>([]);
+  const [to, setTo] = useState(dispute.customer_id ?? '');
+  const [subject, setSubj] = useState(defaultSubject);
+  const [body, setBody] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const [newThread, setNewThread] = useState(false);
-  const [draftLoading, setDraftLoading]   = useState(false);
-  const [draftError, setDraftError]       = useState<string | null>(null);
+  const [draftLoading, setDraftLoading] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
   const [isDraftFromAI, setIsDraftFromAI] = useState(false);   // true only when AI generated, reset on manual edit
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -534,21 +534,21 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
   dispute: Dispute; onClose: () => void;
   onStatusUpdate: (disputeId: number, patch: Partial<Dispute>) => void;
 }) => {
-  const [dispute, setDispute]  = useState<Dispute>(initDispute);
-  const [invoice, setInvoice]  = useState<InvoiceData | null>(null);
+  const [dispute, setDispute] = useState<Dispute>(initDispute);
+  const [invoice, setInvoice] = useState<InvoiceData | null>(null);
   const [payments, setPayments] = useState<PaymentDetailData[]>([]);
   const [episodes, setEpisodes] = useState<TimelineEpisode[]>([]);
-  const [invoiceLoading, setIL]   = useState(false);
-  const [paymentLoading, setPL]   = useState(false);
-  const [timelineLoading, setTL]  = useState(false);
-  const [invoiceTried,  setIT]    = useState(false);
-  const [paymentTried,  setPT]    = useState(false);
-  const [timelineTried, setTT]    = useState(false);
-  const [updating, setUpdating]   = useState<string | null>(null);
-  const [tab, setTab] = useState<'overview'|'timeline'|'documents'|'email'>('overview');
+  const [invoiceLoading, setIL] = useState(false);
+  const [paymentLoading, setPL] = useState(false);
+  const [timelineLoading, setTL] = useState(false);
+  const [invoiceTried, setIT] = useState(false);
+  const [paymentTried, setPT] = useState(false);
+  const [timelineTried, setTT] = useState(false);
+  const [updating, setUpdating] = useState<string | null>(null);
+  const [tab, setTab] = useState<'overview' | 'timeline' | 'documents' | 'email'>('overview');
 
   // Fork recommendations — loaded once on mount
-  const [forkRecs, setForkRecs]           = useState<ForkRecommendation[]>([]);
+  const [forkRecs, setForkRecs] = useState<ForkRecommendation[]>([]);
   const [forkRecsLoaded, setForkRecsLoaded] = useState(false);
 
   useEffect(() => {
@@ -569,7 +569,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
     if (invoiceTried || !dispute.invoice_id) return;
     if (tab !== 'overview' && tab !== 'documents') return;
     setIT(true); setIL(true);
-    disputeService.getInvoice(dispute.invoice_id).then(setInvoice).catch(() => {}).finally(() => setIL(false));
+    disputeService.getInvoice(dispute.invoice_id).then(setInvoice).catch(() => { }).finally(() => setIL(false));
   }, [tab, dispute.invoice_id, invoiceTried]);
 
   useEffect(() => {
@@ -587,7 +587,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
           const p = await disputeService.getPaymentDetail(dispute.payment_detail_id!);
           setPayments([p]);
         }
-      } catch {} finally { setPL(false); }
+      } catch { } finally { setPL(false); }
     };
     run();
   }, [tab, dispute.invoice_id, dispute.payment_detail_id, paymentTried, invoice]);
@@ -619,10 +619,10 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
   const p = pc(dispute.priority);
 
   const TABS = [
-    { id: 'overview'   as const, label: 'Overview'  },
-    { id: 'timeline'   as const, label: 'Timeline',  pill: timelineTried ? episodes.length : undefined },
-    { id: 'documents'  as const, label: 'Documents' },
-    { id: 'email'      as const, label: '✉ Send Email' },
+    { id: 'overview' as const, label: 'Overview' },
+    { id: 'timeline' as const, label: 'Timeline', pill: timelineTried ? episodes.length : undefined },
+    { id: 'documents' as const, label: 'Documents' },
+    { id: 'email' as const, label: '✉ Send Email' },
   ];
 
   return (
@@ -642,9 +642,9 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                   <code className="text-xs font-mono bg-surface-100 text-surface-700 px-2.5 py-1 rounded-lg">#{dispute.dispute_id}</code>
                   <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold',
                     s.badge === 'danger' ? 'bg-red-50 text-red-700' :
-                    s.badge === 'warning' ? 'bg-amber-50 text-amber-700' :
-                    s.badge === 'success' ? 'bg-green-50 text-green-700' :
-                    'bg-surface-100 text-surface-700')}>
+                      s.badge === 'warning' ? 'bg-amber-50 text-amber-700' :
+                        s.badge === 'success' ? 'bg-green-50 text-green-700' :
+                          'bg-surface-100 text-surface-700')}>
                     <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />{s.label}
                   </span>
                   <Badge variant={p.badge === 'danger' ? 'danger' : p.badge === 'warning' ? 'warning' : 'default'}>
@@ -689,8 +689,8 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Case Description</h3>
                     {dispute.description && dispute.description.trim() ? (
                       <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5 whitespace-pre-wrap">
-  {dispute.description.trim().charAt(0).toUpperCase() + dispute.description.trim().slice(1)}
-</p>
+                        {dispute.description.trim().charAt(0).toUpperCase() + dispute.description.trim().slice(1)}
+                      </p>
 
                     ) : dispute.latest_analysis?.ai_summary ? (
                       <p className="text-sm text-surface-800 leading-relaxed bg-surface-50 border border-surface-100 rounded-xl px-4 py-3.5">{dispute.latest_analysis.ai_summary}</p>
@@ -732,8 +732,8 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Case Details</h3>
                     <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                       {[
-                        { label: 'Customer',     val: dispute.customer_id ?? '—' },
-                        { label: 'Assigned To',  val: dispute.assigned_to ?? 'Unassigned' },
+                        { label: 'Customer', val: dispute.customer_id ?? '—' },
+                        { label: 'Assigned To', val: dispute.assigned_to ?? 'Unassigned' },
                         { label: 'Last Updated', val: formatDate(dispute.updated_at) },
                       ].map(({ label, val }) => (
                         <div key={label} className="bg-surface-50 border border-surface-100 rounded-xl px-3.5 py-3">
@@ -755,8 +755,8 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                           <button key={nextStatus} onClick={() => handleStatus(nextStatus)} disabled={updating !== null} className={clsx('btn-sm inline-flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed', isPrimary ? 'btn-primary' : 'btn-secondary')}>
                             {updating === nextStatus && <Loader2 size={11} className="animate-spin" />}
                             {nextStatus === 'UNDER_REVIEW' && 'Mark Under Review'}
-                            {nextStatus === 'RESOLVED'     && 'Mark Resolved'}
-                            {nextStatus === 'CLOSED'       && 'Close Case'}
+                            {nextStatus === 'RESOLVED' && 'Mark Resolved'}
+                            {nextStatus === 'CLOSED' && 'Close Case'}
                           </button>
                         );
                       })}
@@ -774,7 +774,7 @@ const DisputeModal = ({ dispute: initDispute, onClose, onStatusUpdate }: {
                   </div>
                   {timelineLoading ? (<div className="flex flex-col items-center justify-center py-20 gap-3"><LoadingSpinner /><p className="text-sm text-gray-500">Loading conversation…</p></div>)
                     : episodes.length > 0 ? (<div className="space-y-0">{episodes.map((ep, i) => <TimelineMessage key={ep.episode_id} ep={ep} dispute={dispute} isLast={i === episodes.length - 1} />)}</div>)
-                    : (<EmptyState icon={<MessageSquare size={32} />} title="No messages yet" description="The conversation history will appear here as emails are processed." />)}
+                      : (<EmptyState icon={<MessageSquare size={32} />} title="No messages yet" description="The conversation history will appear here as emails are processed." />)}
                 </div>
               )}
 
@@ -929,9 +929,9 @@ const ForkRecommendationCard = ({
   onAccepted,
   onDismissed,
 }: {
-  rec:         ForkRecommendation;
-  dispute:     Dispute;
-  onAccepted:  (newDisputeId: number) => void;
+  rec: ForkRecommendation;
+  dispute: Dispute;
+  onAccepted: (newDisputeId: number) => void;
   onDismissed: () => void;
 }) => {
   const [dismissing, setDismissing] = useState(false);
@@ -1024,9 +1024,9 @@ const AcceptForkModal = ({
   onClose,
   onCreated,
 }: {
-  rec:      ForkRecommendation;
-  dispute:  Dispute;
-  onClose:  () => void;
+  rec: ForkRecommendation;
+  dispute: Dispute;
+  onClose: () => void;
   onCreated: (newDisputeId: number) => void;
 }) => {
   const [disputeTypes, setDisputeTypes] = useState<DisputeTypeOption[]>([]);
@@ -1035,8 +1035,8 @@ const AcceptForkModal = ({
   const [customTypeName, setCustomTypeName] = useState(rec.suggested_type_hint || '');
   const [customTypeDesc, setCustomTypeDesc] = useState('');
   const [description, setDescription] = useState(rec.suggested_description || '');
-  const [priority, setPriority] = useState<'LOW'|'MEDIUM'|'HIGH'>(
-    (rec.suggested_priority as 'LOW'|'MEDIUM'|'HIGH') || 'MEDIUM'
+  const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>(
+    (rec.suggested_priority as 'LOW' | 'MEDIUM' | 'HIGH') || 'MEDIUM'
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -1055,7 +1055,7 @@ const AcceptForkModal = ({
           setUseCustom(true);
         }
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -1074,13 +1074,13 @@ const AcceptForkModal = ({
         dispute.dispute_id,
         rec.recommendation_id,
         {
-          action:           'ACCEPT',
-          dispute_type_id:  useCustom ? null : Number(selectedTypeId),
+          action: 'ACCEPT',
+          dispute_type_id: useCustom ? null : Number(selectedTypeId),
           custom_type_name: useCustom ? customTypeName.trim() : null,
           custom_type_desc: useCustom ? customTypeDesc.trim() : null,
-          description:      description.trim(),
+          description: description.trim(),
           priority,
-          customer_email:   dispute.customer_id,
+          customer_email: dispute.customer_id,
         },
       );
       toast.success(`New case ${result.dispute_token} created`);
@@ -1133,7 +1133,7 @@ const AcceptForkModal = ({
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Priority</label>
               <div className="flex gap-2">
-                {(['LOW','MEDIUM','HIGH'] as const).map(p => (
+                {(['LOW', 'MEDIUM', 'HIGH'] as const).map(p => (
                   <button key={p} onClick={() => setPriority(p)} className={clsx('flex-1 py-2 rounded-xl text-xs font-bold border transition-all', priority === p
                     ? p === 'HIGH' ? 'bg-red-500 text-white border-red-500 shadow-sm' : p === 'MEDIUM' ? 'bg-amber-500 text-white border-amber-500 shadow-sm' : 'bg-surface-500 text-white border-surface-500 shadow-sm'
                     : 'bg-white text-gray-500 border-surface-200 hover:border-surface-300'
@@ -1168,7 +1168,7 @@ const CaseTypePicker = ({
   selected,
   onSelect,
 }: {
-  types:    DisputeTypeOption[];
+  types: DisputeTypeOption[];
   selected: number | null;
   onSelect: (id: number) => void;
 }) => {
@@ -1236,7 +1236,7 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
   const [customTypeDesc, setCustomTypeDesc] = useState('');
   const [useCustom, setUseCustom] = useState(false);
   const [customerId, setCustomerId] = useState('');
-  const [priority, setPriority] = useState<'LOW'|'MEDIUM'|'HIGH'>('MEDIUM');
+  const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -1247,7 +1247,7 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
   const [selectedArDocId, setSelectedArDocId] = useState<number | null>(null);
 
   useEffect(() => {
-    disputeTypeService.list().then(setDisputeTypes).catch(() => {});
+    disputeTypeService.list().then(setDisputeTypes).catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -1284,14 +1284,14 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
     try {
       setSubmitting(true);
       const dispute = await faDisputeService.create({
-        customer_id:      customerId.trim(),
-        customer_email:   customerId.trim(),
-        dispute_type_id:  useCustom ? null : Number(selectedTypeId),
+        customer_id: customerId.trim(),
+        customer_email: customerId.trim(),
+        dispute_type_id: useCustom ? null : Number(selectedTypeId),
         custom_type_name: useCustom ? customTypeName.trim() : null,
         custom_type_desc: useCustom ? customTypeDesc.trim() : null,
         priority,
-        description:      description.trim(),
-        ar_document_id:   selectedArDocId ?? null,
+        description: description.trim(),
+        ar_document_id: selectedArDocId ?? null,
       });
       toast.success(`Dispute #${dispute.dispute_id} created`);
       onCreated(dispute);
@@ -1305,28 +1305,28 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
   // Natural key per doc type — show the identifier that actually names this document.
   // Falls back to the first available key if the preferred type isn't extracted.
   const DOC_TYPE_NATURAL_KEY: Record<string, string> = {
-    PO:          'po_number',
-    INVOICE:     'inv_number',
-    GRN:         'grn_number',
-    PAYMENT:     'payment_ref',
-    CONTRACT:    'contract_number',
+    PO: 'po_number',
+    INVOICE: 'inv_number',
+    GRN: 'grn_number',
+    PAYMENT: 'payment_ref',
+    CONTRACT: 'contract_number',
     CREDIT_NOTE: 'credit_note_number',
   };
 
   const docLabel = (doc: ARDocRelated): string => {
     if (!doc.all_keys?.length) return `${DOC_TYPE_LABELS[doc.doc_type] ?? doc.doc_type} — no keys extracted`;
     const preferred = DOC_TYPE_NATURAL_KEY[doc.doc_type];
-    const primary   = (preferred ? doc.all_keys.find(k => k.key_type === preferred) : null)
-                      ?? doc.all_keys[0];
+    const primary = (preferred ? doc.all_keys.find(k => k.key_type === preferred) : null)
+      ?? doc.all_keys[0];
     return primary.key_value_raw;
   };
 
   const DOC_TYPE_COLORS_MODAL: Record<string, string> = {
-    PO:          'bg-amber-100 text-amber-700',
-    INVOICE:     'bg-blue-100 text-blue-700',
-    GRN:         'bg-purple-100 text-purple-700',
-    PAYMENT:     'bg-green-100 text-green-700',
-    CONTRACT:    'bg-slate-100 text-slate-700',
+    PO: 'bg-amber-100 text-amber-700',
+    INVOICE: 'bg-blue-100 text-blue-700',
+    GRN: 'bg-purple-100 text-purple-700',
+    PAYMENT: 'bg-green-100 text-green-700',
+    CONTRACT: 'bg-slate-100 text-slate-700',
     CREDIT_NOTE: 'bg-red-100 text-red-700',
   };
 
@@ -1424,7 +1424,7 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
             <div>
               <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Priority</label>
               <div className="flex gap-2">
-                {(['LOW','MEDIUM','HIGH'] as const).map(p => (
+                {(['LOW', 'MEDIUM', 'HIGH'] as const).map(p => (
                   <button key={p} onClick={() => setPriority(p)} className={clsx('flex-1 py-2 rounded-xl text-xs font-bold border transition-all', priority === p
                     ? p === 'HIGH' ? 'bg-red-500 text-white border-red-500 shadow-sm' : p === 'MEDIUM' ? 'bg-amber-500 text-white border-amber-500 shadow-sm' : 'bg-surface-500 text-white border-surface-500 shadow-sm'
                     : 'bg-white text-gray-500 border-surface-200 hover:border-surface-300'
@@ -1460,19 +1460,18 @@ const CreateDisputeModal = ({ onClose, onCreated }: {
 async function fetchAndOpenDoc(url: string, fileName: string, mode: 'view' | 'save') {
   try {
     const { default: axiosInst } = await import('@/lib/axios');
-    // Append mode param so backend sets inline vs attachment disposition
     const sep = url.includes('?') ? '&' : '?';
-    const fullUrl = `${url}${sep}mode=${mode}`;
-    const response = await axiosInst.get(fullUrl, { responseType: 'blob' });
-    const contentType = response.headers['content-type'] || 'application/octet-stream';
-    const blob = new Blob([response.data], { type: contentType });
+    const res = await axiosInst.get(
+      `${url}${sep}mode=${mode}`,
+      { responseType: 'blob' }
+    );
+    const mime = res.headers['content-type'] || 'application/octet-stream';
+    const blob = new Blob([res.data], { type: mime });
     const blobUrl = URL.createObjectURL(blob);
 
     if (mode === 'view') {
-      // Open in new tab — browser will render PDF/images inline
       window.open(blobUrl, '_blank', 'noopener,noreferrer');
     } else {
-      // Force download
       const a = document.createElement('a');
       a.href = blobUrl;
       a.download = fileName;
@@ -1480,7 +1479,6 @@ async function fetchAndOpenDoc(url: string, fileName: string, mode: 'view' | 'sa
       a.click();
       document.body.removeChild(a);
     }
-    // Revoke after enough time for browser to load the content
     setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000);
   } catch {
     toast.error('Could not open file — please try again');
@@ -1490,11 +1488,11 @@ async function fetchAndOpenDoc(url: string, fileName: string, mode: 'view' | 'sa
 // ─── AR Docs Inline Panel ────────────────────────────────────────────────────
 
 const DOC_TYPE_COLORS_INLINE: Record<string, string> = {
-  PO:          'bg-amber-100 text-amber-700 border-amber-200',
-  INVOICE:     'bg-blue-100 text-blue-700 border-blue-200',
-  GRN:         'bg-purple-100 text-purple-700 border-purple-200',
-  PAYMENT:     'bg-green-100 text-green-700 border-green-200',
-  CONTRACT:    'bg-slate-100 text-slate-700 border-slate-200',
+  PO: 'bg-amber-100 text-amber-700 border-amber-200',
+  INVOICE: 'bg-blue-100 text-blue-700 border-blue-200',
+  GRN: 'bg-purple-100 text-purple-700 border-purple-200',
+  PAYMENT: 'bg-green-100 text-green-700 border-green-200',
+  CONTRACT: 'bg-slate-100 text-slate-700 border-slate-200',
   CREDIT_NOTE: 'bg-red-100 text-red-700 border-red-200',
 };
 
@@ -1504,15 +1502,15 @@ const AnchorPickerModal = ({
   onClose,
   onUpdated,
 }: {
-  disputeId:  number;
+  disputeId: number;
   customerId: string;
-  onClose:    () => void;
-  onUpdated:  () => void;
+  onClose: () => void;
+  onUpdated: () => void;
 }) => {
-  const [customerDocs, setCustomerDocs]   = useState<ARDocRelated[]>([]);
-  const [loadingDocs,  setLoadingDocs]    = useState(true);
+  const [customerDocs, setCustomerDocs] = useState<ARDocRelated[]>([]);
+  const [loadingDocs, setLoadingDocs] = useState(true);
   const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
-  const [saving,       setSaving]         = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -1594,9 +1592,9 @@ const AnchorPickerModal = ({
 
 // ─── AR Docs Inline Panel ────────────────────────────────────────────────────
 const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; customerId: string }) => {
-  const [docs,          setDocs]          = useState<ARDocRelated[]>([]);
-  const [loading,       setLoading]       = useState(false);
-  const [error,         setError]         = useState(false);
+  const [docs, setDocs] = useState<ARDocRelated[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [showAnchorPicker, setShowAnchorPicker] = useState(false);
 
   const reload = () => {
@@ -1688,9 +1686,9 @@ const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; custo
             PO: 'po_number', INVOICE: 'inv_number', GRN: 'grn_number',
             PAYMENT: 'payment_ref', CONTRACT: 'contract_number', CREDIT_NOTE: 'credit_note_number',
           };
-          const preferred  = DOC_NATURAL_KEY[doc.doc_type];
+          const preferred = DOC_NATURAL_KEY[doc.doc_type];
           const primaryKey = (preferred ? doc.all_keys?.find(k => k.key_type === preferred) : null)
-                             ?? doc.all_keys?.[0];
+            ?? doc.all_keys?.[0];
           return (
             <div key={doc.doc_id} className="bg-white border border-surface-200 rounded-xl">
               <div className="flex items-center gap-3 px-3 py-2.5">
@@ -1718,7 +1716,7 @@ const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; custo
                     <button
                       type="button"
                       title="View file"
-                      onClick={() => fetchAndOpenDoc(doc.download_url, doc.doc_type.toLowerCase() + '_doc', 'view')}
+                      onClick={() => fetchAndOpenDoc(doc.download_url, primaryKey?.key_value_raw ?? doc.doc_type.toLowerCase(), 'view')}
                       className="p-1.5 rounded-lg hover:bg-brand-50 text-gray-400 hover:text-brand-600 transition-colors"
                     >
                       <Eye size={13} />
@@ -1726,7 +1724,7 @@ const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; custo
                     <button
                       type="button"
                       title="Download file"
-                      onClick={() => fetchAndOpenDoc(doc.download_url, doc.doc_type.toLowerCase() + '_doc', 'save')}
+                      onClick={() => fetchAndOpenDoc(doc.download_url, primaryKey?.key_value_raw ?? doc.doc_type.toLowerCase(), 'save')}
                       className="p-1.5 rounded-lg hover:bg-surface-100 text-gray-400 hover:text-surface-700 transition-colors"
                     >
                       <Download size={13} />
@@ -1741,7 +1739,7 @@ const ARDocsInlinePanel = ({ disputeId, customerId }: { disputeId: number; custo
 
       <div className="flex gap-2">
         <a href="/ar-documents"
-           className="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-brand-200 hover:border-brand-400 hover:bg-brand-50 text-brand-600 text-xs font-semibold rounded-xl px-4 py-3 transition-all">
+          className="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-brand-200 hover:border-brand-400 hover:bg-brand-50 text-brand-600 text-xs font-semibold rounded-xl px-4 py-3 transition-all">
           <Upload size={13} /> Upload more documents for {customerId.split('@')[0]}
         </a>
         <button
@@ -1814,28 +1812,34 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
    * (which sends the JWT cookie) then create a temporary blob URL.
    * This avoids the 401 that a bare <a href> would get.
    */
-  const handleDocOpen = async (doc: DisputeDocument, forceDownload: boolean) => {
-    try {
-      const { default: axiosInstance } = await import('@/lib/axios');
-      const res = await axiosInstance.get(doc.download_url, { responseType: 'blob' });
-      const blob = new Blob([res.data], { type: doc.file_type || 'application/octet-stream' });
-      const blobUrl = URL.createObjectURL(blob);
-      if (forceDownload) {
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = doc.file_name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else {
-        window.open(blobUrl, '_blank');
-      }
-      // Revoke after a short delay to allow the browser to start loading
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
-    } catch {
-      toast.error('Could not open file — try downloading instead');
+const handleDocOpen = async (doc: DisputeDocument, forceDownload: boolean) => {
+  try {
+    const { default: axiosInstance } = await import('@/lib/axios');
+    const sep = doc.download_url.includes('?') ? '&' : '?';
+    const mode = forceDownload ? 'save' : 'view';
+    const res = await axiosInstance.get(
+      `${doc.download_url}${sep}mode=${mode}`,
+      { responseType: 'blob' }
+    );
+    const mime = res.headers['content-type'] || 'application/octet-stream';
+    const blob = new Blob([res.data], { type: mime });
+    const blobUrl = URL.createObjectURL(blob);
+
+    if (forceDownload) {
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = doc.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      window.open(blobUrl, '_blank', 'noopener,noreferrer');
     }
-  };
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000);
+  } catch {
+    toast.error('Could not open file — try downloading instead');
+  }
+};
 
   const formatSize = (bytes: number | null) => {
     if (!bytes) return '';
@@ -1925,7 +1929,7 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
                     <Eye size={12} /> View
                   </button>
                   <button
-                    onClick={() => fetchAndOpenDoc(doc.download_url, doc.file_name, 'save')}
+                    onClick={() => handleDocOpen(doc, true)}
                     className="flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-surface-800 bg-surface-100 hover:bg-surface-200 px-2.5 py-1.5 rounded-lg transition-all"
                     title="Download file"
                   >
@@ -1952,17 +1956,17 @@ const DisputeDocumentsPanel = ({ dispute }: { dispute: Dispute }) => {
 const DashboardPage = () => {
   const user = useUser();
   const { openDisputeId } = (useOutletContext<{ openDisputeId: number | null }>()) ?? { openDisputeId: null };
-  const [disputes, setDisputes]             = useState<Dispute[]>([]);
-  const [total, setTotal]                   = useState(0);
-  const [loading, setLoading]               = useState(true);
-  const [error, setError]                   = useState<string | null>(null);
-  const [search, setSearch]                 = useState('');
+  const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [statusFilter, setStatusFilter]     = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
-  const [selected, setSelected]             = useState<Dispute | null>(null);
-  const [showCreate, setShowCreate]           = useState(false);
-  const [currentPage, setCurrentPage]         = useState(1);
+  const [selected, setSelected] = useState<Dispute | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1973,7 +1977,7 @@ const DashboardPage = () => {
     if (target) {
       setSelected(target);
       // Mark read when opened from notification
-      newMessageService.markDisputeRead(openDisputeId).catch(() => {});
+      newMessageService.markDisputeRead(openDisputeId).catch(() => { });
       updateLocalDispute(openDisputeId, { has_new_customer_message: false } as Partial<Dispute>);
     }
   }, [openDisputeId, disputes]);
@@ -1990,9 +1994,9 @@ const DashboardPage = () => {
     setLoading(true); setError(null);
     try {
       const params = {
-        status:   statusFilter   !== 'all' ? statusFilter   : undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
         priority: priorityFilter !== 'all' ? priorityFilter : undefined,
-        search:   debouncedSearch.trim()   || undefined,
+        search: debouncedSearch.trim() || undefined,
         limit: 100, offset: 0,
       };
       // Always use list() with full params — myDisputes only for unfiltered "my" view
@@ -2023,10 +2027,10 @@ const DashboardPage = () => {
   }, []);
 
   const stats = {
-    total:    disputes.length,
-    open:     disputes.filter(d => d.status === 'OPEN').length,
+    total: disputes.length,
+    open: disputes.filter(d => d.status === 'OPEN').length,
     unverified: disputes.filter(d => d.status === 'UNVERIFIED').length,
-    review:   disputes.filter(d => d.status === 'UNDER_REVIEW').length,
+    review: disputes.filter(d => d.status === 'UNDER_REVIEW').length,
     resolved: disputes.filter(d => d.status === 'RESOLVED').length,
   };
 
@@ -2048,10 +2052,10 @@ const DashboardPage = () => {
         }
       />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={FileText}     label="Total"     value={stats.total}    accent="bg-brand-500" />
-        <StatCard icon={AlertCircle}  label="Open"      value={stats.open}     accent="bg-status-error"    sub="Needs attention" />
-        <StatCard icon={Clock}        label="In Review"  value={stats.review}   accent="bg-status-warning" />
-        <StatCard icon={CheckCircle2} label="Resolved"  value={stats.resolved} accent="bg-status-success" />
+        <StatCard icon={FileText} label="Total" value={stats.total} accent="bg-brand-500" />
+        <StatCard icon={AlertCircle} label="Open" value={stats.open} accent="bg-status-error" sub="Needs attention" />
+        <StatCard icon={Clock} label="In Review" value={stats.review} accent="bg-status-warning" />
+        <StatCard icon={CheckCircle2} label="Resolved" value={stats.resolved} accent="bg-status-success" />
       </div>
 
       <div className="card px-5 py-3.5 mb-6 flex items-center gap-3 bg-gradient-to-r from-brand-600 to-brand-700 border-0">
@@ -2108,7 +2112,7 @@ const DashboardPage = () => {
                   onClick={() => {
                     setSelected(d);
                     // Clear new message flag on backend + locally in row
-                    newMessageService.markDisputeRead(d.dispute_id).catch(() => {});
+                    newMessageService.markDisputeRead(d.dispute_id).catch(() => { });
                     updateLocalDispute(d.dispute_id, { has_new_customer_message: false } as Partial<Dispute>);
                   }}
                 />
